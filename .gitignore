@@ -24,6 +24,8 @@ ios/*.xcodeproj/xcuserdata/
 android/app/build/
 android/build/
 android/.gradle/
+android/local.properties
+*.apk
 
 # Build & Bundles
 build/
