@@ -6,6 +6,7 @@ import {
   FlatList,
   RefreshControl,
   Pressable,
+  Image,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -143,9 +144,19 @@ export const CoursesScreen = ({
           onPress={() => navigation.navigate('Profile')}
           style={[s.circle, styles.avatar]}
         >
-          <Text style={styles.avatarText}>
-            {(user?.fullName || user?.name || 'U').charAt(0).toUpperCase()}
-          </Text>
+          {user?.avatar || (user as any)?.profileImage ? (
+            <Image
+              source={{ uri: user?.avatar || (user as any)?.profileImage }}
+              style={styles.avatarImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Image
+              source={require('../../assets/images/logo/crackwithai.png')}
+              style={styles.avatarLogoImage}
+              resizeMode="contain"
+            />
+          )}
         </Pressable>
       </View>
 
@@ -300,14 +311,21 @@ const styles = StyleSheet.create({
   },
   avatar: {
     borderRadius: 22,
-    backgroundColor: palette.tint,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: palette.purple,
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  avatarLogoImage: {
+    width: 30,
+    height: 30,
   },
   tabs: {
     flexDirection: 'row',

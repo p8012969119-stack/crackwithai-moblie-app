@@ -9,6 +9,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -154,10 +155,21 @@ export const HomeScreen = ({ navigation }: any) => {
             style={styles.avatarCircle}
             onPress={() => navigation.navigate('Profile')}
             activeOpacity={0.8}
+            accessibilityLabel="Profile"
           >
-            <Text style={styles.avatarText}>
-              {(user?.fullName || user?.name || 'U').charAt(0).toUpperCase()}
-            </Text>
+            {user?.avatar || (user as any)?.profileImage ? (
+              <Image
+                source={{ uri: user?.avatar || (user as any)?.profileImage }}
+                style={styles.avatarImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <Image
+                source={require('../../assets/images/logo/crackwithai.png')}
+                style={styles.avatarLogoImage}
+                resizeMode="contain"
+              />
+            )}
           </TouchableOpacity>
 
           <View style={styles.headerRightControls}>
@@ -258,15 +270,22 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
     ...SHADOWS.small,
   },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  avatarLogoImage: {
+    width: 32,
+    height: 32,
   },
   welcomeGreetingSection: {
     marginBottom: 20,
