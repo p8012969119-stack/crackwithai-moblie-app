@@ -162,8 +162,8 @@ export const HomeScreen = ({ navigation }: any) => {
 
           <View style={styles.headerRightControls}>
             {/* Certificate Button */}
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Certificates')} activeOpacity={0.75}>
-              <CompletionBadge size={22} />
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Certificates')} activeOpacity={0.75} accessibilityLabel="Certificates">
+              <CompletionBadge size={26} />
             </TouchableOpacity>
 
             {/* Notification Bell */}
