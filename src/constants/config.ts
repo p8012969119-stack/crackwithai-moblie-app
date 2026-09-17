@@ -1,22 +1,45 @@
 import { NativeModules, Platform } from 'react-native';
 
+const DEV_LAN_IP = '172.168.12.169';
+let dynamicApiBaseUrl: string | null = null;
+
+export const setDynamicApiBaseUrl = (url: string) => {
+  dynamicApiBaseUrl = url;
+};
+
+export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
+  if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1') || currentUrl.includes('10.0.2.2')) {
+    return `http://${DEV_LAN_IP}:5001/api`;
+  }
+  if (currentUrl.includes(DEV_LAN_IP)) {
+    return 'http://localhost:5001/api';
+  }
+  return null;
+};
+
 export const getDevApiBaseUrl = (): string => {
+  if (dynamicApiBaseUrl) {
+    return dynamicApiBaseUrl;
+  }
+
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
   // Extract host IP from Metro bundle URL if running in development mode
   const scriptURL = typeof NativeModules !== 'undefined' ? NativeModules?.SourceCode?.scriptURL : undefined;
-  if (scriptURL) {
+  if (scriptURL && typeof scriptURL === 'string') {
     const host = scriptURL.split('://')[1]?.split(':')[0];
-    if (host) {
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
       return `http://${host}:5001/api`;
     }
   }
 
-  // Fallback for Android emulator vs iOS simulator / Node environment
+  // Physical Android connected via USB with adb reverse uses localhost:5001.
+  // Physical Android on local Wi-Fi or when reverse is not running will automatically
+  // fail over to DEV_LAN_IP (172.168.12.169:5001) via client interceptor.
   if (typeof Platform !== 'undefined' && Platform.OS === 'android') {
-    return 'http://10.0.2.2:5001/api';
+    return 'http://localhost:5001/api';
   }
   return 'http://127.0.0.1:5001/api';
 };

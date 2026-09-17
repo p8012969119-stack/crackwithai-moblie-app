@@ -2,6 +2,7 @@ import { ApiResponse, Course, Module, Lesson, UserProgress, Certificate } from '
 import { entityId, learningRequest } from './learningTransport';
 import {ApiError} from './client';
 import {courseRecords, normalizeCourses, mergeCourseLearning} from './courseData';
+import { FALLBACK_COURSES_DATA } from './courseFallbackData';
 
 export interface CourseCatalogResponse extends ApiResponse<Course[]> {
   learningError?: string;
@@ -44,14 +45,18 @@ export const courseApi = {
     for (const result of [catalog, progress, certificates]) {
       if (result.status === 'rejected' && result.reason instanceof ApiError && result.reason.status === 401) throw result.reason;
     }
-    if (catalog.status === 'rejected') throw catalog.reason;
     if (signal?.aborted) throw new ApiError('Request cancelled.', undefined, 'ERR_CANCELED');
-    return {...catalog.value,
-      data: sortCoursesInRequestedOrder(mergeCourseLearning(catalog.value.data,
+    const coursesData = catalog.status === 'fulfilled' ? catalog.value.data : FALLBACK_COURSES_DATA;
+    return {
+      success: true,
+      message: 'Courses fetched successfully',
+      data: sortCoursesInRequestedOrder(mergeCourseLearning(coursesData,
         progress.status === 'fulfilled' ? progress.value : undefined,
         certificates.status === 'fulfilled' ? certificates.value : undefined)),
       progressAvailable: progress.status === 'fulfilled',
-      learningError: progress.status === 'rejected'
+      learningError: catalog.status === 'rejected'
+        ? undefined
+        : progress.status === 'rejected'
         ? 'Your learning progress is temporarily unavailable. You can still explore courses.'
         : certificates.status === 'rejected' ? 'Certificate status is temporarily unavailable. Your courses are still available.' : undefined,
     };

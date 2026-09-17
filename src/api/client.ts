@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { CONFIG, getDevApiBaseUrl } from '../constants/config';
+import { CONFIG, getDevApiBaseUrl, getAlternateApiBaseUrl, setDynamicApiBaseUrl } from '../constants/config';
 import { storage } from '../services/storage';
 
 type UnauthorizedCallback = () => void;
@@ -47,6 +47,23 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     if (axios.isCancel(error)) return Promise.reject(error);
+
+    // Automatic transparent retry on alternate network host (e.g. localhost -> LAN IP or vice versa)
+    const config = error.config as (InternalAxiosRequestConfig & { _retryCount?: number }) | undefined;
+    if (config && (!config._retryCount || config._retryCount < 1) && (!error.response || error.code === 'ERR_NETWORK')) {
+      const currentBase = config.baseURL || CONFIG.API_BASE_URL;
+      const altBase = getAlternateApiBaseUrl(currentBase);
+      if (altBase && altBase !== currentBase) {
+        config._retryCount = (config._retryCount || 0) + 1;
+        config.baseURL = altBase;
+        setDynamicApiBaseUrl(altBase);
+        try {
+          return await apiClient(config);
+        } catch (retryErr) {
+          // Alternate retry also failed, continue to standard error formatting
+        }
+      }
+    }
     if (error.response?.status === 401) {
       const currentToken = await storage.getToken();
       const requestAuth = error.config?.headers?.Authorization || error.config?.headers?.authorization;

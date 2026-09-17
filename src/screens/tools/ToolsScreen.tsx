@@ -35,10 +35,10 @@ export interface AIToolCardItem {
 }
 
 const LOCAL_TOOL_IMAGES: Record<string, any> = {
-  'email': require('../../assets/tools/email_writer.jpg'),
-  'voice': require('../../assets/tools/voice_generator.jpg'),
+  'email': require('../../assets/tools/email_writer.png'),
+  'voice': require('../../assets/tools/voice_generator.png'),
   'image': require('../../assets/tools/image_generator.png'),
-  'code': require('../../assets/tools/code_generator.jpg'),
+  'code': require('../../assets/tools/code_generator.png'),
 };
 
 const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
