@@ -85,9 +85,9 @@ export const BookmarksScreen = ({ navigation }: any) => {
             <EmptyState
               icon="bookmark"
               title="No Bookmarks Saved"
-              message="Bookmark key lessons and AI tools to easily revisit them anytime!"
-              actionTitle="Explore Courses"
-              onAction={() => navigation.navigate('CoursesTab')}
+              message="Bookmark key items and AI tools to easily revisit them anytime!"
+              actionTitle="Explore AI Tools"
+              onAction={() => navigation.navigate('MainTabs', { screen: 'ToolsTab' })}
             />
           }
           renderItem={({ item }) => {

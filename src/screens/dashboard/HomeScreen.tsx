@@ -18,63 +18,19 @@ import {aiApi} from '../../api/aiApi';
 import {DashboardOverview} from '../../components/DashboardOverview';
 import {DashboardTools} from '../../components/DashboardTools';
 import { userApi } from '../../api/userApi';
-import { sortCoursesInRequestedOrder } from '../../api/courseApi';
-import { DashboardData, Course, AiTool } from '../../types';
+import { DashboardData, AiTool } from '../../types';
 import { COLORS, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/theme';
-import { ProgressBar } from '../../components/ProgressBar';
 import { LoadingView } from '../../components/LoadingView';
 import { ErrorState } from '../../components/ErrorState';
-import { Icon } from '../../components/Icon';
 import {TrainingAssistant} from '../../components/TrainingAssistant';
 import {CompletionBadge} from '../../components/CertificateMark';
-import { ToolLogo } from '../../components/ToolLogo';
 import { FirstTimeLanguageModal } from '../../components/FirstTimeLanguageModal';
 import { storage } from '../../services/storage';
-
-const HorizontalCourseCard = ({ course, onPress }: { course: Course; onPress: () => void }) => {
-  const completed = course.courseCompleted === true || course.certified === true;
-  const lessons = course.totalLessons ?? course.totalLessonsCount ?? 0;
-  const duration = course.totalEstimatedMinutes ?? course.duration;
-
-  return (
-    <TouchableOpacity
-      style={styles.hCourseCard}
-      activeOpacity={0.85}
-      onPress={onPress}
-    >
-      <View style={styles.hCourseHeader}>
-        <ToolLogo courseKey={course.title} slug={course.slug} logoUrl={course.logoUrl} size={42} />
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>{completed && <CompletionBadge size={18} />}<View style={[styles.hCourseBadge, completed && styles.hCourseBadgeCompleted]}>
-          <Text style={[styles.hCourseBadgeText, completed && styles.hCourseBadgeTextCompleted]}>
-            {completed ? 'Completed' : (course.level || 'AI').toUpperCase()}
-          </Text>
-        </View></View>
-      </View>
-
-      <Text numberOfLines={2} style={styles.hCourseTitle}>{course.title}</Text>
-      <Text numberOfLines={2} style={styles.hCourseDesc}>
-        {course.shortDescription || course.description || 'Master AI tools step by step.'}
-      </Text>
-
-      <View style={styles.hCourseMetaRow}>
-        <Text style={styles.hCourseMetaText}>{lessons} Lessons</Text>
-        {duration ? <Text style={styles.hCourseMetaText}>• {duration} min</Text> : null}
-      </View>
-
-      <ProgressBar progress={course.progressPercentage ?? 0} showLabel={false} height={5} />
-
-      <View style={styles.hCourseCtaRow}>
-        <Text style={styles.hCourseCtaText}>{completed ? 'Review' : course.isEnrolled ? 'Continue Learning' : 'Start Learning'}</Text>
-        <Icon name="arrow-right" size={14} color={COLORS.primary} />
-      </View>
-    </TouchableOpacity>
-  );
-};
+import { Icon } from '../../components/Icon';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [tools, setTools] = useState<AiTool[]>([]);
   const [toolsError, setToolsError] = useState(false);
@@ -109,12 +65,10 @@ export const HomeScreen = ({ navigation }: any) => {
       if (toolResult.status === 'fulfilled') setTools(toolResult.value.data);
       if (controller.signal.aborted) return;
       setDashboardData(response.data);
-      setEnrolledCourses(sortCoursesInRequestedOrder(response.data.courses || []));
     } catch {
       if (!controller.signal.aborted) {
         const fallback = await userApi.getDashboard();
         setDashboardData(fallback.data);
-        setEnrolledCourses(sortCoursesInRequestedOrder(fallback.data.courses || []));
       }
     } finally {
       if (!controller.signal.aborted) {setLoading(false); setRefreshing(false); request.current = null;}
@@ -192,34 +146,19 @@ export const HomeScreen = ({ navigation }: any) => {
           <Text style={styles.userSubName}>{user?.fullName || user?.name || 'Learner'}</Text>
         </View>
 
-        {dashboardData && <DashboardOverview data={dashboardData} courses={enrolledCourses} onCourse={courseId => navigation.navigate('CourseDetails', {courseId})} onCourses={() => navigation.navigate('CoursesTab')} onProfile={() => navigation.navigate('Profile')} onCertificates={() => navigation.navigate('Certificates')} onTools={() => navigation.navigate('ToolsTab')} />}
-
-        <TrainingAssistant key={user?._id} onStartCourse={courseId => navigation.navigate('CourseDetails', {courseId})} />
-
-
-        {/* Compact course preview follows the learning assistant. */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Explore Courses</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('CoursesTab')}>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <FlatList
-            data={enrolledCourses.slice(0, 5)}
-            keyExtractor={(item) => item._id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalListPadding}
-            renderItem={({ item }) => (
-              <HorizontalCourseCard
-                course={item}
-                onPress={() => navigation.navigate('CourseDetails', { courseId: item._id })}
-              />
-            )}
+        {dashboardData && (
+          <DashboardOverview
+            data={dashboardData}
+            onProfile={() => navigation.navigate('Profile')}
+            onTools={() => navigation.navigate('ToolsTab')}
+            onAI={() => navigation.navigate('AITab')}
           />
-        </View>
+        )}
+
+        <TrainingAssistant
+          key={user?._id}
+          onStartCourse={() => navigation.navigate('MainTabs', { screen: 'AITab' })}
+        />
 
         {/* The tools catalog always follows courses. */}
         <View style={styles.sectionContainer}>
@@ -362,79 +301,6 @@ const styles = StyleSheet.create({
   horizontalListPadding: {
     paddingRight: SPACING.md,
     gap: 12,
-  },
-
-  /* HORIZONTAL COURSE CARD STYLES */
-  hCourseCard: {
-    width: 270,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 10,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  hCourseHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  hCourseBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  hCourseBadgeCompleted: {
-    backgroundColor: '#FEF3C7',
-  },
-  hCourseBadgeText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#4F46E5',
-    letterSpacing: 0.4,
-  },
-  hCourseBadgeTextCompleted: {
-    color: '#D97706',
-  },
-  hCourseTitle: {
-    fontSize: 16.5,
-    lineHeight: 22,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.2,
-  },
-  hCourseDesc: {
-    fontSize: 12.5,
-    lineHeight: 18,
-    color: COLORS.textSecondary,
-  },
-  hCourseMetaRow: {
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'center',
-  },
-  hCourseMetaText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  hCourseCtaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 4,
-  },
-  hCourseCtaText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.primary,
   },
 
   /* HORIZONTAL TOOL CARD STYLES */

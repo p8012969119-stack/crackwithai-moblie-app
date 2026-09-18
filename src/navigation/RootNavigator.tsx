@@ -8,7 +8,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { MainTabNavigator } from './MainTabNavigator';
-import { CourseDetailsScreen } from '../screens/courses/CourseDetailsScreen';
 import { LessonScreen } from '../screens/lessons/LessonScreen';
 import { QuizScreen } from '../screens/quiz/QuizScreen';
 import { QuizResultScreen } from '../screens/quiz/QuizResultScreen';
@@ -27,7 +26,7 @@ import { AIVoiceGeneratorScreen } from '../screens/tools/AIVoiceGeneratorScreen'
 import { AIImageGeneratorScreen } from '../screens/tools/AIImageGeneratorScreen';
 import { AICodeGeneratorScreen } from '../screens/tools/AICodeGeneratorScreen';
 
-type RootStackParams = ParamListBase & {CourseDetails: {courseId: string; showRoadmap?: boolean}};
+type RootStackParams = ParamListBase;
 const Stack = createNativeStackNavigator<RootStackParams>();
 
 export const RootNavigator = () => {
@@ -59,7 +58,6 @@ export const RootNavigator = () => {
           <Stack.Screen name="MainTabs" component={MainTabNavigator} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />
-          <Stack.Screen name="CourseDetails" component={CourseDetailsScreen} />
           <Stack.Screen name="Lesson" component={LessonScreen} />
           <Stack.Screen name="Quiz" component={QuizScreen} />
           <Stack.Screen name="QuizResult" component={QuizResultScreen} />

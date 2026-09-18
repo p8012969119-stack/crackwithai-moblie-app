@@ -22,7 +22,7 @@ import { userApi } from '../../api/userApi';
 
 import { certificateApi } from '../../api/certificateApi';
 import { bookmarkApi } from '../../api/bookmarkApi';
-import { Course, Certificate, Bookmark, DashboardData } from '../../types';
+import { Certificate, Bookmark, DashboardData } from '../../types';
 import { SHADOWS } from '../../constants/theme';
 import { Button } from '../../components/Button';
 import {CertificateMark} from '../../components/CertificateMark';
@@ -73,7 +73,6 @@ export const ProfileScreen = ({ navigation }: any) => {
   const [currentLangCode, setCurrentLangCode] = useState<string>('en');
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
@@ -234,8 +233,7 @@ export const ProfileScreen = ({ navigation }: any) => {
       if (controller.signal.aborted) return;
       if (dashRes.status === 'fulfilled') {
         setDashboardData(dashRes.value.data);
-        setEnrolledCourses((dashRes.value.data.courses || []).filter(course => course.isEnrolled));
-      } else {setDashboardData(null); setEnrolledCourses([]); setProgressError(true);}
+      } else {setDashboardData(null); setProgressError(true);}
       if (certRes.status === 'fulfilled') setCertificates(certRes.value.data || []);
       if (bmRes.status === 'fulfilled') setBookmarks(bmRes.value.data || []);
     } finally {
@@ -295,9 +293,6 @@ export const ProfileScreen = ({ navigation }: any) => {
         .slice(0, 2)
     : 'P';
 
-  const currentCourse = enrolledCourses.find(course => course._id === dashboardData?.currentCourseId);
-  const currentProgress = Number.isFinite(currentCourse?.progressPercentage)
-    ? Math.min(100, Math.max(0, currentCourse?.progressPercentage ?? 0)) : 0;
   const stat = (value?: number) => loading ? '…' : progressError || value === undefined ? '—' : value;
 
   return (
@@ -395,37 +390,16 @@ export const ProfileScreen = ({ navigation }: any) => {
         {progressError && <TouchableOpacity accessibilityRole="button" onPress={fetchProfileData} style={{padding: 20}}><Text style={{color: '#6150C9'}}>Learning progress unavailable. Tap to retry.</Text></TouchableOpacity>}
         {/* ================= FLOATING STATISTICS CARD ================= */}
         <View style={styles.floatingStatsCard}>
-          <TouchableOpacity
-            style={styles.statCol}
-            activeOpacity={0.75}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'CoursesTab' })}
-          >
-            <View style={[styles.statIconCircle, { backgroundColor: '#EEEDFF' }]}>
-              <Icon name="book-open" size={15} color="#5553FE" />
+          <View style={styles.statCol}>
+            <View style={[styles.statIconCircle, { backgroundColor: '#FFF7ED' }]}>
+              <Icon name="flame" size={15} color="#F97316" />
             </View>
             <Text style={styles.statNumberText}>
-              {stat(dashboardData?.completedCourses)}
+              {user?.streak ?? dashboardData?.streak ?? 0}
             </Text>
-            <Text style={styles.statLabelText}>Courses</Text>
-            <Text style={styles.statSubText}>Completed</Text>
-          </TouchableOpacity>
-
-          <View style={styles.verticalSeparator} />
-
-          <TouchableOpacity
-            style={styles.statCol}
-            activeOpacity={0.75}
-            onPress={() => currentCourse
-              ? navigation.navigate('CourseDetails', { courseId: currentCourse._id })
-              : navigation.navigate('MainTabs', { screen: 'CoursesTab' })}
-          >
-            <View style={[styles.statIconCircle, { backgroundColor: '#EFF6FF' }]}>
-              <Icon name="play-circle" size={15} color="#2563EB" />
-            </View>
-            <Text style={styles.statNumberText}>{stat(dashboardData?.completedLessonsCount)}</Text>
-            <Text style={styles.statLabelText}>Lessons</Text>
-            <Text style={styles.statSubText}>Completed</Text>
-          </TouchableOpacity>
+            <Text style={styles.statLabelText}>Streak</Text>
+            <Text style={styles.statSubText}>Days Active</Text>
+          </View>
 
           <View style={styles.verticalSeparator} />
 
@@ -515,66 +489,6 @@ export const ProfileScreen = ({ navigation }: any) => {
             </View>
           </View>
         </View>
-
-        {/* ================= CURRENTLY LEARNING CARD ================= */}
-        {!loading && !progressError && currentCourse && <View style={styles.whiteSectionCard}>
-          <View style={styles.cardTitleWithIcon}>
-            <Icon name="book-open" size={18} color="#5553FE" style={{ marginRight: 8 }} />
-            <Text style={styles.cardHeaderTitle}>Currently Learning</Text>
-          </View>
-
-          <TouchableOpacity
-            activeOpacity={0.88}
-            style={styles.currentCourseItemCard}
-            onPress={() => currentCourse
-              ? navigation.navigate('CourseDetails', { courseId: currentCourse._id })
-              : navigation.navigate('MainTabs', { screen: 'CoursesTab' })}
-          >
-            <View style={styles.courseHeaderFlex}>
-              <Image
-                source={currentCourse.thumbnail ? { uri: currentCourse.thumbnail } : require('../../assets/brand/crackwithai-logo.png')}
-                style={styles.courseThumbImage}
-              />
-
-              <View style={styles.courseTitleCol}>
-                <View style={styles.titleWithLevelRow}>
-                  <Text style={styles.courseTitleText} numberOfLines={1}>
-                    {currentCourse.title}
-                  </Text>
-                  <View style={styles.beginnerBadge}>
-                    <Text style={styles.beginnerBadgeText}>{currentCourse.level?.toUpperCase() || 'IN PROGRESS'}</Text>
-                  </View>
-                </View>
-
-                {/* Progress Bar Row */}
-                <View style={styles.miniProgressRow}>
-                  <View style={styles.miniProgressTrack}>
-                    <View style={[styles.miniProgressFill, { width: `${currentProgress}%` }]} />
-                  </View>
-                  <Text style={styles.miniProgressPercentText}>{currentProgress}%</Text>
-                </View>
-
-                {/* Time & Continue Link Row */}
-                <View style={styles.timeContinueRow}>
-                  <View style={styles.timeSpentGroup}>
-                    <Icon name="clock" size={13} color="#64748B" />
-                    <Text style={styles.timeLeftText}>{currentCourse.completedLessonsCount ?? 0} / {currentCourse.totalLessonsCount ?? currentCourse.totalLessons ?? 0} lessons</Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.continueLinkBtn}
-                    onPress={() => currentCourse
-              ? navigation.navigate('CourseDetails', { courseId: currentCourse._id })
-              : navigation.navigate('MainTabs', { screen: 'CoursesTab' })}
-                  >
-                    <Text style={styles.continueLinkText}>Continue Learning</Text>
-                    <Icon name="chevron-right" size={12} color="#5553FE" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>}
 
         {/* ================= ACCOUNT & PREFERENCES ================= */}
         <View style={styles.accountSection}>
@@ -822,7 +736,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             </View>
 
             <View style={styles.switchRowItem}>
-              <Text style={styles.switchRowLabel}>New Course Releases</Text>
+              <Text style={styles.switchRowLabel}>New AI Tools & Updates</Text>
               <Switch value={newCourseAlerts} onValueChange={setNewCourseAlerts} trackColor={{ false: '#CBD5E1', true: '#5553FE' }} />
             </View>
 
@@ -1361,92 +1275,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
 
-  /* CURRENTLY LEARNING */
-  currentCourseItemCard: {
-    marginTop: 12,
-  },
-  courseHeaderFlex: {
-    flexDirection: 'row',
-  },
-  courseThumbImage: {
-    width: 72,
-    height: 72,
-    borderRadius: 16,
-    marginRight: 12,
-  },
-  courseTitleCol: {
-    flex: 1,
-  },
-  titleWithLevelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  courseTitleText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
-    flex: 1,
-  },
-  beginnerBadge: {
-    backgroundColor: '#EEEDFF',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  beginnerBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#5553FE',
-  },
-  miniProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  miniProgressTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginRight: 8,
-  },
-  miniProgressFill: {
-    height: '100%',
-    backgroundColor: '#5553FE',
-    borderRadius: 3,
-  },
-  miniProgressPercentText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  timeContinueRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  timeSpentGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  timeLeftText: {
-    fontSize: 11,
-    color: '#64748B',
-  },
-  continueLinkBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  continueLinkText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#5553FE',
-  },
 
   /* ACCOUNT & PREFERENCES LIST */
   accountSection: {

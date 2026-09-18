@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated, Keyboard } from 're
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen } from '../screens/dashboard/HomeScreen';
-import { CoursesScreen } from '../screens/courses/CoursesScreen';
 import { AIScreen } from '../screens/ai/AIScreen';
 import { ToolsScreen } from '../screens/tools/ToolsScreen';
 import { TabIcon, TabIconName } from '../components/TabIcon';
@@ -90,7 +89,6 @@ export const MainTabNavigator = () => {
 
               let iconName: TabIconName = 'home';
               if (route.name === 'HomeTab') iconName = 'home';
-              else if (route.name === 'CoursesTab') iconName = 'courses';
               else if (route.name === 'AITab') iconName = 'workspace';
               else if (route.name === 'ToolsTab') iconName = 'tools';
 
@@ -122,7 +120,6 @@ export const MainTabNavigator = () => {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="CoursesTab" component={CoursesScreen} options={{ tabBarLabel: 'Courses' }} />
       <Tab.Screen name="AITab" component={AIScreen} options={{ tabBarLabel: 'AI Workspace' }} />
       <Tab.Screen name="ToolsTab" component={ToolsScreen} options={{ tabBarLabel: 'Tools' }} />
     </Tab.Navigator>

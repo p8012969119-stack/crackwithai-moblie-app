@@ -25,16 +25,7 @@ export const userApi = {
         },
         greeting: 'Good morning 👋',
         streak: 1,
-        enrolledCoursesCount: 15,
-        completedCoursesCount: 0,
         certificatesCount: 0,
-        courses: [
-          { _id: '6aa2f695d5d02e7b2922675b', title: 'Zapier AI Automation', slug: 'zapier-ai-automation', description: 'Build intelligent workflow automations using Zapier AI.', shortDescription: 'Build intelligent workflow automations using Zapier AI.', level: 'beginner', isEnrolled: true, progressPercentage: 15, totalLessons: 12, totalEstimatedMinutes: 90, isFree: false },
-          { _id: '6aa2f694d5d02e7b29225990', title: 'Gamma AI Presentation', slug: 'gamma-ai-presentation', description: 'Create professional pitch decks & slides in seconds with Gamma.', shortDescription: 'Create professional pitch decks & slides in seconds with Gamma.', level: 'beginner', isEnrolled: true, progressPercentage: 30, totalLessons: 12, totalEstimatedMinutes: 75, isFree: true },
-          { _id: '6aa2f694d5d02e7b29225ad1', title: 'Pika AI Video Creator', slug: 'pika-ai-video-creator', description: 'Generate cinematic AI videos & 3D animations effortlessly.', shortDescription: 'Generate cinematic AI videos & 3D animations effortlessly.', level: 'intermediate', isEnrolled: true, progressPercentage: 10, totalLessons: 12, totalEstimatedMinutes: 110, isFree: false },
-          { _id: '6aa2f694d5d02e7b29225c12', title: 'Notion AI Productivity', slug: 'notion-ai-productivity', description: 'Supercharge your workspace & notes with Notion AI features.', shortDescription: 'Supercharge your workspace & notes with Notion AI features.', level: 'beginner', isEnrolled: true, progressPercentage: 45, totalLessons: 12, totalEstimatedMinutes: 60, isFree: true },
-          { _id: '6aa2f693d5d02e7b2922584f', title: 'Claude AI Professional', slug: 'claude-ai-professional', description: 'Master prompt engineering & complex reasoning with Claude 3.5.', shortDescription: 'Master prompt engineering & complex reasoning with Claude 3.5.', level: 'advanced', isEnrolled: true, progressPercentage: 20, totalLessons: 12, totalEstimatedMinutes: 120, isFree: false },
-        ],
       },
     };
   },

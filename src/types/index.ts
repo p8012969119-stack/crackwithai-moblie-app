@@ -28,6 +28,10 @@ export interface ApiResponse<T = any> {
 }
 
 export interface Course {
+  [key: string]: any;
+  curriculumVersion?: string;
+  order?: number;
+  totalLessonMinutes?: number;
   learningOutcomes?: string[];
   prerequisites?: string[];
   totalEstimatedMinutes?: number;

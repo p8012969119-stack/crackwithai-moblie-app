@@ -82,8 +82,8 @@ export const CertificatesScreen = ({
     }}><Text style={s.label}>CRACKWITHAI / ACHIEVEMENTS</Text><Text style={s.title}>Certificates</Text><Text style={[s.body, s.muted]}>A lasting record of the skills you’ve earned.</Text>{!loading && !error && <Text style={s.small}>{certificates.length} {certificates.length === 1 ? 'certificate' : 'certificates'} in your collection</Text>}</View>} ListEmptyComponent={loading ? <LearningSkeleton label="Loading your achievements…" /> : error ? <LearningEmpty title="Unable to load certificates" message={error} onRetry={() => {
       setLoading(true);
       fetchCertificates();
-    }} icon="info" /> : <LearningEmpty title="Your achievements start here" message="Complete a course’s lessons and pass its final assessment to unlock your certificate." icon="certificate" action="Explore courses" onRetry={() => navigation.navigate('MainTabs', {
-      screen: 'CoursesTab'
+    }} icon="info" /> : <LearningEmpty title="Your achievements start here" message="Complete assessments and AI tool workshops to unlock your certificates." icon="certificate" action="Explore Workspace" onRetry={() => navigation.navigate('MainTabs', {
+      screen: 'HomeTab'
     })} />} renderItem={({
       item
     }) => <View style={[s.card, {
