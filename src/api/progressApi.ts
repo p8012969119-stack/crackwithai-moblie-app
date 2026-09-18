@@ -1,6 +1,7 @@
 import { learningRequest } from './learningTransport';
 import { UserProgress } from '../types';
-import { LessonActivity } from './courseApi';
+
+export interface LessonActivity { lesson: string; readTopics: number[]; practicedTopics: number[] }
 export const progressApi = {
   getCourseProgress: (id: string) => learningRequest<UserProgress>('get', `/progress/course/${id}`),
   getCourseModulesFlow: (id: string) => learningRequest<any>('get', `/progress/course/${id}/modules`),

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { TopicNavigation } from '../../components/learning/TopicNavigation';
 import { useFocusEffect } from '@react-navigation/native';
-import { courseApi, LearningPath, LessonActivity } from '../../api/courseApi';
+import { learningApi, LearningPath, LessonActivity } from '../../api/learningApi';
 import { progressApi } from '../../api/progressApi';
 import { bookmarkApi } from '../../api/bookmarkApi';
 import { aiApi } from '../../api/aiApi';
@@ -50,7 +50,7 @@ export const LessonScreen = ({ route, navigation }: any) => {
   const load = useCallback(async () => {
     try {
       setError('');
-      const response = await courseApi.getLearningPath(courseId);
+      const response = await learningApi.getLearningPath(courseId);
       const lesson = response.data.lessons.find(
         (item) => item._id === lessonId,
       );

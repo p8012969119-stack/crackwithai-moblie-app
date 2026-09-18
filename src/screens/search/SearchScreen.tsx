@@ -10,32 +10,42 @@ import {
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/theme';
 import { Icon } from '../../components/Icon';
-import { courseApi } from '../../api/courseApi';
+import { aiApi } from '../../api/aiApi';
 import { ErrorState } from '../../components/ErrorState';
 import { LoadingView } from '../../components/LoadingView';
-import { Course } from '../../types';
+import { AiTool } from '../../types';
 
 export const SearchScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [tools, setTools] = useState<AiTool[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const load = async () => {try {setError(''); setCourses((await courseApi.getAllCourses()).data);} catch(e: any) {setError(e.message);} finally {setLoading(false);}};
+  const load = async () => {
+    try {
+      setError('');
+      const res = await aiApi.getTools();
+      setTools(res.data || []);
+    } catch(e: any) {
+      setError(e.message || 'Failed to load tools');
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {load();}, []);
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([
-    'ChatGPT Mastery',
-    'Prompt Engineering',
-    'Gemini AI',
+    'Email Writer',
+    'Voice Generator',
     'Code Generator',
+    'Image Generator',
   ]);
 
-  const searchResults: Course[] = query.trim()
-    ? courses.filter(
-        (c) =>
-          c.title.toLowerCase().includes(query.toLowerCase()) ||
-          c.description.toLowerCase().includes(query.toLowerCase()) ||
-          c.tags?.some((t) => t.toLowerCase().includes(query.toLowerCase()))
+  const searchResults: AiTool[] = query.trim()
+    ? tools.filter(
+        (t) =>
+          t.name.toLowerCase().includes(query.toLowerCase()) ||
+          (t.description && t.description.toLowerCase().includes(query.toLowerCase())) ||
+          (t.category && t.category.toLowerCase().includes(query.toLowerCase()))
       )
     : [];
 
@@ -48,7 +58,7 @@ export const SearchScreen = ({ navigation }: any) => {
   };
 
   if (error) return <ErrorState message={error} onRetry={load}/>;
-  if (loading) return <LoadingView message="Loading course search…"/>;
+  if (loading) return <LoadingView message="Loading search…"/>;
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header with Search Input */}
@@ -138,19 +148,25 @@ export const SearchScreen = ({ navigation }: any) => {
           /* Search Results List */
           <View style={styles.resultsList}>
             <Text style={styles.resultsHeader}>Search Results ({searchResults.length})</Text>
-            {searchResults.map((course) => (
+            {searchResults.map((tool) => (
               <TouchableOpacity
-                key={course._id}
+                key={tool._id}
                 style={styles.resultItem}
-                onPress={() => navigation.navigate('CourseDetails', { courseId: course._id })}
+                onPress={() => {
+                  if (tool.slug === 'ai-email-writer') navigation.navigate('AIEmailWriter');
+                  else if (tool.slug === 'ai-voice-generator') navigation.navigate('AIVoiceGenerator');
+                  else if (tool.slug === 'ai-image-generator') navigation.navigate('AIImageGenerator');
+                  else if (tool.slug === 'ai-code-generator') navigation.navigate('AICodeGenerator');
+                  else navigation.navigate('MainTabs', { screen: 'ToolsTab' });
+                }}
               >
                 <View style={styles.resultIconBox}>
-                  <Icon name="book-open" size={20} color={COLORS.primary} />
+                  <Icon name="bot" size={20} color={COLORS.primary} />
                 </View>
                 <View style={styles.resultTextCol}>
-                  <Text style={styles.resultItemTitle}>{course.title}</Text>
+                  <Text style={styles.resultItemTitle}>{tool.name}</Text>
                   <Text style={styles.resultItemDesc} numberOfLines={1}>
-                    {course.description}
+                    {tool.description}
                   </Text>
                 </View>
                 <Icon name="chevron-right" size={18} color={COLORS.textSecondary} />
