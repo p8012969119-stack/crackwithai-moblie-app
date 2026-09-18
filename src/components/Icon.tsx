@@ -48,7 +48,12 @@ export type IconName =
   | 'mic'
   | 'sparkles'
   | 'paperclip'
-  | 'file-text';
+  | 'file-text'
+  | 'terminal'
+  | 'database'
+  | 'server'
+  | 'palette'
+  | 'layout';
 
 interface IconProps {
   name: IconName;
@@ -105,6 +110,11 @@ const ICON_MAP: Record<IconName, string> = {
   sparkles: '✨',
   paperclip: '📎',
   'file-text': '📄',
+  terminal: '💻',
+  database: '🗄️',
+  server: '🖥️',
+  palette: '🎨',
+  layout: '📐',
 };
 
 export const Icon: React.FC<IconProps> = ({

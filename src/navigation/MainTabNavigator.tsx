@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen } from '../screens/dashboard/HomeScreen';
 import { AIScreen } from '../screens/ai/AIScreen';
 import { ToolsScreen } from '../screens/tools/ToolsScreen';
+import { FullStackOverviewScreen } from '../screens/fullstack/FullStackOverviewScreen';
 import { TabIcon, TabIconName } from '../components/TabIcon';
 
 const Tab = createBottomTabNavigator();
@@ -89,6 +90,7 @@ export const MainTabNavigator = () => {
 
               let iconName: TabIconName = 'home';
               if (route.name === 'HomeTab') iconName = 'home';
+              else if (route.name === 'FullStackTab') iconName = 'code';
               else if (route.name === 'AITab') iconName = 'workspace';
               else if (route.name === 'ToolsTab') iconName = 'tools';
 
@@ -120,6 +122,7 @@ export const MainTabNavigator = () => {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
+      <Tab.Screen name="FullStackTab" component={FullStackOverviewScreen} options={{ tabBarLabel: 'Full Stack' }} />
       <Tab.Screen name="AITab" component={AIScreen} options={{ tabBarLabel: 'AI Workspace' }} />
       <Tab.Screen name="ToolsTab" component={ToolsScreen} options={{ tabBarLabel: 'Tools' }} />
     </Tab.Navigator>

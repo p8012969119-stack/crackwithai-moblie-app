@@ -155,9 +155,42 @@ export const HomeScreen = ({ navigation }: any) => {
           />
         )}
 
+        {/* Full Stack Developer Track Hero Card */}
+        <View style={styles.fullstackHeroCard}>
+          <View style={styles.fullstackHeroTop}>
+            <View style={styles.fullstackBadge}>
+              <View style={styles.fullstackPulseDot} />
+              <Text style={styles.fullstackBadgeText}>NEW FULL STACK TRACK</Text>
+            </View>
+            <Text style={styles.fullstackLevelText}>Step 1 Active</Text>
+          </View>
+          <Text style={styles.fullstackTitle}>HTML — From Beginner to Practical</Text>
+          <Text style={styles.fullstackSubtitle}>
+            25 interactive lessons, live code playground, browser sandbox preview & syntax validation.
+          </Text>
+          <View style={styles.fullstackButtonRow}>
+            <TouchableOpacity
+              style={styles.fullstackPrimaryBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('HtmlCourse')}
+            >
+              <Text style={styles.fullstackPrimaryBtnText}>Start HTML Course</Text>
+              <Icon name="arrow-right" size={14} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.fullstackSecondaryBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('HtmlPlayground')}
+            >
+              <Icon name="code" size={14} color={COLORS.primary} />
+              <Text style={styles.fullstackSecondaryBtnText}>Playground</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <TrainingAssistant
           key={user?._id}
-          onStartCourse={() => navigation.navigate('MainTabs', { screen: 'AITab' })}
+          onStartCourse={() => navigation.navigate('HtmlCourse')}
         />
 
         {/* The tools catalog always follows courses. */}
@@ -420,5 +453,95 @@ const styles = StyleSheet.create({
   bannerDotInactive: {
     width: 6,
     backgroundColor: '#CBD5E1',
+  },
+
+  /* FULL STACK HERO CARD */
+  fullstackHeroCard: {
+    backgroundColor: '#1E1B4B',
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
+    ...SHADOWS.medium,
+  },
+  fullstackHeroTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  fullstackBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: '#10B981',
+  },
+  fullstackPulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginRight: 6,
+  },
+  fullstackBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#34D399',
+    letterSpacing: 0.6,
+  },
+  fullstackLevelText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#A5B4FC',
+  },
+  fullstackTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  fullstackSubtitle: {
+    fontSize: 12,
+    color: '#C7D2FE',
+    lineHeight: 16,
+    marginBottom: 12,
+  },
+  fullstackButtonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  fullstackPrimaryBtn: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: RADIUS.sm,
+    gap: 6,
+  },
+  fullstackPrimaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  fullstackSecondaryBtn: {
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: RADIUS.sm,
+    gap: 6,
+  },
+  fullstackSecondaryBtnText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

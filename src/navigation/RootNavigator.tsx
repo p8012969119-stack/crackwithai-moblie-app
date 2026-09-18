@@ -25,6 +25,10 @@ import { AIEmailWriterScreen } from '../screens/tools/AIEmailWriterScreen';
 import { AIVoiceGeneratorScreen } from '../screens/tools/AIVoiceGeneratorScreen';
 import { AIImageGeneratorScreen } from '../screens/tools/AIImageGeneratorScreen';
 import { AICodeGeneratorScreen } from '../screens/tools/AICodeGeneratorScreen';
+import { FullStackOverviewScreen } from '../screens/fullstack/FullStackOverviewScreen';
+import { HtmlCourseScreen } from '../screens/fullstack/HtmlCourseScreen';
+import { HtmlLessonScreen } from '../screens/fullstack/HtmlLessonScreen';
+import { HtmlPlaygroundScreen } from '../screens/fullstack/HtmlPlaygroundScreen';
 
 type RootStackParams = ParamListBase;
 const Stack = createNativeStackNavigator<RootStackParams>();
@@ -69,6 +73,10 @@ export const RootNavigator = () => {
           <Stack.Screen name="AIVoiceGenerator" component={AIVoiceGeneratorScreen} />
           <Stack.Screen name="AIImageGenerator" component={AIImageGeneratorScreen} />
           <Stack.Screen name="AICodeGenerator" component={AICodeGeneratorScreen} />
+          <Stack.Screen name="FullStackOverview" component={FullStackOverviewScreen} />
+          <Stack.Screen name="HtmlCourse" component={HtmlCourseScreen} />
+          <Stack.Screen name="HtmlLesson" component={HtmlLessonScreen} />
+          <Stack.Screen name="HtmlPlayground" component={HtmlPlaygroundScreen} />
         </Stack.Group>
       )}
     </Stack.Navigator>

@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 
-export type TabIconName = 'home' | 'courses' | 'workspace' | 'tools';
+export type TabIconName = 'home' | 'courses' | 'workspace' | 'tools' | 'code' | 'fullstack';
 
 // Native shapes stay crisp at every display scale and inherit the tab tint.
 // Kept separate from the shared emoji icons used elsewhere in the app.
@@ -40,6 +40,16 @@ export const TabIcon = ({name, color, size = 24}: {
         <View key={index} style={[styles.tile, stroke]} />
       )}</View>;
       break;
+    case 'code':
+    case 'fullstack':
+      symbol = (
+        <View style={[styles.terminalFrame, stroke]}>
+          <View style={[styles.terminalHeader, { backgroundColor: color }]} />
+          <View style={[styles.terminalPrompt, { backgroundColor: color }]} />
+          <View style={[styles.terminalCursor, { backgroundColor: color }]} />
+        </View>
+      );
+      break;
   }
 
   return <View pointerEvents="none" accessible={false} accessibilityElementsHidden
@@ -70,4 +80,8 @@ const styles = StyleSheet.create({
   smallSparkle: {position: 'absolute', top: 0, right: 0},
   grid: {position: 'absolute', top: 2, left: 2, width: 20, height: 20, flexDirection: 'row', flexWrap: 'wrap', gap: 4},
   tile: {width: 8, height: 8, borderWidth: 1.8, borderRadius: 2.5},
+  terminalFrame: {position: 'absolute', top: 3, left: 2, width: 20, height: 17, borderWidth: 1.8, borderRadius: 3},
+  terminalHeader: {position: 'absolute', top: 0, left: 0, right: 0, height: 3, opacity: 0.25},
+  terminalPrompt: {position: 'absolute', top: 6, left: 3, width: 5, height: 2, borderRadius: 1},
+  terminalCursor: {position: 'absolute', top: 10, left: 3, width: 8, height: 2, borderRadius: 1},
 });
