@@ -159,13 +159,12 @@ export const HtmlLessonScreen: React.FC = () => {
           <Text style={styles.topBarSubtitle} numberOfLines={1}>{lesson.moduleTitle || 'HTML Module'}</Text>
           <Text style={styles.topBarTitle} numberOfLines={1}>{lesson.title}</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.completeCheckBtn, isCompleted && styles.completeCheckBtnActive]}
-          onPress={handleToggleComplete}
-        >
+        <View style={[styles.completeCheckBtn, isCompleted && styles.completeCheckBtnActive]}>
           <Icon name="check" size={16} color={isCompleted ? '#FFFFFF' : COLORS.textMuted} />
-        </TouchableOpacity>
+        </View>
       </View>
+
+
 
       <ScrollView
         style={styles.container}
@@ -263,24 +262,26 @@ export const HtmlLessonScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Mark Completed Card */}
+        {/* Practice Completion Status Card */}
         <TouchableOpacity
           style={[styles.completeActionCard, isCompleted && styles.completeActionCardActive]}
-          onPress={handleToggleComplete}
-          activeOpacity={0.8}
+          onPress={isCompleted ? undefined : handleLaunchPlayground}
+          activeOpacity={isCompleted ? 1 : 0.8}
         >
           <View style={[styles.completeCheckIcon, isCompleted && styles.completeCheckIconActive]}>
             <Icon name="check" size={18} color={isCompleted ? '#FFFFFF' : COLORS.textMuted} />
           </View>
           <View style={styles.completeActionTextWrap}>
             <Text style={[styles.completeActionTitle, isCompleted && styles.completeActionTitleActive]}>
-              {isCompleted ? 'Lesson Completed!' : 'Mark Lesson as Completed'}
+              {isCompleted ? 'Hands-on Practice Verified ✓' : 'Complete Practice to Finish Lesson'}
             </Text>
             <Text style={styles.completeActionSubtitle}>
-              {isCompleted ? 'Tap to mark uncompleted' : 'Check off your progress on your learning track'}
+              {isCompleted ? 'All requirements satisfied and progress saved' : 'Tap to open HTML Playground and submit your solution'}
             </Text>
           </View>
+          {!isCompleted && <Icon name="chevron-right" size={16} color={COLORS.primary} />}
         </TouchableOpacity>
+
 
         {/* Sibling Lesson Navigation */}
         <View style={styles.bottomNavRow}>
