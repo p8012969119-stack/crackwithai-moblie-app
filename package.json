@@ -13,7 +13,9 @@
     "test:learning-ui": "node tests/learning-ui.test.js",
     "backend": "node backend/start-with-db.js",
     "test:training-ui": "node tests/training-ui.test.js",
-    "test:workshop": "node tests/workshop.test.js && node backend/tests/workshop.test.js && node backend/tests/workshop-provider.test.js"
+    "test:workshop": "node tests/workshop.test.js && node backend/tests/workshop.test.js && node backend/tests/workshop-provider.test.js",
+    "test:fullstack": "node backend/tests/fullstack-curriculum.test.js",
+    "test:fullstack-workspace": "node backend/tests/fullstack-workspace.test.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.23.1",

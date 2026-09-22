@@ -26,6 +26,8 @@ import { AIVoiceGeneratorScreen } from '../screens/tools/AIVoiceGeneratorScreen'
 import { AIImageGeneratorScreen } from '../screens/tools/AIImageGeneratorScreen';
 import { AICodeGeneratorScreen } from '../screens/tools/AICodeGeneratorScreen';
 import { FullStackOverviewScreen } from '../screens/fullstack/FullStackOverviewScreen';
+import { CurriculumModuleScreen } from '../screens/fullstack/CurriculumModuleScreen';
+import { CurriculumWorkspaceScreen } from '../screens/fullstack/CurriculumWorkspaceScreen';
 import { HtmlCourseScreen } from '../screens/fullstack/HtmlCourseScreen';
 import { HtmlLessonScreen } from '../screens/fullstack/HtmlLessonScreen';
 import { HtmlPlaygroundScreen } from '../screens/fullstack/HtmlPlaygroundScreen';
@@ -74,6 +76,8 @@ export const RootNavigator = () => {
           <Stack.Screen name="AIImageGenerator" component={AIImageGeneratorScreen} />
           <Stack.Screen name="AICodeGenerator" component={AICodeGeneratorScreen} />
           <Stack.Screen name="FullStackOverview" component={FullStackOverviewScreen} />
+          <Stack.Screen name="CurriculumModule" component={CurriculumModuleScreen} />
+          <Stack.Screen name="CurriculumWorkspace" component={CurriculumWorkspaceScreen} />
           <Stack.Screen name="HtmlCourse" component={HtmlCourseScreen} />
           <Stack.Screen name="HtmlLesson" component={HtmlLessonScreen} />
           <Stack.Screen name="HtmlPlayground" component={HtmlPlaygroundScreen} />

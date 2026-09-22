@@ -162,19 +162,19 @@ export const HomeScreen = ({ navigation }: any) => {
               <View style={styles.fullstackPulseDot} />
               <Text style={styles.fullstackBadgeText}>NEW FULL STACK TRACK</Text>
             </View>
-            <Text style={styles.fullstackLevelText}>Step 1 Active</Text>
+            <Text style={styles.fullstackLevelText}>6-Month Curriculum</Text>
           </View>
-          <Text style={styles.fullstackTitle}>HTML — From Beginner to Practical</Text>
+          <Text style={styles.fullstackTitle}>Full Stack Web Development</Text>
           <Text style={styles.fullstackSubtitle}>
-            25 interactive lessons, live code playground, browser sandbox preview & syntax validation.
+            Learn frontend, backend, databases, and deployment through guided lessons and practical projects.
           </Text>
           <View style={styles.fullstackButtonRow}>
             <TouchableOpacity
               style={styles.fullstackPrimaryBtn}
               activeOpacity={0.85}
-              onPress={() => navigation.navigate('HtmlCourse')}
+              onPress={() => navigation.navigate('FullStackOverview')}
             >
-              <Text style={styles.fullstackPrimaryBtnText}>Start HTML Course</Text>
+              <Text style={styles.fullstackPrimaryBtnText}>Explore Curriculum</Text>
               <Icon name="arrow-right" size={14} color="#FFFFFF" />
             </TouchableOpacity>
             <TouchableOpacity
@@ -190,7 +190,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
         <TrainingAssistant
           key={user?._id}
-          onStartCourse={() => navigation.navigate('HtmlCourse')}
+          onStartCourse={() => navigation.navigate('FullStackOverview')}
         />
 
         {/* The tools catalog always follows courses. */}

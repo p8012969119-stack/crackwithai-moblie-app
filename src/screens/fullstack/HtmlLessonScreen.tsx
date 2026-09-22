@@ -57,22 +57,6 @@ export const HtmlLessonScreen: React.FC = () => {
     }
   }, [lessonId, lessonSlug]);
 
-  const handleToggleComplete = async () => {
-    if (!lesson) return;
-    const targetId = lesson._id || lesson.id || currentId;
-    const nextState = !isCompleted;
-    setIsCompleted(nextState);
-
-    if (nextState) {
-      try {
-        await fullstackApi.completeLesson(targetId, lesson.courseId);
-        Alert.alert('🎉 Great Job!', `You completed "${lesson.title}". Keep up the momentum!`);
-      } catch (err) {
-        console.warn('Error completing lesson', err);
-      }
-    }
-  };
-
   const handleCopyCode = (code: string) => {
     Clipboard.setString(code);
     setCopied(true);

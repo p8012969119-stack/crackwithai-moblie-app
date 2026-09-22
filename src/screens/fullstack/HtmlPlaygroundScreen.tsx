@@ -653,8 +653,12 @@ export const HtmlPlaygroundScreen: React.FC = () => {
                 <TouchableOpacity
                   style={styles.completeLessonBtn}
                   onPress={async () => {
-                    await fullstackApi.completeLesson(lessonId);
-                    Alert.alert('🎉 Lesson Complete!', 'You satisfied all practice task requirements! Progress saved.');
+                    try {
+                      await fullstackApi.completeLesson(lessonId, undefined, code);
+                      Alert.alert('Lesson complete', 'The server verified your practice and saved your progress.');
+                    } catch (error: any) {
+                      Alert.alert('Practice not saved', error.message || 'Please check your code and retry.');
+                    }
                   }}
                 >
                   <Icon name="award" size={16} color="#FFFFFF" />
