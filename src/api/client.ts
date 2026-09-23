@@ -102,8 +102,9 @@ apiClient.interceptors.response.use(
       error.response?.status >= 500 ? 'The service is temporarily unavailable. Please try again shortly.' :
       error.response?.status === 401 ? 'Your session has expired. Please sign in again.' :
       error.response?.data?.message ||
-      (!error.response ? 'Unable to connect to CrackWithAI. Check your connection and try again.' : error.message) ||
-      'An unexpected error occurred. Please try again.';
+      (!error.response && (error.message?.includes('Local network') || error.code === 'ERR_NETWORK'))
+        ? 'Unable to connect to CrackWithAI. Ensure your iPhone and Mac are on the same Wi-Fi network and Local Network permission is enabled in iPhone Settings > Privacy & Security > Local Network > CrackWithAI.'
+        : error.message || 'An unexpected error occurred. Please try again.';
 
     return Promise.reject(new ApiError(message, error.response?.status, error.response?.data?.code || error.code, error.response?.data?.requiresVerification));
   }
