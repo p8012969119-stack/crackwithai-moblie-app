@@ -27,10 +27,13 @@ import {CompletionBadge} from '../../components/CertificateMark';
 import { FirstTimeLanguageModal } from '../../components/FirstTimeLanguageModal';
 import { storage } from '../../services/storage';
 import { Icon } from '../../components/Icon';
+import { fullstackApi } from '../../api/fullstackApi';
+import { FullStackCourseProgress } from '../../types/fullstack';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [fullstackProgress, setFullstackProgress] = useState<FullStackCourseProgress | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [tools, setTools] = useState<AiTool[]>([]);
   const [toolsError, setToolsError] = useState(false);
@@ -58,11 +61,16 @@ export const HomeScreen = ({ navigation }: any) => {
     const controller = new AbortController(); request.current = controller;
     setLoading(true); setError(null);
     try {
-      const [dashboard, toolResult] = await Promise.allSettled([userApi.getDashboard(controller.signal), aiApi.getTools(controller.signal)]);
+      const [dashboard, toolResult, fsResult] = await Promise.allSettled([
+        userApi.getDashboard(controller.signal),
+        aiApi.getTools(controller.signal),
+        fullstackApi.getFullStackProgress()
+      ]);
       if (controller.signal.aborted) return;
       const response = dashboard.status === 'fulfilled' ? dashboard.value : await userApi.getDashboard();
       setToolsError(false);
       if (toolResult.status === 'fulfilled') setTools(toolResult.value.data);
+      if (fsResult.status === 'fulfilled') setFullstackProgress(fsResult.value);
       if (controller.signal.aborted) return;
       setDashboardData(response.data);
     } catch {
@@ -155,37 +163,129 @@ export const HomeScreen = ({ navigation }: any) => {
           />
         )}
 
-        {/* Full Stack Developer Track Hero Card */}
+        {/* Full Stack Developer Track Hero & 8-Module Progress Card */}
         <View style={styles.fullstackHeroCard}>
           <View style={styles.fullstackHeroTop}>
             <View style={styles.fullstackBadge}>
               <View style={styles.fullstackPulseDot} />
-              <Text style={styles.fullstackBadgeText}>NEW FULL STACK TRACK</Text>
+              <Text style={styles.fullstackBadgeText}>8-MODULE FULL STACK COURSE</Text>
             </View>
-            <Text style={styles.fullstackLevelText}>6-Month Curriculum</Text>
+            <Text style={styles.fullstackLevelText}>
+              {fullstackProgress?.completedModules ?? 0}/8 Modules
+            </Text>
           </View>
+
           <Text style={styles.fullstackTitle}>Full Stack Web Development</Text>
           <Text style={styles.fullstackSubtitle}>
-            Learn frontend, backend, databases, and deployment through guided lessons and practical projects.
+            Master HTML, CSS, JavaScript, Node.js, Express, MongoDB, REST APIs, Auth & Capstone.
           </Text>
-          <View style={styles.fullstackButtonRow}>
-            <TouchableOpacity
-              style={styles.fullstackPrimaryBtn}
-              activeOpacity={0.85}
-              onPress={() => navigation.navigate('FullStackOverview')}
-            >
-              <Text style={styles.fullstackPrimaryBtnText}>Explore Curriculum</Text>
-              <Icon name="arrow-right" size={14} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.fullstackSecondaryBtn}
-              activeOpacity={0.85}
-              onPress={() => navigation.navigate('HtmlPlayground')}
-            >
-              <Icon name="code" size={14} color={COLORS.primary} />
-              <Text style={styles.fullstackSecondaryBtnText}>Playground</Text>
-            </TouchableOpacity>
+
+          {/* Progress Bar & Counters */}
+          <View style={styles.fsProgressContainer}>
+            <View style={styles.fsProgressLabels}>
+              <Text style={styles.fsProgressPercentText}>
+                {fullstackProgress?.overallPercentage ?? 0}% Complete
+              </Text>
+              <Text style={styles.fsProgressLessonsText}>
+                {fullstackProgress?.completedLessons ?? 0} / {fullstackProgress?.totalLessons || '–'} Lessons
+              </Text>
+            </View>
+            <View style={styles.fsProgressBarTrack}>
+              <View
+                style={[
+                  styles.fsProgressBarFill,
+                  { width: `${fullstackProgress?.overallPercentage ?? 0}%` },
+                  (fullstackProgress?.overallPercentage ?? 0) === 100 && { backgroundColor: '#10B981' }
+                ]}
+              />
+            </View>
           </View>
+
+          {/* 8-Module Checklist Preview */}
+          <View style={styles.fsChecklistCard}>
+            <Text style={styles.fsChecklistHeader}>CURRICULUM CHECKLIST</Text>
+            {[
+              { num: 1, name: 'HTML Fundamentals', slug: 'html', key: 'html' },
+              { num: 2, name: 'CSS & Responsive Design', slug: 'css', key: 'css' },
+              { num: 3, name: 'Modern JavaScript (ES6+)', slug: 'javascript', key: 'javascript' },
+              { num: 4, name: 'Node.js Server Runtime', slug: 'nodejs', key: 'nodejs' },
+              { num: 5, name: 'Express.js Framework', slug: 'expressjs', key: 'expressjs' },
+              { num: 6, name: 'MongoDB & Mongoose ODM', slug: 'mongodb', key: 'mongodb' },
+              { num: 7, name: 'REST API & Authentication', slug: 'rest-api', key: 'rest-auth' },
+              { num: 8, name: 'Final Full Stack Capstone', slug: 'final-project', key: 'final-project' }
+            ].map(m => {
+              const modData = fullstackProgress?.modules?.find(
+                item => item.moduleNumber === m.num || item.id === m.key
+              );
+              const isDone = Boolean(modData?.isCompleted);
+              const inProg = Boolean(modData && modData.completedLessons > 0 && !isDone);
+
+              return (
+                <TouchableOpacity
+                  key={m.num}
+                  style={styles.fsChecklistItem}
+                  activeOpacity={0.75}
+                  onPress={() => navigation.navigate('FullStackOverview')}
+                >
+                  <View style={[styles.fsCheckIconWrap, isDone && styles.fsCheckIconWrapDone, inProg && styles.fsCheckIconWrapInProg]}>
+                    <Icon
+                      name={isDone ? 'check' : inProg ? 'play' : 'circle'}
+                      size={11}
+                      color={isDone ? '#10B981' : inProg ? '#818CF8' : '#64748B'}
+                    />
+                  </View>
+                  <Text style={[styles.fsChecklistTitle, isDone && styles.fsChecklistTitleDone]}>
+                    <Text style={styles.fsModuleNum}>M{m.num} · </Text>
+                    {m.name}
+                  </Text>
+                  <Text style={[styles.fsModuleStatusBadge, isDone ? styles.fsStatusDone : inProg ? styles.fsStatusProg : styles.fsStatusTodo]}>
+                    {isDone ? 'Done' : inProg ? `${modData?.completedLessons}/${modData?.totalLessons}` : 'Ready'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Celebratory Certificate State or Action Buttons */}
+          {(fullstackProgress?.courseCompleted || fullstackProgress?.hasCertificate) ? (
+            <View style={styles.fsCertCelebrationBox}>
+              <View style={styles.fsCertCelebrationTop}>
+                <Icon name="award" size={20} color="#F59E0B" />
+                <Text style={styles.fsCertCelebrationTitle}>100% Curriculum Completed!</Text>
+              </View>
+              <Text style={styles.fsCertCelebrationDesc}>
+                Your official Full Stack Web Development Certificate is ready and verified.
+              </Text>
+              <TouchableOpacity
+                style={styles.fsCertClaimBtn}
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate('FullStackCertificate')}
+              >
+                <Icon name="award" size={16} color="#0B0F19" />
+                <Text style={styles.fsCertClaimBtnText}>View Verified Certificate</Text>
+                <Icon name="arrow-right" size={14} color="#0B0F19" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.fullstackButtonRow}>
+              <TouchableOpacity
+                style={styles.fullstackPrimaryBtn}
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate('FullStackOverview')}
+              >
+                <Text style={styles.fullstackPrimaryBtnText}>Continue Course</Text>
+                <Icon name="arrow-right" size={14} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.fullstackSecondaryBtn}
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate('CertificateVerification')}
+              >
+                <Icon name="shield" size={14} color={COLORS.primary} />
+                <Text style={styles.fullstackSecondaryBtnText}>Verify ID</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <TrainingAssistant
@@ -543,5 +643,149 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 13,
     fontWeight: '700',
+  },
+  fsProgressContainer: {
+    marginVertical: 10,
+  },
+  fsProgressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  fsProgressPercentText: {
+    color: '#818CF8',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  fsProgressLessonsText: {
+    color: '#C7D2FE',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  fsProgressBarTrack: {
+    height: 6,
+    backgroundColor: '#312E81',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  fsProgressBarFill: {
+    height: '100%',
+    backgroundColor: '#6366F1',
+    borderRadius: 3,
+  },
+  fsChecklistCard: {
+    backgroundColor: '#17153B',
+    borderRadius: RADIUS.md,
+    padding: 10,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: '#312E81',
+  },
+  fsChecklistHeader: {
+    color: '#A5B4FC',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  fsChecklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(99, 102, 241, 0.1)',
+  },
+  fsCheckIconWrap: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  fsCheckIconWrapDone: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  fsCheckIconWrapInProg: {
+    backgroundColor: 'rgba(99, 102, 241, 0.25)',
+  },
+  fsChecklistTitle: {
+    flex: 1,
+    color: '#E0E7FF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  fsChecklistTitleDone: {
+    color: '#A7F3D0',
+  },
+  fsModuleNum: {
+    color: '#818CF8',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  fsModuleStatusBadge: {
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  fsStatusDone: {
+    color: '#10B981',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  fsStatusProg: {
+    color: '#818CF8',
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+  },
+  fsStatusTodo: {
+    color: '#94A3B8',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  fsCertCelebrationBox: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderRadius: RADIUS.md,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#D97706',
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  fsCertCelebrationTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  fsCertCelebrationTitle: {
+    color: '#F59E0B',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  fsCertCelebrationDesc: {
+    color: '#FDE68A',
+    fontSize: 11,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  fsCertClaimBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#F59E0B',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: RADIUS.sm,
+    width: '100%',
+  },
+  fsCertClaimBtnText: {
+    color: '#0B0F19',
+    fontSize: 13,
+    fontWeight: '800',
   },
 });

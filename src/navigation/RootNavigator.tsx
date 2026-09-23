@@ -31,6 +31,8 @@ import { CurriculumWorkspaceScreen } from '../screens/fullstack/CurriculumWorksp
 import { HtmlCourseScreen } from '../screens/fullstack/HtmlCourseScreen';
 import { HtmlLessonScreen } from '../screens/fullstack/HtmlLessonScreen';
 import { HtmlPlaygroundScreen } from '../screens/fullstack/HtmlPlaygroundScreen';
+import { FullStackCertificateScreen } from '../screens/certificates/FullStackCertificateScreen';
+import { CertificateVerificationScreen } from '../screens/certificates/CertificateVerificationScreen';
 
 type RootStackParams = ParamListBase;
 const Stack = createNativeStackNavigator<RootStackParams>();
@@ -81,6 +83,8 @@ export const RootNavigator = () => {
           <Stack.Screen name="HtmlCourse" component={HtmlCourseScreen} />
           <Stack.Screen name="HtmlLesson" component={HtmlLessonScreen} />
           <Stack.Screen name="HtmlPlayground" component={HtmlPlaygroundScreen} />
+          <Stack.Screen name="FullStackCertificate" component={FullStackCertificateScreen} />
+          <Stack.Screen name="CertificateVerification" component={CertificateVerificationScreen} />
         </Stack.Group>
       )}
     </Stack.Navigator>

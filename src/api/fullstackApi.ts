@@ -25,4 +25,31 @@ export const fullstackApi = {
     unwrap(await apiClient.post('/fullstack/html/save-code',{lessonId,code,title:title || 'HTML Practice Code'}));return true;
   },
   async getSavedCode(lessonId:string): Promise<string|null> { return unwrap(await apiClient.get(`/fullstack/html/saved-code/${lessonId || 'general'}`)).code; },
+
+  async getFullStackProgress(): Promise<import('../types/fullstack').FullStackCourseProgress> {
+    return unwrap(await apiClient.get('/fullstack/course-progress'));
+  },
+
+  async getFullStackEligibility(): Promise<import('../types/fullstack').FullStackEligibility> {
+    return unwrap(await apiClient.get('/fullstack/eligibility'));
+  },
+
+  async generateFullStackCertificate(): Promise<import('../types/fullstack').FullStackCertificateData> {
+    const res = await apiClient.post('/fullstack/certificate/generate');
+    if (!res.data?.success) {
+      const err: any = new Error(res.data?.message || 'Failed to generate Full Stack Certificate');
+      err.missingRequirements = res.data?.missingRequirements;
+      throw err;
+    }
+    return res.data.data;
+  },
+
+  async getFullStackCertificate(): Promise<import('../types/fullstack').FullStackCertificateData> {
+    return unwrap(await apiClient.get('/fullstack/certificate'));
+  },
+
+  async getCourse(courseSlug: string): Promise<HtmlCourse> {
+    const payload = unwrap(await apiClient.get(`/fullstack/${courseSlug}/course`));
+    return { ...payload.course, modules: payload.modules || [] };
+  }
 };

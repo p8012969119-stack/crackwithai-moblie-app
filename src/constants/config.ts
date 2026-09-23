@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 
-const CLOUDFLARE_API_URL = 'https://harris-prix-barn-collective.trycloudflare.com/api';
+const CLOUDFLARE_API_URL = 'https://understanding-trailers-rows-specials.trycloudflare.com/api';
 const DEV_LAN_IP = '172.168.6.95';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 const LOCAL_URL = 'http://localhost:5001/api';

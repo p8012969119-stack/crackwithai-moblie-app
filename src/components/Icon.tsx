@@ -53,7 +53,13 @@ export type IconName =
   | 'database'
   | 'server'
   | 'palette'
-  | 'layout';
+  | 'layout'
+  | 'share'
+  | 'share-2'
+  | 'download'
+  | 'circle'
+  | 'x'
+  | 'alert-triangle';
 
 interface IconProps {
   name: IconName;
@@ -115,6 +121,12 @@ const ICON_MAP: Record<IconName, string> = {
   server: '🖥️',
   palette: '🎨',
   layout: '📐',
+  share: '↗️',
+  'share-2': '↗️',
+  download: '📥',
+  circle: '○',
+  x: '✕',
+  'alert-triangle': '⚠️',
 };
 
 export const Icon: React.FC<IconProps> = ({

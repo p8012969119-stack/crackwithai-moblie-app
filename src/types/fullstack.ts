@@ -103,3 +103,74 @@ export interface SavedHtmlCode {
   code: string;
   savedAt: string;
 }
+
+export interface FullStackModuleProgress {
+  moduleNumber: number;
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: string;
+  courseSlugs: string[];
+  primaryCourseSlug: string;
+  totalLessons: number;
+  completedLessons: number;
+  progressPercentage: number;
+  isCompleted: boolean;
+  status: 'completed' | 'in_progress' | 'not_started';
+}
+
+export interface FullStackCertificateData {
+  id?: string;
+  certificateId: string;
+  certificateNumber?: string;
+  verificationCode?: string;
+  recipientName: string;
+  courseName: string;
+  score?: number;
+  percentage?: number;
+  issuedAt: string;
+  metadata?: {
+    courseSlug?: string;
+    curriculum?: string;
+    modulesCompleted?: number;
+    totalModules?: number;
+    totalLessons?: number;
+    grade?: string;
+    verified?: boolean;
+    technologies?: string[];
+    [key: string]: any;
+  };
+}
+
+export interface FullStackCourseProgress {
+  courseTitle: string;
+  courseSlug: string;
+  totalModules: number;
+  completedModules: number;
+  totalLessons: number;
+  completedLessons: number;
+  overallPercentage: number;
+  courseCompleted: boolean;
+  certificateEligible: boolean;
+  hasCertificate: boolean;
+  certificateId: string | null;
+  certificateNumber: string | null;
+  verificationCode: string | null;
+  certificate: FullStackCertificateData | null;
+  modules: FullStackModuleProgress[];
+}
+
+export interface FullStackEligibility {
+  eligible: boolean;
+  courseCompleted: boolean;
+  overallPercentage: number;
+  completedModules: number;
+  totalModules: number;
+  totalLessons: number;
+  completedLessons: number;
+  missingRequirements: string[];
+  hasCertificate: boolean;
+  certificateId: string | null;
+  certificate: FullStackCertificateData | null;
+}
