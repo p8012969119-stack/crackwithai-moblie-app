@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 
-const TUNNEL_API_URL = 'https://cwa-api-dev.loca.lt/api';
+const CLOUDFLARE_API_URL = 'https://harris-prix-barn-collective.trycloudflare.com/api';
 const DEV_LAN_IP = '172.168.6.95';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 const LOCAL_URL = 'http://localhost:5001/api';
@@ -12,16 +12,16 @@ export const setDynamicApiBaseUrl = (url: string) => {
 };
 
 export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
-  if (currentUrl.includes('loca.lt')) {
+  if (currentUrl.includes('trycloudflare.com')) {
     return DEV_LAN_URL;
   }
   if (currentUrl.includes(DEV_LAN_IP)) {
     return LOCAL_URL;
   }
   if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1') || currentUrl.includes('10.0.2.2')) {
-    return TUNNEL_API_URL;
+    return CLOUDFLARE_API_URL;
   }
-  return TUNNEL_API_URL;
+  return CLOUDFLARE_API_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -47,8 +47,8 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  // Use the public HTTPS tunnel so physical devices on Cellular (4G/5G) or Wi-Fi can always connect reliably
-  return TUNNEL_API_URL;
+  // Use high-speed Cloudflare tunnel so physical iPhone connects over Cellular (4G/5G) or Wi-Fi without restriction
+  return CLOUDFLARE_API_URL;
 };
 
 // Environment & App Configuration
