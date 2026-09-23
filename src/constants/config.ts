@@ -1,6 +1,10 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules } from 'react-native';
 
+const TUNNEL_API_URL = 'https://cwa-api-dev.loca.lt/api';
 const DEV_LAN_IP = '172.168.6.95';
+const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
+const LOCAL_URL = 'http://localhost:5001/api';
+
 let dynamicApiBaseUrl: string | null = null;
 
 export const setDynamicApiBaseUrl = (url: string) => {
@@ -8,13 +12,16 @@ export const setDynamicApiBaseUrl = (url: string) => {
 };
 
 export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
+  if (currentUrl.includes('loca.lt')) {
+    return DEV_LAN_URL;
+  }
   if (currentUrl.includes(DEV_LAN_IP)) {
-    return 'http://localhost:5001/api';
+    return LOCAL_URL;
   }
   if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1') || currentUrl.includes('10.0.2.2')) {
-    return `http://${DEV_LAN_IP}:5001/api`;
+    return TUNNEL_API_URL;
   }
-  return null;
+  return TUNNEL_API_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -40,10 +47,8 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  // On physical iOS or Android devices or offline bundle (file://),
-  // 127.0.0.1 is loopback to the phone itself, which cannot reach the Mac.
-  // DEV_LAN_IP (172.168.6.95) works for physical devices and simulator on the same network.
-  return `http://${DEV_LAN_IP}:5001/api`;
+  // Use the public HTTPS tunnel so physical devices on Cellular (4G/5G) or Wi-Fi can always connect reliably
+  return TUNNEL_API_URL;
 };
 
 // Environment & App Configuration
