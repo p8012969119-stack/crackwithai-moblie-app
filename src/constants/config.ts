@@ -1,6 +1,5 @@
 import { NativeModules } from 'react-native';
 
-const CLOUDFLARE_API_URL = 'https://understanding-trailers-rows-specials.trycloudflare.com/api';
 const DEV_LAN_IP = '172.168.6.95';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 const LOCAL_URL = 'http://localhost:5001/api';
@@ -12,16 +11,13 @@ export const setDynamicApiBaseUrl = (url: string) => {
 };
 
 export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
-  if (currentUrl.includes('trycloudflare.com')) {
+  if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1')) {
     return DEV_LAN_URL;
   }
   if (currentUrl.includes(DEV_LAN_IP)) {
     return LOCAL_URL;
   }
-  if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1') || currentUrl.includes('10.0.2.2')) {
-    return CLOUDFLARE_API_URL;
-  }
-  return CLOUDFLARE_API_URL;
+  return LOCAL_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -47,8 +43,8 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  // Use high-speed Cloudflare tunnel so physical iPhone connects over Cellular (4G/5G) or Wi-Fi without restriction
-  return CLOUDFLARE_API_URL;
+  // Default to fast, reliable local backend API
+  return LOCAL_URL;
 };
 
 // Environment & App Configuration
