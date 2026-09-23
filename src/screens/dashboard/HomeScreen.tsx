@@ -168,7 +168,7 @@ export const HomeScreen = ({ navigation }: any) => {
           <View style={styles.fullstackHeroTop}>
             <View style={styles.fullstackBadge}>
               <View style={styles.fullstackPulseDot} />
-              <Text style={styles.fullstackBadgeText}>8-MODULE FULL STACK COURSE</Text>
+              <Text style={styles.fullstackBadgeText}>LEARNING</Text>
             </View>
             <Text style={styles.fullstackLevelText}>
               {fullstackProgress?.completedModules ?? 0}/8 Modules

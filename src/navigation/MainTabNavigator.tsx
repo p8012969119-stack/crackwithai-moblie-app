@@ -122,7 +122,7 @@ export const MainTabNavigator = () => {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
-      <Tab.Screen name="FullStackTab" component={FullStackOverviewScreen} options={{ tabBarLabel: 'Full Stack' }} />
+      <Tab.Screen name="FullStackTab" component={FullStackOverviewScreen} options={{ tabBarLabel: 'Learning' }} />
       <Tab.Screen name="AITab" component={AIScreen} options={{ tabBarLabel: 'AI Workspace' }} />
       <Tab.Screen name="ToolsTab" component={ToolsScreen} options={{ tabBarLabel: 'Tools' }} />
     </Tab.Navigator>

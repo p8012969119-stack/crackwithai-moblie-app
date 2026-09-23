@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -15,7 +16,7 @@ import { curriculumApi } from '../../api/curriculumApi';
 import { fullstackApi } from '../../api/fullstackApi';
 import { Curriculum } from '../../types/curriculum';
 import { FullStackCourseProgress } from '../../types/fullstack';
-import { Action, Meter, Notice, palette, ui } from '../../components/fullstack/CurriculumUI';
+import { Meter, Notice, palette, ui } from '../../components/fullstack/CurriculumUI';
 import { Icon } from '../../components/Icon';
 import { useAuth } from '../../store/AuthContext';
 
@@ -72,6 +73,13 @@ export const FullStackOverviewScreen = () => {
   };
 
   const openWeek = (weekId: string) => navigation.navigate('CurriculumModule', { weekId });
+
+  const handleComingSoon = (courseName: string) => {
+    Alert.alert(
+      courseName,
+      `${courseName} course is coming soon.`
+    );
+  };
 
   const months =
     data?.months
@@ -142,6 +150,18 @@ export const FullStackOverviewScreen = () => {
     }
   ];
 
+  const fullStackTechTags = [
+    'HTML',
+    'CSS',
+    'JavaScript',
+    'Node.js',
+    'Express.js',
+    'MongoDB',
+    'REST API',
+    'Authentication',
+    'Final Project'
+  ];
+
   return (
     <SafeAreaView style={ui.safe} edges={['top']}>
       <ScrollView
@@ -161,10 +181,11 @@ export const FullStackOverviewScreen = () => {
           <Text style={ui.backText}>‹ Back to dashboard</Text>
         </TouchableOpacity>
 
-        <Text style={ui.eyebrow}>CRACKWITHAI / FULL STACK PATH</Text>
-        <Text style={ui.title}>Full Stack Web Development</Text>
-        <Text style={[ui.body, { marginTop: 10 }]}>
-          Master client-side, server-side, database engineering, and capstone deployment.
+        {/* Learning Header */}
+        <Text style={ui.eyebrow}>CRACKWITHAI / COURSES</Text>
+        <Text style={ui.title}>LEARNING</Text>
+        <Text style={[ui.body, { marginTop: 6, color: '#475569', fontSize: 14 }]}>
+          Learn practical technology and AI skills with hands-on courses.
         </Text>
 
         {loading && !data && !fsProgress && (
@@ -174,152 +195,241 @@ export const FullStackOverviewScreen = () => {
         {error ? <Notice message={error} retry={() => setRevision(x => x + 1)} /> : null}
 
         {/* ==================================================
-            CERTIFICATE ELIGIBILITY & 8-MODULE CARD
+            COURSE 1: FULL STACK DEVELOPMENT (ACTIVE COURSE CARD)
             ================================================== */}
-        {fsProgress && (
-          <View style={styles.fsCard}>
-            {/* Header / Certificate Banner */}
-            {fsProgress.courseCompleted || fsProgress.hasCertificate ? (
-              <View style={styles.eligibleBanner}>
-                <View style={styles.eligibleTop}>
-                  <Icon name="award" size={24} color="#F59E0B" />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.eligibleTitle}>Certificate Available! 🎉</Text>
-                    <Text style={styles.eligibleSub}>
-                      You have passed 100% of all 8 Full Stack modules and capstone requirements.
+        <View style={styles.activeCourseCard}>
+          {/* Top Header Row */}
+          <View style={styles.courseHeaderRow}>
+            <View style={styles.activeBadgeContainer}>
+              <View style={styles.activeDot} />
+              <Text style={styles.activeBadgeText}>ACTIVE COURSE</Text>
+            </View>
+            <Text style={styles.courseProgressBadgeText}>
+              {fsProgress ? `${fsProgress.overallPercentage}% Progress` : 'Active'}
+            </Text>
+          </View>
+
+          <Text style={styles.courseTitle}>Full Stack Development</Text>
+          <Text style={styles.courseDesc}>
+            Master client-side, server-side, database engineering, and capstone deployment.
+          </Text>
+
+          {/* Tech Stack Pills */}
+          <View style={styles.techTagsWrap}>
+            {fullStackTechTags.map((tag, idx) => (
+              <View key={idx} style={styles.techTagPill}>
+                <Text style={styles.techTagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Certificate Banner / Progress Banner & 8-Module Checklist */}
+          {fsProgress && (
+            <View style={styles.fsCardInner}>
+              {fsProgress.courseCompleted || fsProgress.hasCertificate ? (
+                <View style={styles.eligibleBanner}>
+                  <View style={styles.eligibleTop}>
+                    <Icon name="award" size={24} color="#F59E0B" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.eligibleTitle}>Certificate Available! 🎉</Text>
+                      <Text style={styles.eligibleSub}>
+                        You have passed 100% of all 8 Full Stack modules and capstone requirements.
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.claimCertBtn}
+                    activeOpacity={0.85}
+                    onPress={() => navigation.navigate('FullStackCertificate')}
+                  >
+                    <Icon name="award" size={16} color="#0B0F19" />
+                    <Text style={styles.claimCertBtnText}>Get Your Certificate</Text>
+                    <Icon name="arrow-right" size={14} color="#0B0F19" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.progressBanner}>
+                  <View style={styles.progressHeaderRow}>
+                    <Text style={styles.progressCardTitle}>Full Stack Course Progress</Text>
+                    <Text style={styles.progressPercentText}>{fsProgress.overallPercentage}%</Text>
+                  </View>
+                  <Meter value={fsProgress.overallPercentage} />
+                  <View style={styles.progressStatsRow}>
+                    <Text style={styles.progressStatsText}>
+                      {fsProgress.completedModules} of 8 modules finished
+                    </Text>
+                    <Text style={styles.progressStatsText}>
+                      {fsProgress.completedLessons} / {fsProgress.totalLessons} lessons
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.claimCertBtn}
-                  activeOpacity={0.85}
-                  onPress={() => navigation.navigate('FullStackCertificate')}
-                >
-                  <Icon name="award" size={16} color="#0B0F19" />
-                  <Text style={styles.claimCertBtnText}>Get Your Certificate</Text>
-                  <Icon name="arrow-right" size={14} color="#0B0F19" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.progressBanner}>
-                <View style={styles.progressHeaderRow}>
-                  <Text style={styles.progressCardTitle}>Full Stack Course Progress</Text>
-                  <Text style={styles.progressPercentText}>{fsProgress.overallPercentage}%</Text>
-                </View>
-                <Meter value={fsProgress.overallPercentage} />
-                <View style={styles.progressStatsRow}>
-                  <Text style={styles.progressStatsText}>
-                    {fsProgress.completedModules} of 8 modules finished
-                  </Text>
-                  <Text style={styles.progressStatsText}>
-                    {fsProgress.completedLessons} / {fsProgress.totalLessons} lessons
-                  </Text>
-                </View>
-              </View>
-            )}
+              )}
 
-            {/* Interactive 8-Module Checklist */}
-            <Text style={styles.checklistTitle}>8-MODULE COURSE CHECKLIST</Text>
-            <View style={styles.modulesContainer}>
-              {modulesList.map(mod => {
-                const modProgress = fsProgress.modules?.find(
-                  m => m.moduleNumber === mod.num || m.id === mod.key
-                );
-                const isCompleted = Boolean(modProgress?.isCompleted);
-                const inProgress = Boolean(
-                  modProgress && modProgress.completedLessons > 0 && !isCompleted
-                );
+              {/* 8-Module Course Checklist */}
+              <Text style={styles.checklistTitle}>8-MODULE COURSE CHECKLIST</Text>
+              <View style={styles.modulesContainer}>
+                {modulesList.map(mod => {
+                  const modProgress = fsProgress.modules?.find(
+                    m => m.moduleNumber === mod.num || m.id === mod.key
+                  );
+                  const isCompleted = Boolean(modProgress?.isCompleted);
+                  const inProgress = Boolean(
+                    modProgress && modProgress.completedLessons > 0 && !isCompleted
+                  );
 
-                return (
-                  <TouchableOpacity
-                    key={mod.num}
-                    style={[styles.moduleRow, isCompleted && styles.moduleRowDone]}
-                    activeOpacity={0.8}
-                    onPress={() => openModule(mod.slug)}
-                  >
-                    <View
-                      style={[
-                        styles.moduleCheckWrap,
-                        isCompleted && styles.moduleCheckDone,
-                        inProgress && styles.moduleCheckProg
-                      ]}
+                  return (
+                    <TouchableOpacity
+                      key={mod.num}
+                      style={[styles.moduleRow, isCompleted && styles.moduleRowDone]}
+                      activeOpacity={0.8}
+                      onPress={() => openModule(mod.slug)}
                     >
-                      <Icon
-                        name={isCompleted ? 'check' : inProgress ? 'play' : 'circle'}
-                        size={13}
-                        color={isCompleted ? '#10B981' : inProgress ? '#6366F1' : '#94A3B8'}
-                      />
-                    </View>
-                    <View style={styles.moduleTextCol}>
-                      <View style={styles.moduleHeadingRow}>
-                        <Text style={styles.moduleNumTag}>MODULE {mod.num}</Text>
-                        <View
-                          style={[
-                            styles.statusPill,
-                            isCompleted
-                              ? styles.statusPillDone
-                              : inProgress
-                              ? styles.statusPillProg
-                              : styles.statusPillTodo
-                          ]}
-                        >
-                          <Text
+                      <View
+                        style={[
+                          styles.moduleCheckWrap,
+                          isCompleted && styles.moduleCheckDone,
+                          inProgress && styles.moduleCheckProg
+                        ]}
+                      >
+                        <Icon
+                          name={isCompleted ? 'check' : inProgress ? 'play' : 'circle'}
+                          size={13}
+                          color={isCompleted ? '#10B981' : inProgress ? '#6366F1' : '#94A3B8'}
+                        />
+                      </View>
+                      <View style={styles.moduleTextCol}>
+                        <View style={styles.moduleHeadingRow}>
+                          <Text style={styles.moduleNumTag}>MODULE {mod.num}</Text>
+                          <View
                             style={[
-                              styles.statusPillText,
+                              styles.statusPill,
                               isCompleted
-                                ? styles.statusPillTextDone
+                                ? styles.statusPillDone
                                 : inProgress
-                                ? styles.statusPillTextProg
-                                : styles.statusPillTextTodo
+                                ? styles.statusPillProg
+                                : styles.statusPillTodo
                             ]}
                           >
-                            {isCompleted
-                              ? 'Completed'
-                              : inProgress
-                              ? `${modProgress?.completedLessons}/${modProgress?.totalLessons} done`
-                              : 'Ready'}
-                          </Text>
+                            <Text
+                              style={[
+                                styles.statusPillText,
+                                isCompleted
+                                  ? styles.statusPillTextDone
+                                  : inProgress
+                                  ? styles.statusPillTextProg
+                                  : styles.statusPillTextTodo
+                              ]}
+                            >
+                              {isCompleted
+                                ? 'Completed'
+                                : inProgress
+                                ? `${modProgress?.completedLessons}/${modProgress?.totalLessons} done`
+                                : 'Ready'}
+                            </Text>
+                          </View>
                         </View>
+                        <Text style={styles.moduleTitleText}>{mod.name}</Text>
+                        <Text style={styles.moduleDescText}>{mod.desc}</Text>
                       </View>
-                      <Text style={styles.moduleTitleText}>{mod.name}</Text>
-                      <Text style={styles.moduleDescText}>{mod.desc}</Text>
-                    </View>
-                    <Icon name="chevron-right" size={16} color="#94A3B8" />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                      <Icon name="chevron-right" size={16} color="#94A3B8" />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
 
-            {/* Quick Actions Footer */}
-            <View style={styles.cardActionsRow}>
-              <TouchableOpacity
-                style={styles.cardActionPrimary}
-                onPress={() => navigation.navigate('FullStackCertificate')}
-              >
-                <Icon name="award" size={15} color="#FFFFFF" />
-                <Text style={styles.cardActionPrimaryText}>
-                  {fsProgress.courseCompleted || fsProgress.hasCertificate
-                    ? 'View Certificate'
-                    : 'Check Certificate Eligibility'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cardActionSecondary}
-                onPress={() => navigation.navigate('CertificateVerification')}
-              >
-                <Icon name="shield" size={15} color="#6366F1" />
-                <Text style={styles.cardActionSecondaryText}>Verify</Text>
-              </TouchableOpacity>
+              {/* Quick Actions Footer */}
+              <View style={styles.cardActionsRow}>
+                <TouchableOpacity
+                  style={styles.cardActionPrimary}
+                  onPress={() => navigation.navigate('FullStackCertificate')}
+                >
+                  <Icon name="award" size={15} color="#FFFFFF" />
+                  <Text style={styles.cardActionPrimaryText}>
+                    {fsProgress.courseCompleted || fsProgress.hasCertificate
+                      ? 'View Certificate'
+                      : 'Check Certificate Eligibility'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cardActionSecondary}
+                  onPress={() => navigation.navigate('CertificateVerification')}
+                >
+                  <Icon name="shield" size={15} color="#6366F1" />
+                  <Text style={styles.cardActionSecondaryText}>Verify</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* ==================================================
+            COURSE 2: PROMPT ENGINEERING (COMING SOON CARD)
+            ================================================== */}
+        <TouchableOpacity
+          style={styles.comingSoonCard}
+          activeOpacity={0.85}
+          onPress={() => handleComingSoon('Prompt Engineering')}
+        >
+          <View style={styles.courseHeaderRow}>
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
             </View>
           </View>
-        )}
+
+          <Text style={styles.comingSoonTitle}>Prompt Engineering</Text>
+          <Text style={styles.comingSoonDesc}>
+            Learn how to write effective prompts and communicate better with AI systems.
+          </Text>
+
+          <View style={styles.comingSoonBtnContainer}>
+            <TouchableOpacity
+              style={styles.comingSoonBtn}
+              activeOpacity={0.8}
+              onPress={() => handleComingSoon('Prompt Engineering')}
+            >
+              <Icon name="clock" size={14} color="#64748B" />
+              <Text style={styles.comingSoonBtnText}>Coming Soon</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+
+        {/* ==================================================
+            COURSE 3: CONTEXT ENGINEERING (COMING SOON CARD)
+            ================================================== */}
+        <TouchableOpacity
+          style={styles.comingSoonCard}
+          activeOpacity={0.85}
+          onPress={() => handleComingSoon('Context Engineering')}
+        >
+          <View style={styles.courseHeaderRow}>
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
+            </View>
+          </View>
+
+          <Text style={styles.comingSoonTitle}>Context Engineering</Text>
+          <Text style={styles.comingSoonDesc}>
+            Learn how to design and manage the context AI systems use to produce better results.
+          </Text>
+
+          <View style={styles.comingSoonBtnContainer}>
+            <TouchableOpacity
+              style={styles.comingSoonBtn}
+              activeOpacity={0.8}
+              onPress={() => handleComingSoon('Context Engineering')}
+            >
+              <Icon name="clock" size={14} color="#64748B" />
+              <Text style={styles.comingSoonBtnText}>Coming Soon</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
 
         {/* ==================================================
             6-MONTH CURRICULUM TIMELINE & LESSON DIRECTORY
             ================================================== */}
         {data && (
-          <View style={{ marginTop: 24 }}>
-            <Text style={ui.eyebrow}>CURRICULUM TIMELINE</Text>
+          <View style={{ marginTop: 28 }}>
+            <Text style={ui.eyebrow}>FULL STACK TIMELINE</Text>
             <Text style={[ui.heading, { fontSize: 20, marginBottom: 12 }]}>
               Weekly Learning Schedule
             </Text>
@@ -387,6 +497,142 @@ export const FullStackOverviewScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  activeCourseCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#6366F1',
+    padding: 18,
+    marginVertical: 14,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3
+  },
+  courseHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10
+  },
+  activeBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 6
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981'
+  },
+  activeBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#4F46E5',
+    letterSpacing: 0.6
+  },
+  courseProgressBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#10B981'
+  },
+  courseTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4
+  },
+  courseDesc: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 18,
+    marginBottom: 12
+  },
+  techTagsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 16
+  },
+  techTagPill: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0'
+  },
+  techTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#334155'
+  },
+  fsCardInner: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 14,
+    marginTop: 4
+  },
+  comingSoonCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 18,
+    marginVertical: 8,
+    opacity: 0.95
+  },
+  comingSoonBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#CBD5E1'
+  },
+  comingSoonBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.6
+  },
+  comingSoonTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 4
+  },
+  comingSoonDesc: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
+    marginBottom: 14
+  },
+  comingSoonBtnContainer: {
+    alignItems: 'flex-start'
+  },
+  comingSoonBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10
+  },
+  comingSoonBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569'
+  },
   fsCard: {
     backgroundColor: '#F8FAFC',
     borderRadius: 18,
