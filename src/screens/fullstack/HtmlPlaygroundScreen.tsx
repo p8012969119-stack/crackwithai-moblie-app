@@ -837,43 +837,46 @@ const styles = StyleSheet.create({
   },
   codeEditorContainer: {
     flex: 1,
-    backgroundColor: '#0F172A'
+    backgroundColor: '#FFFFFF'
   },
   codeEditorScrollContent: {
     paddingVertical: SPACING.sm
   },
   editorRow: {
     flexDirection: 'row',
-    minHeight: Dimensions.get('window').height * 0.5
+    minHeight: Dimensions.get('window').height * 0.5,
+    backgroundColor: '#FFFFFF'
   },
   gutter: {
     width: 36,
     paddingRight: 6,
     alignItems: 'flex-end',
     borderRightWidth: 1,
-    borderRightColor: '#1E293B',
+    borderRightColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
     paddingTop: Platform.OS === 'ios' ? 0 : 2
   },
   gutterText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 12,
     lineHeight: 20,
-    color: '#475569'
+    color: '#64748B'
   },
   textEditor: {
     flex: 1,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 12.5,
     lineHeight: 20,
-    color: '#F8FAFC',
+    color: '#0F172A',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 10,
     paddingTop: 0,
     paddingBottom: 40
   },
   quickTagToolbar: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F1F5F9',
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: '#E2E8F0',
     paddingVertical: 6
   },
   quickTagsScroll: {
@@ -881,13 +884,15 @@ const styles = StyleSheet.create({
     gap: 6
   },
   tagChip: {
-    backgroundColor: '#334155',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: RADIUS.xs
   },
   tagChipText: {
-    color: '#38BDF8',
+    color: '#4F46E5',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 11,
     fontWeight: '700'

@@ -97,7 +97,7 @@ export const HtmlCourseScreen: React.FC = () => {
         >
           <Icon name="chevron-left" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle} numberOfLines={1}>HTML Course</Text>
+        <Text style={styles.topBarTitle} numberOfLines={1}>Full Stack Development</Text>
         <TouchableOpacity
           style={styles.playgroundIconBtn}
           onPress={() => navigation.navigate('HtmlPlayground')}
@@ -116,16 +116,16 @@ export const HtmlCourseScreen: React.FC = () => {
         <View style={styles.heroBanner}>
           <View style={styles.badgeRow}>
             <View style={styles.trackPill}>
-              <Text style={styles.trackPillText}>FULL STACK TRACK 01</Text>
+              <Text style={styles.trackPillText}>FULL STACK COURSE</Text>
             </View>
             <View style={styles.levelPill}>
-              <Text style={styles.levelPillText}>Beginner</Text>
+              <Text style={styles.levelPillText}>Beginner to Advanced</Text>
             </View>
           </View>
 
-          <Text style={styles.courseTitle}>{course?.title || 'HTML — From Beginner to Practical'}</Text>
+          <Text style={styles.courseTitle}>{course?.title || 'Full Stack Web Development'}</Text>
           <Text style={styles.courseDescription}>
-            {course?.description || 'Learn HTML step by step and build real webpages using CrackWithAI HTML Playground.'}
+            {course?.description || 'Master HTML, CSS, JavaScript, Node.js, Express, MongoDB, REST APIs, and Capstone deployment step by step.'}
           </Text>
 
           {/* Stats Bar */}

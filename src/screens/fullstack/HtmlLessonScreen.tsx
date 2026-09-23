@@ -81,11 +81,14 @@ export const HtmlLessonScreen: React.FC = () => {
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex >= 0 && currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
   const navigateToSiblingLesson = (sibling: HtmlLesson) => {
     const targetId = sibling._id || sibling.id || '';
     if (targetId) {
       setCurrentId(targetId);
       loadLesson(targetId);
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
   };
 
@@ -148,9 +151,8 @@ export const HtmlLessonScreen: React.FC = () => {
         </View>
       </View>
 
-
-
       <ScrollView
+        ref={scrollViewRef}
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
