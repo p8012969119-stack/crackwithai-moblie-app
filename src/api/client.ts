@@ -28,7 +28,7 @@ export const apiClient: AxiosInstance = axios.create({
 // Request Interceptor: Inject JWT token into Authorization header and ensure current baseURL
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    config.baseURL = CONFIG.API_BASE_URL;
+    config.baseURL = config.baseURL || CONFIG.API_BASE_URL;
     const token = await storage.getToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -48,9 +48,10 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (axios.isCancel(error)) return Promise.reject(error);
 
-    // Automatic transparent retry on alternate network host (e.g. localhost -> LAN IP or vice versa)
+    // Automatic transparent retry on alternate network host (e.g. LAN IP -> localhost or vice versa)
     const config = error.config as (InternalAxiosRequestConfig & { _retryCount?: number }) | undefined;
-    if (config && (!config._retryCount || config._retryCount < 1) && (!error.response || error.code === 'ERR_NETWORK')) {
+    const isNetworkOrTimeout = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
+    if (config && (!config._retryCount || config._retryCount < 1) && isNetworkOrTimeout) {
       const currentBase = config.baseURL || CONFIG.API_BASE_URL;
       const altBase = getAlternateApiBaseUrl(currentBase);
       if (altBase && altBase !== currentBase) {
