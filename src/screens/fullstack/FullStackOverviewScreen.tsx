@@ -7,7 +7,8 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -16,6 +17,8 @@ import { FullStackCourseProgress } from '../../types/fullstack';
 import { Meter, Notice, palette, ui } from '../../components/fullstack/CurriculumUI';
 import { Icon } from '../../components/Icon';
 import { useAuth } from '../../store/AuthContext';
+
+const FONT_FAMILY = Platform.OS === 'ios' ? 'System' : 'sans-serif';
 
 export const FullStackOverviewScreen = () => {
   const navigation = useNavigation<any>();
@@ -236,23 +239,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981'
   },
   activeBadgeText: {
+    fontFamily: FONT_FAMILY,
     fontSize: 10,
     fontWeight: '800',
     color: '#4F46E5',
     letterSpacing: 0.6
   },
   courseProgressBadgeText: {
+    fontFamily: FONT_FAMILY,
     fontSize: 12,
     fontWeight: '700',
     color: '#10B981'
   },
   courseTitle: {
+    fontFamily: FONT_FAMILY,
     fontSize: 22,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 6
   },
   courseDesc: {
+    fontFamily: FONT_FAMILY,
     fontSize: 13,
     color: '#475569',
     lineHeight: 19,
@@ -262,6 +269,7 @@ const styles = StyleSheet.create({
     marginBottom: 16
   },
   progressSubtext: {
+    fontFamily: FONT_FAMILY,
     fontSize: 11,
     fontWeight: '600',
     color: '#64748B',
@@ -277,6 +285,7 @@ const styles = StyleSheet.create({
     borderRadius: 12
   },
   startBtnText: {
+    fontFamily: FONT_FAMILY,
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800'
@@ -299,18 +308,21 @@ const styles = StyleSheet.create({
     borderColor: '#CBD5E1'
   },
   comingSoonBadgeText: {
+    fontFamily: FONT_FAMILY,
     fontSize: 10,
     fontWeight: '800',
     color: '#64748B',
     letterSpacing: 0.6
   },
   comingSoonTitle: {
+    fontFamily: FONT_FAMILY,
     fontSize: 20,
     fontWeight: '700',
     color: '#1E293B',
     marginBottom: 6
   },
   comingSoonDesc: {
+    fontFamily: FONT_FAMILY,
     fontSize: 13,
     color: '#64748B',
     lineHeight: 19,
@@ -329,6 +341,7 @@ const styles = StyleSheet.create({
     borderRadius: 10
   },
   comingSoonBtnText: {
+    fontFamily: FONT_FAMILY,
     fontSize: 12,
     fontWeight: '700',
     color: '#475569'
