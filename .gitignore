@@ -13,12 +13,17 @@ ios/build/
 ios/Pods.xcodeproj
 ios/*.xcworkspace/xcuserdata/
 ios/*.xcodeproj/xcuserdata/
+ios/.xcode.env.local
+.xcode.env.local
 *.pbxuser
 *.mode1v3
 *.mode2v3
 *.perspectivev3
 *.xcuserstate
 .DS_Store
+
+# Nested backend repo
+backend/
 
 # Android
 android/app/build/
