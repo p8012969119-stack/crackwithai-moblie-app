@@ -5,10 +5,10 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
   {
     "id": "html",
     "title": "HTML",
-    "subtitle": "From Beginner to Practical",
-    "description": "Learn the foundational markup language of the web with hands-on practice in the HTML Playground.",
+    "subtitle": "Foundations of Web Structure",
+    "description": "Master HTML5 tags, document hierarchy, forms, semantic elements, and web accessibility.",
     "status": "active",
-    "badge": "Ready to Learn",
+    "badge": "Track 1",
     "lessonsCount": 25,
     "modulesCount": 4,
     "duration": "3 hours",
@@ -22,12 +22,12 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
     "subtitle": "Styling & Modern Responsive Layouts",
     "description": "Style beautiful interfaces with Flexbox, CSS Grid, animations, and responsive media queries.",
     "status": "active",
-    "badge": "Ready to Learn",
+    "badge": "Track 2",
     "lessonsCount": 20,
     "modulesCount": 3,
     "duration": "4 hours",
     "level": "Beginner",
-    "icon": "palette",
+    "icon": "layout",
     "route": "HtmlCourse"
   },
   {
@@ -36,7 +36,7 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
     "subtitle": "Interactivity & Modern ES6+ Logic",
     "description": "Master variables, functions, async/await, DOM manipulation, and dynamic client-side logic.",
     "status": "active",
-    "badge": "Ready to Learn",
+    "badge": "Track 3",
     "lessonsCount": 25,
     "modulesCount": 4,
     "duration": "6 hours",
@@ -48,9 +48,9 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
     "id": "nodejs",
     "title": "Node.js",
     "subtitle": "Server-side JavaScript Runtime",
-    "description": "Execute JavaScript outside the browser, read files, handle streams, and build command-line tools.",
+    "description": "Execute JavaScript outside the browser, read files, handle streams, and build server modules.",
     "status": "active",
-    "badge": "Ready to Learn",
+    "badge": "Track 4",
     "lessonsCount": 15,
     "modulesCount": 3,
     "duration": "4 hours",
@@ -62,9 +62,9 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
     "id": "expressjs",
     "title": "Express.js",
     "subtitle": "Fast Backend Web Framework",
-    "description": "Build fast RESTful APIs, route requests, manage middleware, and handle server error handling.",
+    "description": "Build RESTful APIs, route requests, manage middleware, and handle server error logging.",
     "status": "active",
-    "badge": "Ready to Learn",
+    "badge": "Track 5",
     "lessonsCount": 15,
     "modulesCount": 3,
     "duration": "4 hours",
@@ -78,7 +78,7 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
     "subtitle": "NoSQL Database & Mongoose ODM",
     "description": "Store JSON-like documents, design data schemas, write queries, and perform aggregations.",
     "status": "active",
-    "badge": "Ready to Learn",
+    "badge": "Track 6",
     "lessonsCount": 15,
     "modulesCount": 3,
     "duration": "4 hours",
@@ -88,11 +88,11 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
   },
   {
     "id": "restapi",
-    "title": "REST API & Authentication",
-    "subtitle": "Standardized Client-Server Security & JWT",
-    "description": "Design idempotent endpoints, status codes, JWT authentication, cookies, and protected routes.",
+    "title": "REST APIs",
+    "subtitle": "Standardized Client-Server Contracts",
+    "description": "Design idempotent HTTP endpoints, status codes, request validation, and API versioning.",
     "status": "active",
-    "badge": "Ready to Learn",
+    "badge": "Track 7",
     "lessonsCount": 15,
     "modulesCount": 3,
     "duration": "5 hours",
@@ -101,16 +101,30 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
     "route": "HtmlCourse"
   },
   {
-    "id": "capstone",
-    "title": "Full Stack Capstone Project",
-    "subtitle": "End-to-End Production Application",
-    "description": "Connect HTML, CSS, JavaScript, Node, Express, and MongoDB into a complete deployed capstone project.",
+    "id": "auth",
+    "title": "Authentication & Authorization",
+    "subtitle": "Security, JWT & OAuth Sessions",
+    "description": "Secure applications with password hashing, JSON Web Tokens, cookies, and protected routes.",
     "status": "active",
-    "badge": "Ready to Learn",
+    "badge": "Track 8",
+    "lessonsCount": 12,
+    "modulesCount": 3,
+    "duration": "4 hours",
+    "level": "Advanced",
+    "icon": "shield",
+    "route": "HtmlCourse"
+  },
+  {
+    "id": "capstone",
+    "title": "Final Full Stack Project",
+    "subtitle": "End-to-End Production Capstone",
+    "description": "Connect HTML, CSS, JavaScript, Node, Express, MongoDB, and Auth into a deployed capstone app.",
+    "status": "active",
+    "badge": "Track 9",
     "lessonsCount": 10,
     "modulesCount": 2,
     "duration": "8 hours",
-    "level": "Advanced",
+    "level": "Capstone",
     "icon": "award",
     "route": "HtmlCourse"
   }
@@ -3334,6 +3348,58 @@ export const FALLBACK_CAPSTONE_COURSE: HtmlCourse = {
   ]
 };
 
+// ==========================================
+// AUTHENTICATION COURSE DATA
+// ==========================================
+export const FALLBACK_AUTH_COURSE: HtmlCourse = {
+  _id: 'auth-course',
+  id: 'auth-course',
+  title: 'Authentication & Authorization — Security, JWT & OAuth',
+  slug: 'authentication-jwt-security',
+  description: 'Master bcrypt password hashing, JSON Web Tokens, cookies, session security, and authorization middleware.',
+  category: 'Authentication',
+  level: 'Advanced',
+  totalLessons: 12,
+  totalModules: 3,
+  duration: 240,
+  modules: [
+    {
+      _id: 'auth-mod-1',
+      id: 'auth-mod-1',
+      title: 'Module 1 — Passwords & JWT Security',
+      slug: 'passwords-and-jwt-security',
+      order: 1,
+      description: 'Learn secure password hashing, salt rounds, JWT sign/verify, and header tokens.',
+      duration: 80,
+      lessons: [
+        {
+          _id: 'auth-les-1-1',
+          id: 'auth-les-1-1',
+          moduleId: 'auth-mod-1',
+          moduleTitle: 'Module 1 — Passwords & JWT Security',
+          courseId: 'auth-course',
+          order: 1,
+          title: 'Introduction to Authentication & Passwords',
+          slug: 'introduction-to-authentication-and-passwords',
+          description: 'Understand authentication vs authorization, hashing with bcrypt, and security best practices.',
+          learningObjective: 'Learn how to securely store user credentials using salt hashing and verify login payloads.',
+          concept: 'Authentication verifies WHO a user is (e.g. login credentials), while Authorization verifies WHAT a user can access.',
+          codeExample: 'const bcrypt = require("bcryptjs");\nconst hash = await bcrypt.hash("userPassword123", 10);',
+          expectedOutput: 'Hashed password string produced securely.',
+          starterCode: 'const bcrypt = require("bcryptjs");\n\nasync function registerUser(password) {\n  // Hash the password\n  return await bcrypt.hash(password, 10);\n}',
+          practiceTask: {
+            title: 'Authentication Basics Checkpoint',
+            description: 'Write a basic HTML form structure for User Login.',
+            requirements: ['Include form tag', 'Include email input', 'Include password input', 'Include submit button'],
+            starterCode: '<form action="/login" method="POST">\n  <label>Email:</label>\n  <input type="email" name="email" required />\n  <label>Password:</label>\n  <input type="password" name="password" required />\n  <button type="submit">Sign In</button>\n</form>',
+            expectedOutput: 'Clean login form with email and password input fields.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
 /**
  * Returns the exact tailored course curriculum object for any selected technology.
  */
@@ -3351,7 +3417,11 @@ export function getCourseForTech(techId: string | null): HtmlCourse {
       return FALLBACK_MONGO_COURSE;
     case 'restapi':
       return FALLBACK_REST_COURSE;
+    case 'auth':
+    case 'authentication':
+      return FALLBACK_AUTH_COURSE;
     case 'capstone':
+    case 'finalproject':
       return FALLBACK_CAPSTONE_COURSE;
     case 'html':
     default:
@@ -3369,6 +3439,7 @@ export function getFallbackLessonById(id: string): HtmlLesson | undefined {
     ...FALLBACK_EXPRESS_COURSE.modules.flatMap(m => m.lessons),
     ...FALLBACK_MONGO_COURSE.modules.flatMap(m => m.lessons),
     ...FALLBACK_REST_COURSE.modules.flatMap(m => m.lessons),
+    ...FALLBACK_AUTH_COURSE.modules.flatMap(m => m.lessons),
     ...FALLBACK_CAPSTONE_COURSE.modules.flatMap(m => m.lessons)
   ];
   return allLessons.find(l => l._id === id || l.id === id || l.slug === id);
