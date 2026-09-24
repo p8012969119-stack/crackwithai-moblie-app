@@ -14,7 +14,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { fullstackApi } from '../../api/fullstackApi';
 import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress, FullStackTrack } from '../../types/fullstack';
-import { FALLBACK_HTML_COURSE, FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
+import { FALLBACK_HTML_COURSE, FULLSTACK_TRACKS, getCourseForTech } from '../../data/fullstackHtmlData';
 import { Icon } from '../../components/Icon';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
@@ -31,6 +31,13 @@ export const HtmlCourseScreen: React.FC = () => {
 
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
     'module-1': true,
+    'css-mod-1': true,
+    'js-mod-1': true,
+    'node-mod-1': true,
+    'exp-mod-1': true,
+    'mongo-mod-1': true,
+    'rest-mod-1': true,
+    'cap-mod-1': true,
     '0': true
   });
   const [loading, setLoading] = useState<boolean>(false);
@@ -93,18 +100,27 @@ export const HtmlCourseScreen: React.FC = () => {
     });
   };
 
+  const handleOpenPlayground = (initialCode?: string) => {
+    navigation.navigate('HtmlPlayground', {
+      initialCode: initialCode || undefined
+    });
+  };
+
   const completedSet = new Set(progress?.completedLessonIds || []);
-  const totalLessons = course?.totalLessons || 25;
+
+  // Determine course data dynamically for the selected technology
+  const activeCourse = selectedTech ? getCourseForTech(selectedTech) : (course || FALLBACK_HTML_COURSE);
+  const activeTrack = FULLSTACK_TRACKS.find(t => t.id === selectedTech);
+
+  const totalLessons = activeCourse?.totalLessons || 25;
   const completedLessons = progress?.completedCount || 0;
   const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
   // Sort modules numerically by order (Module 1, Module 2, Module 3, Module 4)
   const sortedModules = React.useMemo(() => {
-    if (!course?.modules) return [];
-    return [...course.modules].sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [course?.modules]);
-
-  const activeTrack = FULLSTACK_TRACKS.find(t => t.id === selectedTech);
+    if (!activeCourse?.modules) return [];
+    return [...activeCourse.modules].sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [activeCourse?.modules]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -130,7 +146,7 @@ export const HtmlCourseScreen: React.FC = () => {
         </Text>
         <TouchableOpacity
           style={styles.playgroundIconBtn}
-          onPress={() => navigation.navigate('HtmlPlayground')}
+          onPress={() => handleOpenPlayground()}
         >
           <Icon name="code" size={20} color={COLORS.primary} />
         </TouchableOpacity>
@@ -161,7 +177,7 @@ export const HtmlCourseScreen: React.FC = () => {
 
               <Text style={styles.roadmapTitle}>Technologies & Modules</Text>
               <Text style={styles.roadmapDesc}>
-                Select any technology below to explore its structured curriculum, interactive modules, and hands-on code practice.
+                Select any technology below to explore its tailored curriculum, interactive modules, and hands-on code practice.
               </Text>
 
               {/* Progress Summary Card */}
@@ -179,7 +195,7 @@ export const HtmlCourseScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.heroPlaygroundButton}
                 activeOpacity={0.85}
-                onPress={() => navigation.navigate('HtmlPlayground')}
+                onPress={() => handleOpenPlayground()}
               >
                 <Icon name="code" size={18} color="#FFFFFF" />
                 <Text style={styles.heroPlaygroundButtonText}>Open Code Playground</Text>
@@ -190,7 +206,7 @@ export const HtmlCourseScreen: React.FC = () => {
             {/* Section Heading */}
             <View style={styles.sectionHeadingWrap}>
               <Text style={styles.sectionHeadingTitle}>Select a Technology to Start</Text>
-              <Text style={styles.sectionHeadingSub}>Tap any card to view its modules and lessons</Text>
+              <Text style={styles.sectionHeadingSub}>Tap any card to view its unique modules and lessons</Text>
             </View>
 
             {/* Tech Stack Cards Grid */}
@@ -240,7 +256,7 @@ export const HtmlCourseScreen: React.FC = () => {
                       onPress={() => setSelectedTech(track.id)}
                     >
                       <Text style={[styles.exploreBtnText, isHtml && styles.exploreBtnTextActive]}>
-                        Explore Modules & Lessons
+                        Explore {track.title} Modules & Lessons
                       </Text>
                       <Icon name="arrow-right" size={15} color={isHtml ? '#FFFFFF' : '#4F46E5'} />
                     </TouchableOpacity>
@@ -253,7 +269,7 @@ export const HtmlCourseScreen: React.FC = () => {
 
         {/* ==================================================
             STEP 2: SELECTED TECHNOLOGY MODULES & LESSONS VIEW
-            (Shown when user selects a specific tech card)
+            (Renders unique tailored content for HTML, CSS, JS, Node, Express, Mongo, REST API, Capstone)
             ================================================== */}
         {selectedTech && activeTrack && (
           <View>
@@ -278,22 +294,18 @@ export const HtmlCourseScreen: React.FC = () => {
                 </View>
               </View>
 
-              <Text style={styles.courseTitle}>
-                {selectedTech === 'html' ? (course?.title || activeTrack.subtitle) : activeTrack.subtitle}
-              </Text>
-              <Text style={styles.courseDescription}>
-                {selectedTech === 'html' ? (course?.description || activeTrack.description) : activeTrack.description}
-              </Text>
+              <Text style={styles.courseTitle}>{activeCourse.title}</Text>
+              <Text style={styles.courseDescription}>{activeCourse.description}</Text>
 
               {/* Stats Bar */}
               <View style={styles.metaRow}>
                 <View style={styles.metaChip}>
                   <Icon name="file-text" size={14} color="#C7D2FE" />
-                  <Text style={styles.metaChipText}>{activeTrack.lessonsCount} Lessons</Text>
+                  <Text style={styles.metaChipText}>{activeCourse.totalLessons || activeTrack.lessonsCount} Lessons</Text>
                 </View>
                 <View style={styles.metaChip}>
                   <Icon name="book-open" size={14} color="#C7D2FE" />
-                  <Text style={styles.metaChipText}>{activeTrack.modulesCount} Modules</Text>
+                  <Text style={styles.metaChipText}>{activeCourse.modules?.length || activeTrack.modulesCount} Modules</Text>
                 </View>
                 <View style={styles.metaChip}>
                   <Icon name="clock" size={14} color="#C7D2FE" />
@@ -318,10 +330,10 @@ export const HtmlCourseScreen: React.FC = () => {
               <TouchableOpacity
                 style={styles.heroPlaygroundButton}
                 activeOpacity={0.85}
-                onPress={() => navigation.navigate('HtmlPlayground')}
+                onPress={() => handleOpenPlayground()}
               >
                 <Icon name="code" size={18} color="#FFFFFF" />
-                <Text style={styles.heroPlaygroundButtonText}>Open Interactive Playground</Text>
+                <Text style={styles.heroPlaygroundButtonText}>Open Interactive {activeTrack.title} Playground</Text>
                 <Icon name="arrow-right" size={16} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
@@ -330,7 +342,7 @@ export const HtmlCourseScreen: React.FC = () => {
             <View style={styles.curriculumHeader}>
               <Text style={styles.curriculumTitle}>{activeTrack.title} Curriculum & Modules</Text>
               <Text style={styles.curriculumSubtitle}>
-                {activeTrack.modulesCount} progressive modules from fundamental concepts to practical code
+                {activeCourse.modules?.length || 3} progressive modules from fundamental concepts to practical code
               </Text>
             </View>
 
@@ -345,6 +357,7 @@ export const HtmlCourseScreen: React.FC = () => {
                   const moduleLessons = module.lessons || [];
                   const completedInModule = moduleLessons.filter(l => completedSet.has(l._id || l.id || '')).length;
                   const moduleNum = module.order || modIndex + 1;
+                  const firstLessonStarterCode = moduleLessons[0]?.starterCode;
 
                   return (
                     <View key={moduleId} style={styles.moduleCard}>
@@ -374,9 +387,22 @@ export const HtmlCourseScreen: React.FC = () => {
                         </View>
                       </TouchableOpacity>
 
-                      {/* Lessons List when Expanded */}
+                      {/* Module Inside Content: Practice Button & Lessons List */}
                       {isExpanded && (
                         <View style={styles.lessonsList}>
+                          {/* Inside Module Hands-on Practice Button */}
+                          <TouchableOpacity
+                            style={styles.modulePracticeBtn}
+                            activeOpacity={0.8}
+                            onPress={() => handleOpenPlayground(firstLessonStarterCode)}
+                          >
+                            <Icon name="terminal" size={16} color="#4F46E5" />
+                            <Text style={styles.modulePracticeBtnText}>
+                              ⚡ Practice {module.title} Code
+                            </Text>
+                            <Icon name="arrow-right" size={14} color="#4F46E5" />
+                          </TouchableOpacity>
+
                           {moduleLessons.map((lesson: HtmlLesson, lessonIdx: number) => {
                             const lessonId = lesson._id || lesson.id || '';
                             const isCompleted = completedSet.has(lessonId);
@@ -864,6 +890,27 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
     backgroundColor: '#FFFFFF'
+  },
+  modulePracticeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEEDFF',
+    marginHorizontal: 14,
+    marginTop: 12,
+    marginBottom: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#C7C5FF'
+  },
+  modulePracticeBtnText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#4F46E5'
   },
   lessonRow: {
     flexDirection: 'row',

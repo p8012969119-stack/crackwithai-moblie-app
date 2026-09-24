@@ -2709,7 +2709,667 @@ export const FALLBACK_HTML_COURSE: HtmlCourse = {
 export const FALLBACK_HTML_MODULES: HtmlModule[] = FALLBACK_HTML_COURSE.modules;
 export const FALLBACK_HTML_LESSONS: HtmlLesson[] = FALLBACK_HTML_COURSE.modules.flatMap(m => m.lessons);
 
+// ==========================================
+// CSS3 COURSE DATA
+// ==========================================
+export const FALLBACK_CSS_COURSE: HtmlCourse = {
+  _id: 'css-course',
+  id: 'css-course',
+  title: 'CSS3 — Styling & Responsive Layouts',
+  slug: 'css3-styling-responsive-layouts',
+  description: 'Master CSS selectors, colors, Box Model, Flexbox, Grid, keyframe animations, and modern responsive design.',
+  category: 'Full Stack Frontend',
+  level: 'Beginner to Intermediate',
+  totalLessons: 18,
+  totalModules: 3,
+  duration: 180,
+  modules: [
+    {
+      _id: 'css-mod-1',
+      id: 'css-mod-1',
+      title: 'Module 1 — CSS Selectors, Colors & Box Model',
+      slug: 'css-selectors-colors-box-model',
+      order: 1,
+      description: 'Learn element styling, specificity, margin, padding, borders, and box-sizing.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'css-les-1-1',
+          id: 'css-les-1-1',
+          moduleId: 'css-mod-1',
+          moduleTitle: 'Module 1 — CSS Selectors, Colors & Box Model',
+          courseId: 'css3-course',
+          order: 1,
+          title: 'Introduction to CSS & Selectors',
+          slug: 'intro-to-css-selectors',
+          description: 'Learn how CSS connects to HTML elements via class, id, and tag selectors.',
+          learningObjective: 'Apply CSS styles to HTML elements using class, id, and descendant selectors.',
+          concept: 'CSS (Cascading Style Sheets) formats the presentation of HTML elements. Use class selectors (.btn) for reusable styles and ID selectors (#header) for unique elements.',
+          codeExample: 'h1 { color: #5653fe; font-family: sans-serif; }\n.card { padding: 20px; border-radius: 12px; }',
+          expectedOutput: 'Styled header text and rounded card element.',
+          starterCode: '<!DOCTYPE html>\n<html>\n<head>\n<style>\n  h1 { color: #5653fe; font-family: sans-serif; }\n  .box { padding: 20px; background: #EEEDFF; border-radius: 12px; }\n</style>\n</head>\n<body>\n  <h1>CSS Styling</h1>\n  <div class="box">Styled Box Content</div>\n</body>\n</html>',
+          practiceTask: {
+            title: 'CSS Selector Practice',
+            description: 'Apply a background color and padding to the card element using class selectors.',
+            requirements: ['Add .card class style', 'Set padding to 16px', 'Set border-radius to 10px'],
+            starterCode: '<!DOCTYPE html>\n<html>\n<head>\n<style>\n  /* Add styles here */\n</style>\n</head>\n<body>\n  <div class="card">My Styled Card</div>\n</body>\n</html>',
+            expectedOutput: 'Card styled with background and rounded borders.'
+          }
+        },
+        {
+          _id: 'css-les-1-2',
+          id: 'css-les-1-2',
+          moduleId: 'css-mod-1',
+          moduleTitle: 'Module 1 — CSS Selectors, Colors & Box Model',
+          courseId: 'css3-course',
+          order: 2,
+          title: 'The CSS Box Model',
+          slug: 'css-box-model',
+          description: 'Understand content, padding, border, margin, and box-sizing: border-box.',
+          learningObjective: 'Control layout dimensions accurately using box-sizing: border-box.',
+          concept: 'Every HTML element is a rectangular box consisting of Content, Padding, Border, and Margin. Setting box-sizing: border-box ensures width includes padding and border.',
+          codeExample: '* { box-sizing: border-box; }\n.container { width: 300px; padding: 20px; border: 2px solid #333; }',
+          expectedOutput: 'Box model sizing calculated correctly.',
+          starterCode: '<!DOCTYPE html>\n<html>\n<head>\n<style>\n  * { box-sizing: border-box; }\n  .box { width: 200px; padding: 20px; border: 4px solid #5653fe; margin: 10px; background: #F1F5F9; }\n</style>\n</head>\n<body>\n  <div class="box">Box Model Demo</div>\n</body>\n</html>',
+          practiceTask: {
+            title: 'Box Model Layout',
+            description: 'Set margin, padding, and border-box sizing on container divs.',
+            requirements: ['Set box-sizing: border-box', 'Add 15px padding'],
+            starterCode: '<!DOCTYPE html>\n<html>\n<body>\n  <div>Box Model Exercise</div>\n</body>\n</html>',
+            expectedOutput: 'Box model applied correctly.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'css-mod-2',
+      id: 'css-mod-2',
+      title: 'Module 2 — Flexbox & CSS Grid Layouts',
+      slug: 'flexbox-css-grid-layouts',
+      order: 2,
+      description: 'Master 1D and 2D layout systems for modern responsive user interfaces.',
+      duration: 75,
+      lessons: [
+        {
+          _id: 'css-les-2-1',
+          id: 'css-les-2-1',
+          moduleId: 'css-mod-2',
+          moduleTitle: 'Module 2 — Flexbox & CSS Grid Layouts',
+          courseId: 'css3-course',
+          order: 1,
+          title: 'Flexbox Architecture & Alignment',
+          slug: 'flexbox-architecture-alignment',
+          description: 'Align elements effortlessly using display: flex, justify-content, and align-items.',
+          learningObjective: 'Build flex layouts with center alignment and responsive wrapping.',
+          concept: 'Flexbox provides efficient layout alignment. Use display: flex on container, justify-content for main-axis alignment, and align-items for cross-axis alignment.',
+          codeExample: '.flex-row { display: flex; justify-content: space-between; align-items: center; }',
+          expectedOutput: 'Flex container with spaced items.',
+          starterCode: '<!DOCTYPE html>\n<html>\n<head>\n<style>\n  .nav { display: flex; justify-content: space-between; align-items: center; background: #1E1B4B; padding: 15px; color: white; }\n</style>\n</head>\n<body>\n  <div class="nav"><span>Logo</span><span>Home</span><span>Contact</span></div>\n</body>\n</html>',
+          practiceTask: {
+            title: 'Flex Navigation Bar',
+            description: 'Build a flexbox navbar with logo on the left and menu on the right.',
+            requirements: ['display: flex', 'justify-content: space-between'],
+            starterCode: '<!DOCTYPE html>\n<html>\n<body>\n  <nav><div>Logo</div><div>Menu</div></nav>\n</body>\n</html>',
+            expectedOutput: 'Flex navbar aligned successfully.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'css-mod-3',
+      id: 'css-mod-3',
+      title: 'Module 3 — Responsive Media Queries & Animations',
+      slug: 'responsive-media-queries-animations',
+      order: 3,
+      description: 'Adapt layouts to mobile screens and add smooth hover transitions and animations.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'css-les-3-1',
+          id: 'css-les-3-1',
+          moduleId: 'css-mod-3',
+          moduleTitle: 'Module 3 — Responsive Media Queries & Animations',
+          courseId: 'css3-course',
+          order: 1,
+          title: 'Media Queries & Mobile Breakpoints',
+          slug: 'media-queries-mobile-breakpoints',
+          description: 'Use @media rules to change styles based on screen width.',
+          learningObjective: 'Write responsive CSS for mobile, tablet, and desktop screens.',
+          concept: 'Media queries (@media (max-width: 768px)) allow your stylesheet to apply different CSS rules depending on device viewport dimensions.',
+          codeExample: '@media (max-width: 768px) { .sidebar { display: none; } .content { width: 100%; } }',
+          expectedOutput: 'Layout adapts when screen size changes.',
+          starterCode: '<!DOCTYPE html>\n<html>\n<head>\n<style>\n  .box { background: lightblue; padding: 20px; }\n  @media (max-width: 600px) { .box { background: lightcoral; } }\n</style>\n</head>\n<body>\n  <div class="box">Resize screen to test media query</div>\n</body>\n</html>',
+          practiceTask: {
+            title: 'Mobile Responsive Query',
+            description: 'Add a media query for max-width 600px.',
+            requirements: ['Add @media query', 'Change flex-direction to column'],
+            starterCode: '<!DOCTYPE html>\n<html><body><div class="grid">Responsive Grid</div></body></html>',
+            expectedOutput: 'Responsive styles triggered.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
+// ==========================================
+// JAVASCRIPT COURSE DATA
+// ==========================================
+export const FALLBACK_JS_COURSE: HtmlCourse = {
+  _id: 'js-course',
+  id: 'js-course',
+  title: 'JavaScript — Interactivity & Modern ES6+ Logic',
+  slug: 'javascript-interactivity-es6-logic',
+  description: 'Master JS variables, arrow functions, DOM manipulation, async/await, and API integration.',
+  category: 'Full Stack Frontend',
+  level: 'Intermediate',
+  totalLessons: 20,
+  totalModules: 3,
+  duration: 180,
+  modules: [
+    {
+      _id: 'js-mod-1',
+      id: 'js-mod-1',
+      title: 'Module 1 — JS Variables, ES6 & Control Flow',
+      slug: 'js-variables-es6-control-flow',
+      order: 1,
+      description: 'Learn let/const, template literals, arrow functions, and array methods.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'js-les-1-1',
+          id: 'js-les-1-1',
+          moduleId: 'js-mod-1',
+          moduleTitle: 'Module 1 — JS Variables, ES6 & Control Flow',
+          courseId: 'js-course',
+          order: 1,
+          title: 'Modern ES6 Syntax & Arrow Functions',
+          slug: 'modern-es6-arrow-functions',
+          description: 'Use let, const, arrow functions, and destructuring.',
+          learningObjective: 'Write clean modern JavaScript using arrow functions and template literals.',
+          concept: 'ES6 introduced let/const for block-scoped variables, arrow functions (() => {}) for concise syntax, and template literals (`Hello ${name}`) for string interpolation.',
+          codeExample: 'const greet = (name) => `Welcome to Full Stack JS, ${name}!`;\nconsole.log(greet("Prakash"));',
+          expectedOutput: 'Welcome to Full Stack JS, Prakash!',
+          starterCode: '<!DOCTYPE html>\n<html>\n<body>\n  <h2 id="output">JS Output</h2>\n  <script>\n    const greet = (name) => `Hello, ${name}!`;\n    document.getElementById("output").innerText = greet("Developer");\n  </script>\n</body>\n</html>',
+          practiceTask: {
+            title: 'Arrow Function Practice',
+            description: 'Write an arrow function that takes two numbers and returns their sum.',
+            requirements: ['Use const arrow function syntax', 'Return sum of inputs'],
+            starterCode: '<!DOCTYPE html>\n<html><body><script>\n  // Write add function here\n</script></body></html>',
+            expectedOutput: 'Sum calculated correctly.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'js-mod-2',
+      id: 'js-mod-2',
+      title: 'Module 2 — DOM Manipulation & Event Handling',
+      slug: 'dom-manipulation-event-handling',
+      order: 2,
+      description: 'Select elements, listen for click events, and dynamically update webpage UI.',
+      duration: 75,
+      lessons: [
+        {
+          _id: 'js-les-2-1',
+          id: 'js-les-2-1',
+          moduleId: 'js-mod-2',
+          moduleTitle: 'Module 2 — DOM Manipulation & Event Handling',
+          courseId: 'js-course',
+          order: 1,
+          title: 'Selecting Elements & Event Listeners',
+          slug: 'selecting-elements-event-listeners',
+          description: 'Use querySelector and addEventListener to build interactive web apps.',
+          learningObjective: 'Attach event listeners to buttons and modify DOM text content on click.',
+          concept: 'The Document Object Model (DOM) represents your HTML structure as objects. Use document.querySelector() to find elements and element.addEventListener("click", callback) to respond to user actions.',
+          codeExample: 'const btn = document.querySelector("#btn");\nbtn.addEventListener("click", () => alert("Clicked!"));',
+          expectedOutput: 'Interactive button event triggered.',
+          starterCode: '<!DOCTYPE html>\n<html>\n<body>\n  <button id="clickBtn">Click Me</button>\n  <p id="msg">Initial Message</p>\n  <script>\n    document.getElementById("clickBtn").addEventListener("click", () => {\n      document.getElementById("msg").innerText = "Button Was Clicked!";\n    });\n  </script>\n</body>\n</html>',
+          practiceTask: {
+            title: 'Click Counter',
+            description: 'Build a button that increments a counter number on every click.',
+            requirements: ['addEventListener("click")', 'Update text content'],
+            starterCode: '<!DOCTYPE html>\n<html><body><button id="btn">Increment</button><span id="count">0</span></body></html>',
+            expectedOutput: 'Counter increments on click.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'js-mod-3',
+      id: 'js-mod-3',
+      title: 'Module 3 — Async JS, Promises & Fetch API',
+      slug: 'async-js-promises-fetch-api',
+      order: 3,
+      description: 'Fetch data from backend REST APIs using async/await and handle HTTP responses.',
+      duration: 90,
+      lessons: [
+        {
+          _id: 'js-les-3-1',
+          id: 'js-les-3-1',
+          moduleId: 'js-mod-3',
+          moduleTitle: 'Module 3 — Async JS, Promises & Fetch API',
+          courseId: 'js-course',
+          order: 1,
+          title: 'Fetching Data with Async/Await',
+          slug: 'fetching-data-async-await',
+          description: 'Retrieve JSON data from server APIs asynchronously.',
+          learningObjective: 'Use fetch() with async/await to load server data into the DOM.',
+          concept: 'JavaScript is single-threaded. Asynchronous operations like fetching network requests use Promises and async/await syntax so the browser UI does not freeze during HTTP calls.',
+          codeExample: 'async function loadData() {\n  const res = await fetch("/api/courses");\n  const data = await res.json();\n  console.log(data);\n}',
+          expectedOutput: 'JSON response parsed successfully.',
+          starterCode: '<!DOCTYPE html>\n<html>\n<body>\n  <h2>Async API Fetch</h2>\n  <p id="data">Loading API...</p>\n  <script>\n    async function fetchDemo() {\n      document.getElementById("data").innerText = "Data Loaded Successfully!";\n    }\n    fetchDemo();\n  </script>\n</body>\n</html>',
+          practiceTask: {
+            title: 'Async Fetch Task',
+            description: 'Write an async function that fetches and logs JSON data.',
+            requirements: ['Use async/await', 'Parse JSON response'],
+            starterCode: '<!DOCTYPE html>\n<html><body><script>// Async fetch task</script></body></html>',
+            expectedOutput: 'Async data fetched.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
+// ==========================================
+// NODE.JS COURSE DATA
+// ==========================================
+export const FALLBACK_NODE_COURSE: HtmlCourse = {
+  _id: 'node-course',
+  id: 'node-course',
+  title: 'Node.js — Server-side JavaScript Runtime',
+  slug: 'nodejs-server-side-runtime',
+  description: 'Execute JavaScript on servers, process files, manage Streams, and build CLI utilities.',
+  category: 'Full Stack Backend',
+  level: 'Intermediate',
+  totalLessons: 15,
+  totalModules: 3,
+  duration: 180,
+  modules: [
+    {
+      _id: 'node-mod-1',
+      id: 'node-mod-1',
+      title: 'Module 1 — Node.js Architecture & Module System',
+      slug: 'node-architecture-modules',
+      order: 1,
+      description: 'Understand V8 engine, CommonJS require vs ES import, and process global object.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'node-les-1-1',
+          id: 'node-les-1-1',
+          moduleId: 'node-mod-1',
+          moduleTitle: 'Module 1 — Node.js Architecture & Module System',
+          courseId: 'node-course',
+          order: 1,
+          title: 'Node.js Fundamentals & Event Loop',
+          slug: 'node-fundamentals-event-loop',
+          description: 'Learn how Node runs non-blocking I/O operations via the Event Loop.',
+          learningObjective: 'Understand asynchronous non-blocking single-threaded execution in Node.js.',
+          concept: 'Node.js uses Google Chrome V8 engine to execute JavaScript on servers. Its Event Loop delegates I/O tasks to libuv worker pools for ultra-fast non-blocking performance.',
+          codeExample: 'const fs = require("fs");\nconsole.log("Start");\nfs.readFile("file.txt", "utf8", (err, data) => console.log(data));\nconsole.log("End");',
+          expectedOutput: 'Output order: Start -> End -> Async file content.',
+          starterCode: '<!DOCTYPE html>\n<html>\n<body>\n  <h2>Node.js Server Runtime</h2>\n  <p>Non-blocking asynchronous event loop architecture.</p>\n</body>\n</html>',
+          practiceTask: {
+            title: 'Node Module Import',
+            description: 'Import built-in modules using require syntax.',
+            requirements: ['require("path")', 'Log resolved path'],
+            starterCode: '<!DOCTYPE html>\n<html><body><p>Node Module Exercise</p></body></html>',
+            expectedOutput: 'Module imported successfully.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'node-mod-2',
+      id: 'node-mod-2',
+      title: 'Module 2 — File System & Stream Processing',
+      slug: 'file-system-streams',
+      order: 2,
+      description: 'Read, write, update, and stream large files efficiently.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'node-les-2-1',
+          id: 'node-les-2-1',
+          moduleId: 'node-mod-2',
+          moduleTitle: 'Module 2 — File System & Stream Processing',
+          courseId: 'node-course',
+          order: 1,
+          title: 'Working with fs and Streams',
+          slug: 'fs-and-streams',
+          description: 'Handle file read/write operations and stream data packets.',
+          learningObjective: 'Write files asynchronously using fs.promises API.',
+          concept: 'The fs module allows Node applications to interact with the local operating system file system asynchronously.',
+          codeExample: 'const fs = require("fs/promises");\nawait fs.writeFile("output.json", JSON.stringify({ status: "ok" }));',
+          expectedOutput: 'File output.json created successfully.',
+          starterCode: '<!DOCTYPE html>\n<html><body><h2>Node File System</h2><p>Asynchronous fs file operations.</p></body></html>',
+          practiceTask: {
+            title: 'File Writer Task',
+            description: 'Write JSON data to a file using fs promises.',
+            requirements: ['fs.writeFile', 'JSON.stringify'],
+            starterCode: '<!DOCTYPE html>\n<html><body><p>fs task</p></body></html>',
+            expectedOutput: 'File written.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
+// ==========================================
+// EXPRESS.JS COURSE DATA
+// ==========================================
+export const FALLBACK_EXPRESS_COURSE: HtmlCourse = {
+  _id: 'express-course',
+  id: 'express-course',
+  title: 'Express.js — Fast Backend Web Framework',
+  slug: 'expressjs-backend-framework',
+  description: 'Build REST APIs, configure middleware, handle HTTP methods, and format JSON server responses.',
+  category: 'Full Stack Backend',
+  level: 'Intermediate',
+  totalLessons: 15,
+  totalModules: 3,
+  duration: 180,
+  modules: [
+    {
+      _id: 'exp-mod-1',
+      id: 'exp-mod-1',
+      title: 'Module 1 — Express Routing & Controllers',
+      slug: 'express-routing-controllers',
+      order: 1,
+      description: 'Create Express app, handle GET/POST routes, and parse request parameters.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'exp-les-1-1',
+          id: 'exp-les-1-1',
+          moduleId: 'exp-mod-1',
+          moduleTitle: 'Module 1 — Express Routing & Controllers',
+          courseId: 'express-course',
+          order: 1,
+          title: 'Creating Express App & API Routes',
+          slug: 'creating-express-app-routes',
+          description: 'Set up an Express server and define GET/POST endpoints.',
+          learningObjective: 'Build a functional Express server listening on port 5001.',
+          concept: 'Express is a minimal web application framework for Node.js. It simplifies routing HTTP requests (GET, POST, PUT, DELETE) and returning JSON data.',
+          codeExample: 'const express = require("express");\nconst app = express();\napp.get("/api/courses", (req, res) => res.json([{ id: 1, title: "Full Stack" }]));\napp.listen(5001);',
+          expectedOutput: 'Express API running on port 5001.',
+          starterCode: '<!DOCTYPE html>\n<html><body><h2>Express.js API Framework</h2><p>RESTful endpoints and HTTP request routing.</p></body></html>',
+          practiceTask: {
+            title: 'Express Route Creation',
+            description: 'Define a GET /api/health route that returns status ok.',
+            requirements: ['app.get("/api/health")', 'res.json({ status: "ok" })'],
+            starterCode: '<!DOCTYPE html>\n<html><body><p>Express Route Exercise</p></body></html>',
+            expectedOutput: 'Route returns JSON status ok.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'exp-mod-2',
+      id: 'exp-mod-2',
+      title: 'Module 2 — Middleware & Request Body Parsing',
+      slug: 'middleware-request-parsing',
+      order: 2,
+      description: 'Use express.json(), body-parser, and custom logging middleware functions.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'exp-les-2-1',
+          id: 'exp-les-2-1',
+          moduleId: 'exp-mod-2',
+          moduleTitle: 'Module 2 — Middleware & Request Body Parsing',
+          courseId: 'express-course',
+          order: 1,
+          title: 'Understanding Express Middleware',
+          slug: 'express-middleware-functions',
+          description: 'Execute code, modify request/response objects, and end request-response cycle.',
+          learningObjective: 'Write custom middleware for logging HTTP requests.',
+          concept: 'Middleware functions have access to req, res, and next. Calling next() passes control to the next handler in the execution pipeline.',
+          codeExample: 'app.use((req, res, next) => { console.log(`${req.method} ${req.url}`); next(); });',
+          expectedOutput: 'HTTP request logged in console.',
+          starterCode: '<!DOCTYPE html>\n<html><body><h2>Express Middleware</h2><p>Request pipeline interception.</p></body></html>',
+          practiceTask: {
+            title: 'Middleware Logger',
+            description: 'Create a middleware function that logs timestamps.',
+            requirements: ['Use app.use()', 'Call next()'],
+            starterCode: '<!DOCTYPE html>\n<html><body><p>Middleware task</p></body></html>',
+            expectedOutput: 'Middleware executed.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
+// ==========================================
+// MONGODB COURSE DATA
+// ==========================================
+export const FALLBACK_MONGO_COURSE: HtmlCourse = {
+  _id: 'mongo-course',
+  id: 'mongo-course',
+  title: 'MongoDB — NoSQL Database & Mongoose ODM',
+  slug: 'mongodb-nosql-mongoose-odm',
+  description: 'Design JSON schemas, execute MongoDB queries, build Mongoose models, and run aggregations.',
+  category: 'Full Stack Database',
+  level: 'Intermediate',
+  totalLessons: 15,
+  totalModules: 3,
+  duration: 180,
+  modules: [
+    {
+      _id: 'mongo-mod-1',
+      id: 'mongo-mod-1',
+      title: 'Module 1 — Documents, Collections & Mongoose Schemas',
+      slug: 'documents-collections-mongoose-schemas',
+      order: 1,
+      description: 'Model application data with Mongoose schemas, types, and field validation.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'mongo-les-1-1',
+          id: 'mongo-les-1-1',
+          moduleId: 'mongo-mod-1',
+          moduleTitle: 'Module 1 — Documents, Collections & Mongoose Schemas',
+          courseId: 'mongo-course',
+          order: 1,
+          title: 'Designing Mongoose Schemas',
+          slug: 'designing-mongoose-schemas',
+          description: 'Define collection schemas, required fields, and unique indexes.',
+          learningObjective: 'Create a Mongoose model for User accounts with schema validation.',
+          concept: 'MongoDB stores data in flexible JSON-like BSON documents. Mongoose provides schema validation and ODM convenience methods for Node.js applications.',
+          codeExample: 'const mongoose = require("mongoose");\nconst schema = new mongoose.Schema({ email: { type: String, required: true, unique: true } });\nconst User = mongoose.model("User", schema);',
+          expectedOutput: 'Validated Mongoose User model ready.',
+          starterCode: '<!DOCTYPE html>\n<html><body><h2>MongoDB & Mongoose Schema</h2><p>Document-oriented database persistence.</p></body></html>',
+          practiceTask: {
+            title: 'Schema Validation Task',
+            description: 'Define a Mongoose schema for Course items.',
+            requirements: ['title: String', 'price: Number'],
+            starterCode: '<!DOCTYPE html>\n<html><body><p>Schema Task</p></body></html>',
+            expectedOutput: 'Mongoose schema defined.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'mongo-mod-2',
+      id: 'mongo-mod-2',
+      title: 'Module 2 — Mongoose CRUD Operations & Queries',
+      slug: 'mongoose-crud-operations',
+      order: 2,
+      description: 'Perform find(), findOne(), findOneAndUpdate(), and deleteOne() queries.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'mongo-les-2-1',
+          id: 'mongo-les-2-1',
+          moduleId: 'mongo-mod-2',
+          moduleTitle: 'Module 2 — Mongoose CRUD Operations & Queries',
+          courseId: 'mongo-course',
+          order: 1,
+          title: 'Executing Database CRUD Queries',
+          slug: 'executing-database-crud-queries',
+          description: 'Create, read, update, and delete documents in MongoDB collections.',
+          learningObjective: 'Query MongoDB documents using Mongoose findOne() and find().',
+          concept: 'Use User.create() to insert documents, User.find() to query matching documents, and User.findOneAndUpdate() to update records atomically.',
+          codeExample: 'const user = await User.findOne({ email: "p8012969119@gmail.com" });\nconsole.log(user.fullName);',
+          expectedOutput: 'Document retrieved from MongoDB.',
+          starterCode: '<!DOCTYPE html>\n<html><body><h2>MongoDB CRUD</h2><p>Find, insert, update, and delete document operations.</p></body></html>',
+          practiceTask: {
+            title: 'Mongoose Query Task',
+            description: 'Write a findOne query to fetch a user by email.',
+            requirements: ['User.findOne()', 'Handle promise with async/await'],
+            starterCode: '<!DOCTYPE html>\n<html><body><p>CRUD Task</p></body></html>',
+            expectedOutput: 'Document found.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
+// ==========================================
+// REST API & AUTH COURSE DATA
+// ==========================================
+export const FALLBACK_REST_COURSE: HtmlCourse = {
+  _id: 'rest-course',
+  id: 'rest-course',
+  title: 'REST API & Authentication — JWT & Security',
+  slug: 'rest-api-authentication-jwt-security',
+  description: 'Design RESTful API contracts, bcrypt password hashing, JWT session security, and protected routes.',
+  category: 'Full Stack Security',
+  level: 'Advanced',
+  totalLessons: 12,
+  totalModules: 2,
+  duration: 180,
+  modules: [
+    {
+      _id: 'rest-mod-1',
+      id: 'rest-mod-1',
+      title: 'Module 1 — Password Hashing & JWT Token Signing',
+      slug: 'password-hashing-jwt-signing',
+      order: 1,
+      description: 'Hash user passwords with bcrypt and sign JWT tokens upon login.',
+      duration: 60,
+      lessons: [
+        {
+          _id: 'rest-les-1-1',
+          id: 'rest-les-1-1',
+          moduleId: 'rest-mod-1',
+          moduleTitle: 'Module 1 — Password Hashing & JWT Token Signing',
+          courseId: 'rest-course',
+          order: 1,
+          title: 'Bcrypt Password Hashing & Verification',
+          slug: 'bcrypt-password-hashing',
+          description: 'Store salted password hashes and verify login credentials securely.',
+          learningObjective: 'Hash user passwords before saving to MongoDB and verify with bcrypt.compare.',
+          concept: 'Never store plain text passwords. bcrypt adds a unique salt and high cost factor to prevent rainbow table attacks. Use bcrypt.hash and bcrypt.compare for secure user auth.',
+          codeExample: 'const hashedPassword = await bcrypt.hash(password, 10);\nconst isMatch = await bcrypt.compare(password, user.password);',
+          expectedOutput: 'Password hashed and verified successfully.',
+          starterCode: '<!DOCTYPE html>\n<html><body><h2>JWT & Bcrypt Authentication</h2><p>Password hashing and stateless session security.</p></body></html>',
+          practiceTask: {
+            title: 'Bcrypt Hashing Task',
+            description: 'Write code to hash a password with cost factor 10.',
+            requirements: ['bcrypt.hash()', 'Verify hash match'],
+            starterCode: '<!DOCTYPE html>\n<html><body><p>Auth task</p></body></html>',
+            expectedOutput: 'Password hashed.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
+// ==========================================
+// CAPSTONE COURSE DATA
+// ==========================================
+export const FALLBACK_CAPSTONE_COURSE: HtmlCourse = {
+  _id: 'capstone-course',
+  id: 'capstone-course',
+  title: 'Full Stack Capstone — End-to-End Production App',
+  slug: 'fullstack-capstone-production-app',
+  description: 'Connect HTML, CSS, JavaScript, Node, Express, MongoDB, and Auth into a complete deployed capstone project.',
+  category: 'Full Stack Capstone',
+  level: 'Advanced',
+  totalLessons: 10,
+  totalModules: 2,
+  duration: 180,
+  modules: [
+    {
+      _id: 'cap-mod-1',
+      id: 'cap-mod-1',
+      title: 'Module 1 — Production Full Stack Capstone Deployment',
+      slug: 'production-fullstack-capstone-deployment',
+      order: 1,
+      description: 'Build, test, and deploy a complete production-grade web application.',
+      duration: 120,
+      lessons: [
+        {
+          _id: 'cap-les-1-1',
+          id: 'cap-les-1-1',
+          moduleId: 'cap-mod-1',
+          moduleTitle: 'Module 1 — Production Full Stack Capstone Deployment',
+          courseId: 'capstone-course',
+          order: 1,
+          title: 'End-to-End Capstone Architecture',
+          slug: 'end-to-end-capstone-architecture',
+          description: 'Architect client views, REST API controllers, MongoDB models, and production deployment.',
+          learningObjective: 'Integrate full stack client, server, database, and authentication into a deployed capstone project.',
+          concept: 'A production Full Stack application brings together HTML structure, CSS styling, JavaScript interactivity, Node/Express backend APIs, and MongoDB database persistence.',
+          codeExample: 'console.log("Production Full Stack Web Developer Capstone Deployed Successfully!");',
+          expectedOutput: 'Complete production Web Application deployed.',
+          starterCode: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>Full Stack Capstone</title>\n</head>\n<body>\n  <header><h1>Full Stack Capstone Project</h1></header>\n  <main><p>HTML + CSS + JS + Node + Express + MongoDB = Production App</p></main>\n</body>\n</html>',
+          practiceTask: {
+            title: 'Capstone Verification',
+            description: 'Verify your full stack application architecture.',
+            requirements: ['HTML5 semantic structure', 'Styled layout', 'REST API ready'],
+            starterCode: '<!DOCTYPE html>\n<html><body><h2>Full Stack Capstone Complete!</h2></body></html>',
+            expectedOutput: 'Capstone complete.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
+/**
+ * Returns the exact tailored course curriculum object for any selected technology.
+ */
+export function getCourseForTech(techId: string | null): HtmlCourse {
+  switch (techId) {
+    case 'css':
+      return FALLBACK_CSS_COURSE;
+    case 'javascript':
+      return FALLBACK_JS_COURSE;
+    case 'nodejs':
+      return FALLBACK_NODE_COURSE;
+    case 'expressjs':
+      return FALLBACK_EXPRESS_COURSE;
+    case 'mongodb':
+      return FALLBACK_MONGO_COURSE;
+    case 'restapi':
+      return FALLBACK_REST_COURSE;
+    case 'capstone':
+      return FALLBACK_CAPSTONE_COURSE;
+    case 'html':
+    default:
+      return FALLBACK_HTML_COURSE;
+  }
+}
+
 export function getFallbackLessonById(id: string): HtmlLesson | undefined {
   if (!id) return undefined;
-  return FALLBACK_HTML_LESSONS.find(l => l._id === id || l.id === id || l.slug === id);
+  const allLessons = [
+    ...FALLBACK_HTML_LESSONS,
+    ...FALLBACK_CSS_COURSE.modules.flatMap(m => m.lessons),
+    ...FALLBACK_JS_COURSE.modules.flatMap(m => m.lessons),
+    ...FALLBACK_NODE_COURSE.modules.flatMap(m => m.lessons),
+    ...FALLBACK_EXPRESS_COURSE.modules.flatMap(m => m.lessons),
+    ...FALLBACK_MONGO_COURSE.modules.flatMap(m => m.lessons),
+    ...FALLBACK_REST_COURSE.modules.flatMap(m => m.lessons),
+    ...FALLBACK_CAPSTONE_COURSE.modules.flatMap(m => m.lessons)
+  ];
+  return allLessons.find(l => l._id === id || l.id === id || l.slug === id);
 }
