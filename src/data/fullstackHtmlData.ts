@@ -116,7 +116,7 @@ export const FULLSTACK_TRACKS: FullStackTrack[] = [
   }
 ];
 
-export const FALLBACK_HTML_MODULES: HtmlModule[] = [
+const OLD_FALLBACK_MODULES: HtmlModule[] = [
   {
     "_id": "module-1",
     "id": "module-1",
@@ -2449,15 +2449,267 @@ export const FALLBACK_HTML_COURSE: HtmlCourse = {
           }
         }
       ]
+    },
+    {
+      "_id": "module-3",
+      "id": "module-3",
+      "title": "Module 3 — CSS & Responsive Layouts",
+      "slug": "module-3-css-responsive-layouts",
+      "order": 3,
+      "description": "Master selectors, Flexbox, CSS Grid, animations, and responsive media queries.",
+      "duration": 60,
+      "lessons": [
+        {
+          "_id": "lesson-3-1",
+          "id": "lesson-3-1",
+          "moduleId": "module-3",
+          "moduleTitle": "Module 3 — CSS & Responsive Layouts",
+          "courseId": "fullstack-web-development",
+          "order": 1,
+          "title": "Introduction to CSS & Selectors",
+          "slug": "introduction-to-css-selectors",
+          "description": "Learn element, class, and ID selectors to style webpage components.",
+          "learningObjective": "Understand inline, internal, and external CSS styling and selector specificity.",
+          "concept": "CSS (Cascading Style Sheets) describes how HTML elements are presented on screen. Selectors target HTML tags, classes (.class), or IDs (#id).",
+          "codeExample": "h1 {\n  color: #4F46E5;\n  font-size: 24px;\n}\n.card {\n  background: #F8FAFC;\n  padding: 16px;\n  border-radius: 12px;\n}",
+          "expectedOutput": "Styled heading in indigo with a rounded card container.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    h1 { color: #4F46E5; }\n    .box { background: #EEF2FF; padding: 15px; border-radius: 8px; }\n  </style>\n</head>\n<body>\n  <h1>CSS Styling</h1>\n  <div class=\"box\">Styled Container</div>\n</body>\n</html>",
+          "practiceTask": {
+            "title": "Style Your First Box",
+            "description": "Create a styled card using class selectors, padding, background color, and rounded borders.",
+            "requirements": ["Include a <style> block", "Define a .card class selector", "Apply background-color and padding"],
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .card { background-color: #EEF2FF; padding: 16px; border-radius: 8px; }\n  </style>\n</head>\n<body>\n  <div class=\"card\">\n    <h2>Styled Card</h2>\n  </div>\n</body>\n</html>",
+            "expectedOutput": "A clean styled card container."
+          }
+        },
+        {
+          "_id": "lesson-3-2",
+          "id": "lesson-3-2",
+          "moduleId": "module-3",
+          "moduleTitle": "Module 3 — CSS & Responsive Layouts",
+          "courseId": "fullstack-web-development",
+          "order": 2,
+          "title": "CSS Flexbox & Layout Alignment",
+          "slug": "css-flexbox-layout-alignment",
+          "description": "Build flexible 1D layouts with flex-direction, justify-content, and align-items.",
+          "learningObjective": "Master Flexbox row and column alignment for modern user interfaces.",
+          "concept": "Flexbox is a 1-dimensional layout module that aligns items evenly across rows or columns without floats or static positioning.",
+          "codeExample": ".container {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}",
+          "expectedOutput": "Flexibly spaced navigation bar or card grid.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .flex-row { display: flex; gap: 12px; }\n    .item { background: #4F46E5; color: #FFF; padding: 10px; border-radius: 6px; }\n  </style>\n</head>\n<body>\n  <div class=\"flex-row\">\n    <div class=\"item\">Flex 1</div>\n    <div class=\"item\">Flex 2</div>\n  </div>\n</body>\n</html>",
+          "practiceTask": {
+            "title": "Build a Flex Navigation Bar",
+            "description": "Use display: flex and justify-content: space-between to align header items.",
+            "requirements": ["Set display: flex", "Use justify-content: space-between"],
+            "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    nav { display: flex; justify-content: space-between; padding: 10px; background: #1E293B; color: #FFF; }\n  </style>\n</head>\n<body>\n  <nav>\n    <span>Logo</span>\n    <span>Menu</span>\n  </nav>\n</body>\n</html>",
+            "expectedOutput": "A dark header bar with logo on left and menu on right."
+          }
+        }
+      ]
+    },
+    {
+      "_id": "module-4",
+      "id": "module-4",
+      "title": "Module 4 — Modern JavaScript (ES6+)",
+      "slug": "module-4-modern-javascript-es6",
+      "order": 4,
+      "description": "Master const/let, arrow functions, DOM manipulation, promises, and async/await.",
+      "duration": 90,
+      "lessons": [
+        {
+          "_id": "lesson-4-1",
+          "id": "lesson-4-1",
+          "moduleId": "module-4",
+          "moduleTitle": "Module 4 — Modern JavaScript (ES6+)",
+          "courseId": "fullstack-web-development",
+          "order": 1,
+          "title": "Variables, Scope & ES6 Arrow Functions",
+          "slug": "javascript-variables-arrow-functions",
+          "description": "Learn const, let, template literals, and concise ES6 arrow functions.",
+          "learningObjective": "Differentiate const vs let block scope and write clean ES6 arrow functions.",
+          "concept": "ES6 introduced let and const for block-scoped variables, preventing accidental global overwrites, and arrow functions (() => {}) for concise code.",
+          "codeExample": "const add = (a, b) => a + b;\nconsole.log(`Sum: ${add(5, 10)}`);",
+          "expectedOutput": "Console log: Sum: 15",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2 id=\"out\">JS Output</h2>\n  <script>\n    const greet = name => `Hello, ${name}!`;\n    document.getElementById('out').innerText = greet('Full Stack Developer');\n  </script>\n</body>\n</html>",
+          "practiceTask": {
+            "title": "Write an ES6 Arrow Function",
+            "description": "Create an arrow function that returns a formatted greeting string.",
+            "requirements": ["Use const variable declaration", "Write an arrow function"],
+            "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <p id=\"res\"></p>\n  <script>\n    const welcome = name => `Welcome to JS, ${name}`;\n    document.getElementById('res').innerText = welcome('Learner');\n  </script>\n</body>\n</html>",
+            "expectedOutput": "Paragraph populated with Welcome to JS, Learner."
+          }
+        },
+        {
+          "_id": "lesson-4-2",
+          "id": "lesson-4-2",
+          "moduleId": "module-4",
+          "moduleTitle": "Module 4 — Modern JavaScript (ES6+)",
+          "courseId": "fullstack-web-development",
+          "order": 2,
+          "title": "DOM Manipulation & Event Listeners",
+          "slug": "javascript-dom-events",
+          "description": "Select HTML elements, modify text/styles dynamically, and handle click events.",
+          "learningObjective": "Use document.querySelector and addEventListener to build interactive user interfaces.",
+          "concept": "The Document Object Model (DOM) connects scripts to webpage elements. addEventListener allows responding to user interaction such as button clicks.",
+          "codeExample": "const btn = document.querySelector('button');\nbtn.addEventListener('click', () => alert('Clicked!'));",
+          "expectedOutput": "Interactive button triggering click response.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <button id=\"btn\">Click Me</button>\n  <p id=\"txt\">Initial text</p>\n  <script>\n    document.getElementById('btn').addEventListener('click', () => {\n      document.getElementById('txt').innerText = 'Button Clicked Successfully!';\n    });\n  </script>\n</body>\n</html>",
+          "practiceTask": {
+            "title": "Interactive Click Handler",
+            "description": "Attach a click event listener to update paragraph content dynamically.",
+            "requirements": ["Use addEventListener('click', ...)", "Update innerText"],
+            "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <button id=\"btn\">Change Text</button>\n  <p id=\"msg\">Old Message</p>\n  <script>\n    document.getElementById('btn').addEventListener('click', () => {\n      document.getElementById('msg').innerText = 'New Interactive Message!';\n    });\n  </script>\n</body>\n</html>",
+            "expectedOutput": "Paragraph text changes upon button click."
+          }
+        }
+      ]
+    },
+    {
+      "_id": "module-5",
+      "id": "module-5",
+      "title": "Module 5 — Node.js Server Runtime",
+      "slug": "module-5-nodejs-server-runtime",
+      "order": 5,
+      "description": "Execute JavaScript server-side, work with NPM, Modules, Buffer, and File System.",
+      "duration": 75,
+      "lessons": [
+        {
+          "_id": "lesson-5-1",
+          "id": "lesson-5-1",
+          "moduleId": "module-5",
+          "moduleTitle": "Module 5 — Node.js Server Runtime",
+          "courseId": "fullstack-web-development",
+          "order": 1,
+          "title": "Node.js Architecture & Event Loop",
+          "slug": "nodejs-architecture-event-loop",
+          "description": "Understand non-blocking I/O, single-threaded Event Loop, and Node modules.",
+          "learningObjective": "Explain Node.js event-driven architecture and asynchronous I/O execution.",
+          "concept": "Node.js uses Google Chrome V8 engine to execute JavaScript outside the browser. Its single-threaded event loop handles thousands of concurrent requests efficiently without thread blocking.",
+          "codeExample": "const fs = require('fs');\nfs.readFile('data.txt', 'utf8', (err, data) => {\n  console.log('File Content:', data);\n});",
+          "expectedOutput": "Asynchronous file content logged to server terminal.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Node.js Server Concepts</h2>\n  <p>Non-blocking asynchronous server runtime.</p>\n</body>\n</html>",
+          "practiceTask": {
+            "title": "Understand Asynchronous I/O",
+            "description": "Review Node.js asynchronous event-driven code execution pattern.",
+            "requirements": ["Understand require() module imports", "Identify non-blocking callback pattern"],
+            "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h3>Node.js Module Pattern</h3>\n  <p>Event-driven architecture powering full stack applications.</p>\n</body>\n</html>",
+            "expectedOutput": "Node.js concepts verified."
+          }
+        }
+      ]
+    },
+    {
+      "_id": "module-6",
+      "id": "module-6",
+      "title": "Module 6 — Express.js Web Framework",
+      "slug": "module-6-expressjs-framework",
+      "order": 6,
+      "description": "Build high-performance RESTful APIs, routing, middleware pipelines, and error handling.",
+      "duration": 75,
+      "lessons": [
+        {
+          "_id": "lesson-6-1",
+          "id": "lesson-6-1",
+          "moduleId": "module-6",
+          "moduleTitle": "Module 6 — Express.js Web Framework",
+          "courseId": "fullstack-web-development",
+          "order": 1,
+          "title": "Express Routing & Middleware",
+          "slug": "express-routing-middleware",
+          "description": "Define HTTP methods (GET, POST, PUT, DELETE) and middleware functions.",
+          "learningObjective": "Create Express app routes, parse JSON request body, and use custom middleware.",
+          "concept": "Express.js is a minimal and flexible Node.js web application framework providing robust routing and middleware capabilities for building REST APIs.",
+          "codeExample": "const express = require('express');\nconst app = express();\napp.use(express.json());\napp.get('/api/users', (req, res) => res.json([{ id: 1, name: 'Learner' }]));\napp.listen(5001);",
+          "expectedOutput": "JSON response endpoint returning user list on port 5001.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Express REST API</h2>\n  <p>GET, POST, PUT, DELETE endpoints with JSON payloads.</p>\n</body>\n</html>",
+          "practiceTask": {
+            "title": "Express Endpoint Concepts",
+            "description": "Understand route parameters, request query string, and JSON responses.",
+            "requirements": ["Define GET endpoint route", "Return JSON response"],
+            "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h3>Express API Routing</h3>\n  <p>Fast server framework for full stack web development.</p>\n</body>\n</html>",
+            "expectedOutput": "Express API structure verified."
+          }
+        }
+      ]
+    },
+    {
+      "_id": "module-7",
+      "id": "module-7",
+      "title": "Module 7 — MongoDB & Mongoose ODM",
+      "slug": "module-7-mongodb-mongoose",
+      "order": 7,
+      "description": "Store JSON documents, define Mongoose Schemas, models, queries, and JWT auth security.",
+      "duration": 90,
+      "lessons": [
+        {
+          "_id": "lesson-7-1",
+          "id": "lesson-7-1",
+          "moduleId": "module-7",
+          "moduleTitle": "Module 7 — MongoDB & Mongoose ODM",
+          "courseId": "fullstack-web-development",
+          "order": 1,
+          "title": "NoSQL Schemas, Mongoose & JWT Auth",
+          "slug": "mongodb-mongoose-jwt-auth",
+          "description": "Model database collections with Mongoose and secure routes using JWT tokens.",
+          "learningObjective": "Define User schemas, hash passwords with bcrypt, and verify JWT auth headers.",
+          "concept": "MongoDB is a NoSQL document database. Mongoose provides a straight-forward, schema-based solution to model application data, validate fields, and execute CRUD operations.",
+          "codeExample": "const mongoose = require('mongoose');\nconst UserSchema = new mongoose.Schema({ name: String, email: { type: String, unique: true } });\nconst User = mongoose.model('User', UserSchema);",
+          "expectedOutput": "Validated Mongoose User model with unique index.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>MongoDB & Authentication</h2>\n  <p>Document database storage with JWT session security.</p>\n</body>\n</html>",
+          "practiceTask": {
+            "title": "Mongoose Schema Design",
+            "description": "Design a Mongoose schema for User profile data including name, email, and password.",
+            "requirements": ["Define schema fields", "Set required validation"],
+            "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h3>Mongoose Database Schema</h3>\n  <p>Schema validation and secure document storage.</p>\n</body>\n</html>",
+            "expectedOutput": "MongoDB Schema concept verified."
+          }
+        }
+      ]
+    },
+    {
+      "_id": "module-8",
+      "id": "module-8",
+      "title": "Module 8 — Final Full Stack Capstone Project",
+      "slug": "module-8-final-fullstack-capstone",
+      "order": 8,
+      "description": "Connect HTML, CSS, JavaScript, Node, Express, MongoDB, and Auth into a complete production deployment.",
+      "duration": 120,
+      "lessons": [
+        {
+          "_id": "lesson-8-1",
+          "id": "lesson-8-1",
+          "moduleId": "module-8",
+          "moduleTitle": "Module 8 — Final Full Stack Capstone Project",
+          "courseId": "fullstack-web-development",
+          "order": 1,
+          "title": "Full Stack Capstone Architecture & Deployment",
+          "slug": "fullstack-capstone-architecture-deployment",
+          "description": "Architect client-side views, REST API controllers, MongoDB models, and production deployment.",
+          "learningObjective": "Integrate end-to-end full stack architecture and pass final capstone verification.",
+          "concept": "A production Full Stack application brings together HTML structure, CSS styling, JavaScript interactivity, Node/Express backend APIs, and MongoDB database persistence.",
+          "codeExample": "/* Production Full Stack Web Application Capstone */\nconsole.log('Full Stack Web Developer Capstone Deployed Successfully!');",
+          "expectedOutput": "Complete production Web Application end-to-end deployment.",
+          "starterCode": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Full Stack Capstone</title>\n</head>\n<body>\n  <header><h1>Full Stack Capstone Project</h1></header>\n  <main><p>HTML + CSS + JS + Node + Express + MongoDB = Production App</p></main>\n</body>\n</html>",
+          "practiceTask": {
+            "title": "Final Full Stack Capstone",
+            "description": "Verify your full stack mastery across client, server, database, and authentication.",
+            "requirements": ["Semantic HTML5 structure", "Styled layout", "API integration ready"],
+            "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Full Stack Capstone Completed!</h2>\n  <p>Congratulations on completing the Full Stack Web Development course!</p>\n</body>\n</html>",
+            "expectedOutput": "Full Stack Web Development Capstone complete."
+          }
+        }
+      ]
     }
   ],
-  "totalLessons": 25,
+  "totalLessons": 32,
   "completedLessons": 0,
   "progressPercentage": 0
 };
 
-export const FALLBACK_HTML_LESSONS: HtmlLesson[] = FALLBACK_HTML_MODULES.flatMap(m => m.lessons);
+export const FALLBACK_HTML_MODULES: HtmlModule[] = FALLBACK_HTML_COURSE.modules;
+export const FALLBACK_HTML_LESSONS: HtmlLesson[] = FALLBACK_HTML_COURSE.modules.flatMap(m => m.lessons);
 
 export function getFallbackLessonById(id: string): HtmlLesson | undefined {
+  if (!id) return undefined;
   return FALLBACK_HTML_LESSONS.find(l => l._id === id || l.id === id || l.slug === id);
 }

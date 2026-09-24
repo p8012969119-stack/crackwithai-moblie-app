@@ -14,7 +14,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { fullstackApi } from '../../api/fullstackApi';
 import { HtmlLesson } from '../../types/fullstack';
-import { FALLBACK_HTML_LESSONS } from '../../data/fullstackHtmlData';
+import { FALLBACK_HTML_LESSONS, getFallbackLessonById } from '../../data/fullstackHtmlData';
 import { Icon } from '../../components/Icon';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
@@ -24,23 +24,33 @@ export const HtmlLessonScreen: React.FC = () => {
   const { lessonId, lessonSlug } = route.params || {};
 
   const [currentId, setCurrentId] = useState<string>(lessonId || lessonSlug || 'introduction-to-html');
-  const [lesson, setLesson] = useState<HtmlLesson | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const initialFallback = getFallbackLessonById(lessonId || lessonSlug || 'introduction-to-html') || null;
+  const [lesson, setLesson] = useState<HtmlLesson | null>(initialFallback);
+  const [loading, setLoading] = useState<boolean>(!initialFallback);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
 
   const loadLesson = async (id: string) => {
-    setLoading(true);
+    const fallback = getFallbackLessonById(id);
+    if (fallback) {
+      setLesson(fallback);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     try {
       const [lessonData, progressData] = await Promise.all([
-        fullstackApi.getLesson(id),
-        fullstackApi.getProgress()
+        fullstackApi.getLesson(id).catch(() => null),
+        fullstackApi.getProgress().catch(() => ({ completedLessonIds: [] }))
       ]);
 
-      if (lessonData) {
-        setLesson(lessonData);
-        const resolvedId = lessonData._id || lessonData.id || id;
-        setIsCompleted((progressData.completedLessonIds || []).includes(resolvedId));
+      const resolvedLesson = lessonData || fallback;
+      if (resolvedLesson) {
+        setLesson(resolvedLesson);
+        const resolvedId = resolvedLesson._id || resolvedLesson.id || id;
+        const completedIds: string[] = progressData?.completedLessonIds || [];
+        setIsCompleted(completedIds.includes(resolvedId));
       }
     } catch (err) {
       console.warn('Failed to load lesson', err);

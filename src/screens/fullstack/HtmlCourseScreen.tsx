@@ -13,32 +13,38 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { fullstackApi } from '../../api/fullstackApi';
 import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress } from '../../types/fullstack';
+import { FALLBACK_HTML_COURSE } from '../../data/fullstackHtmlData';
 import { Icon } from '../../components/Icon';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 export const HtmlCourseScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const [course, setCourse] = useState<HtmlCourse | null>(null);
+  const [course, setCourse] = useState<HtmlCourse | null>(FALLBACK_HTML_COURSE);
   const [progress, setProgress] = useState<FullStackProgress | null>(null);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
     'module-1': true,
     '0': true
   });
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const loadData = async () => {
     try {
       const [courseData, progressData] = await Promise.all([
-        fullstackApi.getHtmlCourse(),
-        fullstackApi.getProgress()
+        fullstackApi.getHtmlCourse().catch(() => null),
+        fullstackApi.getProgress().catch(() => null)
       ]);
-      setCourse(courseData);
-      setProgress(progressData);
+      if (courseData && courseData.modules && courseData.modules.length > 0) {
+        setCourse(courseData);
+      }
+      if (progressData) {
+        setProgress(progressData);
+      }
 
       // Expand first module by default
-      if (courseData?.modules?.length) {
-        const firstModId = courseData.modules[0]._id || '0';
+      const activeModules = courseData?.modules || course?.modules;
+      if (activeModules?.length) {
+        const firstModId = activeModules[0]._id || '0';
         setExpandedModules(prev => ({ ...prev, [firstModId]: true }));
       }
     } catch (err) {
