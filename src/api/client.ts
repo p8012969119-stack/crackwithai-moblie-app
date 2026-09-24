@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { Platform } from 'react-native';
 import { CONFIG, getDevApiBaseUrl, getAlternateApiBaseUrl, setDynamicApiBaseUrl } from '../constants/config';
 import { storage } from '../services/storage';
 
@@ -98,12 +99,16 @@ apiClient.interceptors.response.use(
           : undefined,
       });
     }
+    const networkErrorMessage = Platform.OS === 'android'
+      ? 'Unable to connect to CrackWithAI. Please check that the backend server is running on port 5001 and ADB connection is active.'
+      : 'Unable to connect to CrackWithAI. Ensure your iPhone and Mac are on the same Wi-Fi network and Local Network permission is enabled in iPhone Settings > Privacy & Security > Local Network > CrackWithAI.';
+
     const message = timedOut ? 'The server took too long to respond. Please try again.' :
       error.response?.status >= 500 ? 'The service is temporarily unavailable. Please try again shortly.' :
       error.response?.status === 401 ? 'Your session has expired. Please sign in again.' :
       error.response?.data?.message ||
       (!error.response && (error.message?.includes('Local network') || error.code === 'ERR_NETWORK'))
-        ? 'Unable to connect to CrackWithAI. Ensure your iPhone and Mac are on the same Wi-Fi network and Local Network permission is enabled in iPhone Settings > Privacy & Security > Local Network > CrackWithAI.'
+        ? networkErrorMessage
         : error.message || 'An unexpected error occurred. Please try again.';
 
     return Promise.reject(new ApiError(message, error.response?.status, error.response?.data?.code || error.code, error.response?.data?.requiresVerification));

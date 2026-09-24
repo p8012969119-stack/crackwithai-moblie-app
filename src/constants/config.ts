@@ -1,8 +1,8 @@
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
-const DEV_LAN_IP = '172.168.6.95';
+const DEV_LAN_IP = '172.168.7.129';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
-const LOCAL_URL = 'http://localhost:5001/api';
+const LOCAL_URL = 'http://127.0.0.1:5001/api';
 
 let dynamicApiBaseUrl: string | null = null;
 
@@ -43,7 +43,12 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  // Use Mac LAN IP so physical iPhone devices on local Wi-Fi and simulators can reach port 5001
+  // On Android physical/emulator devices with ADB reverse, 127.0.0.1:5001 connects directly over USB.
+  if (Platform.OS === 'android') {
+    return LOCAL_URL;
+  }
+
+  // Use Mac LAN IP so physical iPhone devices on local Wi-Fi can reach port 5001
   return DEV_LAN_URL;
 };
 
