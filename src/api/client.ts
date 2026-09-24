@@ -68,14 +68,17 @@ apiClient.interceptors.response.use(
       }
     }
     if (error.response?.status === 401) {
-      const currentToken = await storage.getToken();
-      const requestAuth = error.config?.headers?.Authorization || error.config?.headers?.authorization;
-      const requestToken = typeof requestAuth === 'string' ? requestAuth.replace(/^Bearer\s+/i, '') : null;
-      if (!requestToken || !currentToken || requestToken === currentToken) {
-        await storage.removeToken();
-        await storage.removeUser();
-        if (unauthorizedListener) {
-          unauthorizedListener();
+      const isAuthEndpoint = error.config?.url?.includes('/auth/');
+      if (!isAuthEndpoint) {
+        const currentToken = await storage.getToken();
+        const requestAuth = error.config?.headers?.Authorization || error.config?.headers?.authorization;
+        const requestToken = typeof requestAuth === 'string' ? requestAuth.replace(/^Bearer\s+/i, '') : null;
+        if (!requestToken || !currentToken || requestToken === currentToken) {
+          await storage.removeToken();
+          await storage.removeUser();
+          if (unauthorizedListener) {
+            unauthorizedListener();
+          }
         }
       }
     }
@@ -104,12 +107,12 @@ apiClient.interceptors.response.use(
       : 'Unable to connect to CrackWithAI. Ensure your iPhone and Mac are on the same Wi-Fi network and Local Network permission is enabled in iPhone Settings > Privacy & Security > Local Network > CrackWithAI.';
 
     const message = timedOut ? 'The server took too long to respond. Please try again.' :
-      error.response?.status >= 500 ? 'The service is temporarily unavailable. Please try again shortly.' :
-      error.response?.status === 401 ? 'Your session has expired. Please sign in again.' :
       error.response?.data?.message ||
+      (error.response?.status >= 500 ? 'The service is temporarily unavailable. Please try again shortly.' :
+      error.response?.status === 401 ? 'Your session has expired. Please sign in again.' :
       (!error.response && (error.message?.includes('Local network') || error.code === 'ERR_NETWORK'))
         ? networkErrorMessage
-        : error.message || 'An unexpected error occurred. Please try again.';
+        : error.message || 'An unexpected error occurred. Please try again.');
 
     return Promise.reject(new ApiError(message, error.response?.status, error.response?.data?.code || error.code, error.response?.data?.requiresVerification));
   }
