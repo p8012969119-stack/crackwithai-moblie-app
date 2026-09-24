@@ -18,7 +18,8 @@ import { FALLBACK_HTML_COURSE, FULLSTACK_TRACKS, getCourseForTech } from '../../
 import { Icon } from '../../components/Icon';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-const FONT_FAMILY = Platform.OS === 'ios' ? 'System' : 'sans-serif';
+const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
+const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
 export const HtmlCourseScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -283,67 +284,19 @@ export const HtmlCourseScreen: React.FC = () => {
               <Text style={styles.backToRoadmapText}>Back to All Full Stack Technologies</Text>
             </TouchableOpacity>
 
-            {/* Selected Tech Hero Banner */}
-            <View style={styles.heroBanner}>
-              <View style={styles.badgeRow}>
-                <View style={styles.trackPill}>
-                  <Text style={styles.trackPillText}>{activeTrack.title.toUpperCase()} TRACK</Text>
+            {/* Compact Header for Selected Tech */}
+            <View style={styles.compactHeaderCard}>
+              <View style={styles.compactHeaderRow}>
+                <View style={styles.compactIconCircle}>
+                  <Icon name={activeTrack.icon as any || 'code'} size={22} color="#4F46E5" />
                 </View>
-                <View style={styles.levelPill}>
-                  <Text style={styles.levelPillText}>{activeTrack.level || 'Beginner to Advanced'}</Text>
-                </View>
-              </View>
-
-              <Text style={styles.courseTitle}>{activeCourse.title}</Text>
-              <Text style={styles.courseDescription}>{activeCourse.description}</Text>
-
-              {/* Stats Bar */}
-              <View style={styles.metaRow}>
-                <View style={styles.metaChip}>
-                  <Icon name="file-text" size={14} color="#C7D2FE" />
-                  <Text style={styles.metaChipText}>{activeCourse.totalLessons || activeTrack.lessonsCount} Lessons</Text>
-                </View>
-                <View style={styles.metaChip}>
-                  <Icon name="book-open" size={14} color="#C7D2FE" />
-                  <Text style={styles.metaChipText}>{activeCourse.modules?.length || activeTrack.modulesCount} Modules</Text>
-                </View>
-                <View style={styles.metaChip}>
-                  <Icon name="clock" size={14} color="#C7D2FE" />
-                  <Text style={styles.metaChipText}>{activeTrack.duration}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.compactHeaderTitle}>{activeTrack.title} Course</Text>
+                  <Text style={styles.compactHeaderSub}>
+                    {activeCourse.modules?.length || activeTrack.modulesCount} Progressive Modules · {activeCourse.totalLessons || activeTrack.lessonsCount} Lessons
+                  </Text>
                 </View>
               </View>
-
-              {/* Progress Card */}
-              {selectedTech === 'html' && (
-                <View style={styles.progressCard}>
-                  <View style={styles.progressTextRow}>
-                    <Text style={styles.progressStatusLabel}>Your Progress</Text>
-                    <Text style={styles.progressPercent}>{completedLessons}/{totalLessons} ({percent}%)</Text>
-                  </View>
-                  <View style={styles.progressBarTrack}>
-                    <View style={[styles.progressBarFill, { width: `${percent}%` }]} />
-                  </View>
-                </View>
-              )}
-
-              {/* Quick Playground CTA */}
-              <TouchableOpacity
-                style={styles.heroPlaygroundButton}
-                activeOpacity={0.85}
-                onPress={() => handleOpenPlayground()}
-              >
-                <Icon name="code" size={18} color="#FFFFFF" />
-                <Text style={styles.heroPlaygroundButtonText}>Open Interactive {activeTrack.title} Playground</Text>
-                <Icon name="arrow-right" size={16} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Modules Section Header */}
-            <View style={styles.curriculumHeader}>
-              <Text style={styles.curriculumTitle}>{activeTrack.title} Curriculum & Modules</Text>
-              <Text style={styles.curriculumSubtitle}>
-                {activeCourse.modules?.length || 3} progressive modules from fundamental concepts to practical code
-              </Text>
             </View>
 
             {/* Loading Spinner */}
@@ -352,7 +305,7 @@ export const HtmlCourseScreen: React.FC = () => {
             ) : (
               <View style={styles.modulesContainer}>
                 {sortedModules.map((module: HtmlModule, modIndex: number) => {
-                  const moduleId = module._id || String(modIndex);
+                  const moduleId = module._id || module.id || `mod-${modIndex}`;
                   const isExpanded = expandedModules[moduleId] ?? (modIndex === 0);
                   const moduleLessons = module.lessons || [];
                   const completedInModule = moduleLessons.filter(l => completedSet.has(l._id || l.id || '')).length;
@@ -360,7 +313,7 @@ export const HtmlCourseScreen: React.FC = () => {
                   const firstLessonStarterCode = moduleLessons[0]?.starterCode;
 
                   return (
-                    <View key={moduleId} style={styles.moduleCard}>
+                    <View key={`mod-${selectedTech}-${modIndex}-${moduleId}`} style={styles.moduleCard}>
                       {/* Module Header (Accordion Toggle) */}
                       <TouchableOpacity
                         style={styles.moduleHeader}
@@ -404,12 +357,12 @@ export const HtmlCourseScreen: React.FC = () => {
                           </TouchableOpacity>
 
                           {moduleLessons.map((lesson: HtmlLesson, lessonIdx: number) => {
-                            const lessonId = lesson._id || lesson.id || '';
+                            const lessonId = lesson._id || lesson.id || `les-${lessonIdx}`;
                             const isCompleted = completedSet.has(lessonId);
 
                             return (
                               <TouchableOpacity
-                                key={lessonId}
+                                key={`les-${selectedTech}-${modIndex}-${lessonIdx}-${lessonId}`}
                                 style={[
                                   styles.lessonRow,
                                   isCompleted && styles.lessonRowCompleted
@@ -491,7 +444,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9'
   },
   topBarTitle: {
-    fontFamily: FONT_FAMILY,
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 17,
     fontWeight: '700',
     color: '#0F172A',
@@ -560,7 +513,7 @@ const styles = StyleSheet.create({
     color: '#34D399'
   },
   roadmapTitle: {
-    fontFamily: FONT_FAMILY,
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 22,
     fontWeight: '800',
     color: '#FFFFFF',
@@ -574,6 +527,56 @@ const styles = StyleSheet.create({
     color: '#C7D2FE',
     lineHeight: 19,
     marginBottom: SPACING.md
+  },
+  progressCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md
+  },
+  progressTextRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8
+  },
+  progressStatusLabel: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#E0E7FF'
+  },
+  progressPercent: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#34D399'
+  },
+  progressBarTrack: {
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderRadius: 4,
+    overflow: 'hidden'
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: 4
+  },
+  heroPlaygroundButton: {
+    backgroundColor: '#433EFE',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 14,
+    gap: 8,
+    elevation: 2
+  },
+  heroPlaygroundButtonText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700'
   },
   sectionHeadingWrap: {
     marginBottom: SPACING.md
@@ -716,114 +719,43 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#4F46E5'
   },
-  heroBanner: {
-    backgroundColor: '#1E1B4B',
-    borderRadius: 22,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    shadowColor: '#433EFE',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5
-  },
-  courseTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginTop: 8,
-    marginBottom: 6,
-    letterSpacing: -0.3
-  },
-  courseDescription: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 13,
-    color: '#C7D2FE',
-    lineHeight: 19,
-    marginBottom: SPACING.md
-  },
-  metaRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: SPACING.md
-  },
-  metaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6
-  },
-  metaChipText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#E0E7FF',
-    fontWeight: '600'
-  },
-  progressCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.md
-  },
-  progressTextRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8
-  },
-  progressStatusLabel: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#E0E7FF'
-  },
-  progressPercent: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#34D399'
-  },
-  progressBarTrack: {
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    borderRadius: 4,
-    overflow: 'hidden'
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#10B981',
-    borderRadius: 4
-  },
-  heroPlaygroundButton: {
-    backgroundColor: '#433EFE',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 14,
-    gap: 8,
+  compactHeaderCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    marginBottom: SPACING.md,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 2
   },
-  heroPlaygroundButtonText: {
-    fontFamily: FONT_FAMILY,
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700'
+  compactHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
   },
-  curriculumHeader: {
-    marginBottom: SPACING.md
+  compactIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#EEEDFF',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  curriculumTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 20,
-    fontWeight: '800',
+  compactHeaderTitle: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 18,
+    fontWeight: '700',
     color: '#0F172A'
   },
-  curriculumSubtitle: {
+  compactHeaderSub: {
     fontFamily: FONT_FAMILY,
-    fontSize: 13,
+    fontSize: 12,
     color: '#64748B',
-    marginTop: 4,
-    lineHeight: 18
+    marginTop: 2
   },
   loader: {
     marginTop: 40
