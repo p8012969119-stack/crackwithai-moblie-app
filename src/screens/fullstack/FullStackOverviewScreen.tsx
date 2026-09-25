@@ -103,12 +103,12 @@ export const FullStackOverviewScreen = () => {
         <TouchableOpacity
           style={styles.activeCourseCard}
           activeOpacity={0.9}
-          onPress={() => openFullStackCourse('html')}
+          onPress={() => navigation.navigate('FullStackRoadmap')}
         >
           <View style={styles.courseHeaderRow}>
             <View style={styles.activeBadgeContainer}>
               <View style={styles.activeDot} />
-              <Text style={styles.activeBadgeText}>ACTIVE COURSE</Text>
+              <Text style={styles.activeBadgeText}>ACTIVE CURRICULUM</Text>
             </View>
             <Text style={styles.courseProgressBadgeText}>
               {fsProgress ? `${fsProgress.overallPercentage}% Progress` : 'Active'}
@@ -117,14 +117,14 @@ export const FullStackOverviewScreen = () => {
 
           <Text style={styles.courseTitle}>Full Stack Development</Text>
           <Text style={styles.courseDesc}>
-            Master client-side, server-side, database engineering, and capstone deployment.
+            Master 9 sequential technologies: HTML, CSS, JavaScript, Node.js, Express, MongoDB, REST API, Authentication & Capstone.
           </Text>
 
           {fsProgress && (
             <View style={styles.progressContainer}>
               <Meter value={fsProgress.overallPercentage} />
               <Text style={styles.progressSubtext}>
-                {fsProgress.completedModules} of 8 modules finished ({fsProgress.completedLessons}/{fsProgress.totalLessons} lessons)
+                {fsProgress.completedModules} of 9 courses finished ({fsProgress.completedLessons}/{fsProgress.totalLessons} lessons)
               </Text>
             </View>
           )}
@@ -132,9 +132,9 @@ export const FullStackOverviewScreen = () => {
           <TouchableOpacity
             style={styles.startBtnPrimary}
             activeOpacity={0.85}
-            onPress={() => openFullStackCourse('html')}
+            onPress={() => navigation.navigate('FullStackRoadmap')}
           >
-            <Text style={styles.startBtnText}>Start / Continue HTML Course</Text>
+            <Text style={styles.startBtnText}>Start Full Stack (View All Courses)</Text>
             <Icon name="arrow-right" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </TouchableOpacity>

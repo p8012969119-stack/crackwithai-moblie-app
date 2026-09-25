@@ -271,9 +271,9 @@ export const HomeScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 style={styles.fullstackPrimaryBtn}
                 activeOpacity={0.85}
-                onPress={() => navigation.navigate('FullStackOverview')}
+                onPress={() => navigation.navigate('FullStackRoadmap')}
               >
-                <Text style={styles.fullstackPrimaryBtnText}>Continue Course</Text>
+                <Text style={styles.fullstackPrimaryBtnText}>Explore All Courses</Text>
                 <Icon name="arrow-right" size={14} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity

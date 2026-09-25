@@ -26,6 +26,7 @@ import { AIVoiceGeneratorScreen } from '../screens/tools/AIVoiceGeneratorScreen'
 import { AIImageGeneratorScreen } from '../screens/tools/AIImageGeneratorScreen';
 import { AICodeGeneratorScreen } from '../screens/tools/AICodeGeneratorScreen';
 import { FullStackOverviewScreen } from '../screens/fullstack/FullStackOverviewScreen';
+import { FullStackRoadmapScreen } from '../screens/fullstack/FullStackRoadmapScreen';
 import { CurriculumModuleScreen } from '../screens/fullstack/CurriculumModuleScreen';
 import { CurriculumWorkspaceScreen } from '../screens/fullstack/CurriculumWorkspaceScreen';
 import { HtmlCourseScreen } from '../screens/fullstack/HtmlCourseScreen';
@@ -78,6 +79,7 @@ export const RootNavigator = () => {
           <Stack.Screen name="AIImageGenerator" component={AIImageGeneratorScreen} />
           <Stack.Screen name="AICodeGenerator" component={AICodeGeneratorScreen} />
           <Stack.Screen name="FullStackOverview" component={FullStackOverviewScreen} />
+          <Stack.Screen name="FullStackRoadmap" component={FullStackRoadmapScreen} />
           <Stack.Screen name="CurriculumModule" component={CurriculumModuleScreen} />
           <Stack.Screen name="CurriculumWorkspace" component={CurriculumWorkspaceScreen} />
           <Stack.Screen name="HtmlCourse" component={HtmlCourseScreen} />
