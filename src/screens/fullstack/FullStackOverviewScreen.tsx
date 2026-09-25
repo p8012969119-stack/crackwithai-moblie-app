@@ -18,8 +18,6 @@ import { Meter, Notice, palette, ui } from '../../components/fullstack/Curriculu
 import { Icon } from '../../components/Icon';
 import { useAuth } from '../../store/AuthContext';
 
-import { FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
-
 const FONT_FAMILY = Platform.OS === 'ios' ? 'System' : 'sans-serif';
 
 export const FullStackOverviewScreen = () => {
@@ -53,10 +51,6 @@ export const FullStackOverviewScreen = () => {
       };
     }, [revision, user?._id])
   );
-
-  const openFullStackCourse = (techId: string = 'html') => {
-    navigation.navigate('HtmlCourse', { tech: techId });
-  };
 
   const handleComingSoon = (courseName: string) => {
     Alert.alert(
@@ -140,39 +134,6 @@ export const FullStackOverviewScreen = () => {
         </TouchableOpacity>
 
         {/* ==================================================
-            FULL STACK INDIVIDUAL TRACKS (SEPARATE COURSES)
-            ================================================== */}
-        <View style={styles.tracksSectionHeader}>
-          <Text style={styles.tracksSectionTitle}>Full Stack Technology Tracks</Text>
-          <Text style={styles.tracksSectionSub}>Tap any technology to open its isolated modules & lessons</Text>
-        </View>
-
-        <View style={styles.tracksContainer}>
-          {FULLSTACK_TRACKS.map(track => (
-            <TouchableOpacity
-              key={track.id}
-              style={styles.trackCardItem}
-              activeOpacity={0.8}
-              onPress={() => openFullStackCourse(track.id)}
-            >
-              <View style={styles.trackCardIconWrap}>
-                <Icon name={track.icon as any || 'code'} size={20} color="#4F46E5" />
-              </View>
-              <View style={styles.trackCardBody}>
-                <View style={styles.trackCardTopRow}>
-                  <Text style={styles.trackCardTitle}>{track.title}</Text>
-                  <View style={styles.trackLessonsBadge}>
-                    <Text style={styles.trackLessonsBadgeText}>{track.lessonsCount || 20} Lessons</Text>
-                  </View>
-                </View>
-                <Text style={styles.trackCardSub} numberOfLines={1}>{track.subtitle || track.description}</Text>
-              </View>
-              <Icon name="chevron-right" size={18} color="#94A3B8" />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* ==================================================
             COURSE 2: PROMPT ENGINEERING (COMING SOON CARD)
             ================================================== */}
         <TouchableOpacity
@@ -182,13 +143,14 @@ export const FullStackOverviewScreen = () => {
         >
           <View style={styles.courseHeaderRow}>
             <View style={styles.comingSoonBadge}>
+              <Icon name="sparkles" size={12} color="#6366F1" />
               <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
             </View>
           </View>
 
           <Text style={styles.comingSoonTitle}>Prompt Engineering</Text>
           <Text style={styles.comingSoonDesc}>
-            Learn how to write effective prompts and communicate better with AI systems.
+            Master the art and science of prompt crafting, system instructions, and LLM reasoning patterns.
           </Text>
 
           <View style={styles.comingSoonBtnContainer}>
@@ -213,13 +175,14 @@ export const FullStackOverviewScreen = () => {
         >
           <View style={styles.courseHeaderRow}>
             <View style={styles.comingSoonBadge}>
+              <Icon name="database" size={12} color="#6366F1" />
               <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
             </View>
           </View>
 
           <Text style={styles.comingSoonTitle}>Context Engineering</Text>
           <Text style={styles.comingSoonDesc}>
-            Learn how to design and manage the context AI systems use to produce better results.
+            Learn context window optimization, dynamic retrieval-augmented generation (RAG), and agentic memory structures.
           </Text>
 
           <View style={styles.comingSoonBtnContainer}>
@@ -335,6 +298,9 @@ const styles = StyleSheet.create({
     opacity: 0.95
   },
   comingSoonBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     backgroundColor: '#F1F5F9',
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -380,75 +346,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#475569'
-  },
-  tracksSectionHeader: {
-    marginTop: 8,
-    marginBottom: 12
-  },
-  tracksSectionTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4
-  },
-  tracksSectionSub: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#64748B'
-  },
-  tracksContainer: {
-    gap: 10,
-    marginBottom: 24
-  },
-  trackCardItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 14,
-    gap: 12
-  },
-  trackCardIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  trackCardBody: {
-    flex: 1
-  },
-  trackCardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2
-  },
-  trackCardTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A'
-  },
-  trackLessonsBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6
-  },
-  trackLessonsBadgeText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#475569'
-  },
-  trackCardSub: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#64748B'
   }
 });
