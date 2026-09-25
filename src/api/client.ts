@@ -59,11 +59,13 @@ apiClient.interceptors.response.use(
       if (altBase && altBase !== currentBase) {
         config._retryCount = (config._retryCount || 0) + 1;
         config.baseURL = altBase;
-        setDynamicApiBaseUrl(altBase);
         try {
-          return await apiClient(config);
+          const res = await apiClient(config);
+          setDynamicApiBaseUrl(altBase);
+          return res;
         } catch (retryErr) {
-          // Alternate retry also failed, continue to standard error formatting
+          // Alternate retry also failed; reset dynamic base URL back to default
+          setDynamicApiBaseUrl('');
         }
       }
     }

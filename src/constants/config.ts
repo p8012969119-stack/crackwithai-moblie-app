@@ -6,8 +6,8 @@ const LOCAL_URL = 'http://127.0.0.1:5001/api';
 
 let dynamicApiBaseUrl: string | null = null;
 
-export const setDynamicApiBaseUrl = (url: string) => {
-  dynamicApiBaseUrl = url;
+export const setDynamicApiBaseUrl = (url: string | null) => {
+  dynamicApiBaseUrl = url || null;
 };
 
 export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
