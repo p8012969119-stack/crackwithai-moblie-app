@@ -73,7 +73,7 @@ export const FullStackRoadmapScreen: React.FC = () => {
           <Icon name="chevron-left" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle} numberOfLines={1}>
-          Full Stack Courses
+          Curriculum Courses
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -84,42 +84,22 @@ export const FullStackRoadmapScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
       >
-        {/* Header Hero Banner */}
-        <View style={styles.heroCard}>
-          <View style={styles.badgeRow}>
-            <View style={styles.trackPill}>
-              <Text style={styles.trackPillText}>FULL STACK CURRICULUM</Text>
-            </View>
-            <View style={styles.levelPill}>
-              <Text style={styles.levelPillText}>9 Sequential Courses</Text>
-            </View>
-          </View>
-
-          <Text style={styles.heroTitle}>Full Stack Development</Text>
-          <Text style={styles.heroDesc}>
-            From frontend markup and modern styling to server runtimes, databases, APIs, and production deployment.
-          </Text>
-
-          {/* Progress Box */}
-          <View style={styles.progressCard}>
-            <View style={styles.progressTextRow}>
-              <Text style={styles.progressLabel}>Overall Roadmap Progress</Text>
-              <Text style={styles.progressValue}>
-                {completedModules} / 9 Courses Finished ({overallPercentage}%)
+        {/* Section Heading & Progress */}
+        <View style={styles.sectionHeaderWrap}>
+          <View style={styles.sectionHeaderTop}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>Curriculum Courses</Text>
+              <Text style={styles.sectionSubtitle}>
+                9 Sequential Courses • {completedModules} of 9 finished
               </Text>
             </View>
-            <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarFill, { width: `${Math.max(4, overallPercentage)}%` }]} />
+            <View style={styles.progressBadge}>
+              <Text style={styles.progressBadgeText}>{overallPercentage}%</Text>
             </View>
           </View>
-        </View>
-
-        {/* Section Heading */}
-        <View style={styles.sectionHeaderWrap}>
-          <Text style={styles.sectionTitle}>Curriculum Courses</Text>
-          <Text style={styles.sectionSubtitle}>
-            Select any course below to access its isolated modules, lessons & practice tasks
-          </Text>
+          <View style={styles.progressBarTrack}>
+            <View style={[styles.progressBarFill, { width: `${Math.max(4, overallPercentage)}%` }]} />
+          </View>
         </View>
 
         {/* Loading Spinner */}
@@ -230,106 +210,28 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40
   },
-  heroCard: {
+  sectionHeaderWrap: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    padding: 18,
-    marginBottom: 20,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 2
   },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10
-  },
-  trackPill: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8
-  },
-  trackPillText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#4F46E5',
-    letterSpacing: 0.6
-  },
-  levelPill: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8
-  },
-  levelPillText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#475569'
-  },
-  heroTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 6
-  },
-  heroDesc: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 19,
-    marginBottom: 16
-  },
-  progressCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  progressTextRow: {
+  sectionHeaderTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8
-  },
-  progressLabel: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B'
-  },
-  progressValue: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#10B981'
-  },
-  progressBarTrack: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E2E8F0',
-    overflow: 'hidden'
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#10B981',
-    borderRadius: 4
-  },
-  sectionHeaderWrap: {
-    marginBottom: 14
+    marginBottom: 12
   },
   sectionTitle: {
     fontFamily: FONT_FAMILY,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 4
@@ -338,6 +240,31 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
     fontSize: 12,
     color: '#64748B'
+  },
+  progressBadge: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0'
+  },
+  progressBadgeText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#059669'
+  },
+  progressBarTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E2E8F0',
+    overflow: 'hidden'
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: 3
   },
   coursesList: {
     gap: 14

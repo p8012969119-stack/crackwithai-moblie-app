@@ -128,7 +128,7 @@ export const FullStackOverviewScreen = () => {
             activeOpacity={0.85}
             onPress={() => navigation.navigate('FullStackRoadmap')}
           >
-            <Text style={styles.startBtnText}>Start Full Stack (View All Courses)</Text>
+            <Text style={styles.startBtnText}>Explore Curriculum Courses</Text>
             <Icon name="arrow-right" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </TouchableOpacity>
