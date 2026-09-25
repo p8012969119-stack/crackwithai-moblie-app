@@ -12,14 +12,27 @@ export const fullstackApi = {
     const payload = unwrap(await apiClient.get('/fullstack/html/course'));
     return {...payload.course, modules:payload.modules || []};
   },
-  async getLesson(lessonId:string): Promise<HtmlLesson|null> { return unwrap(await apiClient.get(`/fullstack/html/lessons/${lessonId}`)).lesson; },
-  async getProgress(): Promise<FullStackProgress> {
-    const progress = unwrap(await apiClient.get('/fullstack/html/progress'));
-    return {courseId:progress.courseId || 'html-from-beginner-to-practical',completedLessonIds:progress.completedLessons,totalLessons:progress.totalLessons,completedCount:progress.completedCount,percentage:progress.progressPercentage,lastLessonId:progress.currentLesson};
+  async getLesson(lessonId: string, courseSlug: string = 'html'): Promise<HtmlLesson | null> {
+    const slug = courseSlug || 'html';
+    const payload = unwrap(await apiClient.get(`/fullstack/${slug}/lessons/${lessonId}`));
+    return payload.lesson || payload;
   },
-  async completeLesson(lessonId:string, courseId?:string, code?:string): Promise<{success:boolean;completedLessonIds:string[];percentage:number}> {
-    const progress=unwrap(await apiClient.post('/fullstack/html/progress/complete-lesson',{lessonId,courseId,code}));
-    return {success:true,completedLessonIds:progress.completedLessons,percentage:progress.progressPercentage};
+  async getProgress(courseSlug: string = 'html'): Promise<FullStackProgress> {
+    const slug = courseSlug || 'html';
+    const progress = unwrap(await apiClient.get(`/fullstack/${slug}/progress`));
+    return {
+      courseId: progress.courseId || slug,
+      completedLessonIds: progress.completedLessons || [],
+      totalLessons: progress.totalLessons || 0,
+      completedCount: progress.completedCount || 0,
+      percentage: progress.progressPercentage || 0,
+      lastLessonId: progress.currentLesson
+    };
+  },
+  async completeLesson(lessonId: string, courseSlug: string = 'html', code?: string): Promise<{ success: boolean; completedLessonIds: string[]; percentage: number }> {
+    const slug = courseSlug || 'html';
+    const progress = unwrap(await apiClient.post(`/fullstack/${slug}/progress/complete-lesson`, { lessonId, courseSlug: slug, code }));
+    return { success: true, completedLessonIds: progress.completedLessons || [], percentage: progress.progressPercentage || 0 };
   },
   async saveCode(lessonId:string,code:string,title?:string): Promise<boolean> {
     unwrap(await apiClient.post('/fullstack/html/save-code',{lessonId,code,title:title || 'HTML Practice Code'}));return true;

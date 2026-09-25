@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,75 +11,79 @@ import {
   StatusBar,
   Platform
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { fullstackApi } from '../../api/fullstackApi';
-import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress, FullStackTrack } from '../../types/fullstack';
+import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress } from '../../types/fullstack';
 import { FALLBACK_HTML_COURSE, FULLSTACK_TRACKS, getCourseForTech } from '../../data/fullstackHtmlData';
 import { Icon } from '../../components/Icon';
-import { COLORS, SPACING, RADIUS } from '../../constants/theme';
+import { COLORS } from '../../constants/theme';
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
 export const HtmlCourseScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const [course, setCourse] = useState<HtmlCourse | null>(FALLBACK_HTML_COURSE);
-  const [progress, setProgress] = useState<FullStackProgress | null>(null);
+  const route = useRoute<any>();
   
-  // Step 1: null = Tech Stack Roadmap View
-  // Step 2: string = Selected Technology View (e.g. 'html', 'css', 'javascript', etc.)
-  const [selectedTech, setSelectedTech] = useState<string | null>(null);
+  // Dynamic technology parameter, defaults strictly to 'html'
+  const tech = (route.params?.tech || route.params?.courseSlug || 'html').toLowerCase();
+  const activeTrack = useMemo(() => {
+    return FULLSTACK_TRACKS.find(t => t.id === tech) || FULLSTACK_TRACKS[0];
+  }, [tech]);
 
-  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
-    'module-1': true,
-    'css-mod-1': true,
-    'js-mod-1': true,
-    'node-mod-1': true,
-    'exp-mod-1': true,
-    'mongo-mod-1': true,
-    'rest-mod-1': true,
-    'auth-mod-1': true,
-    'cap-mod-1': true,
-    '0': true
-  });
-  const [loading, setLoading] = useState<boolean>(false);
+  const [course, setCourse] = useState<HtmlCourse | null>(null);
+  const [progress, setProgress] = useState<FullStackProgress | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const loadData = async () => {
+  // Expanded state for accordion modules
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
+    '0': true,
+    'module-1': true,
+    'mod-0': true
+  });
+
+  const loadData = useCallback(async () => {
     try {
       const [courseData, progressData] = await Promise.all([
-        fullstackApi.getHtmlCourse().catch(() => null),
-        fullstackApi.getProgress().catch(() => null)
+        (tech === 'html' ? fullstackApi.getHtmlCourse() : fullstackApi.getCourse(tech)).catch(() => null),
+        fullstackApi.getProgress(tech).catch(() => null)
       ]);
+
       if (courseData && courseData.modules && courseData.modules.length > 0) {
         setCourse(courseData);
+      } else {
+        setCourse(getCourseForTech(tech));
       }
+
       if (progressData) {
         setProgress(progressData);
       }
 
-      // Expand first module by default
-      const activeModules = courseData?.modules || course?.modules;
-      if (activeModules?.length) {
-        const firstModId = activeModules[0]._id || '0';
-        setExpandedModules(prev => ({ ...prev, [firstModId]: true }));
+      // Default expand the first module
+      const targetCourse = courseData || getCourseForTech(tech);
+      if (targetCourse?.modules?.length) {
+        const firstId = targetCourse.modules[0]._id || targetCourse.modules[0].id || '0';
+        setExpandedModules(prev => ({ ...prev, [firstId]: true }));
       }
     } catch (err) {
-      console.warn('Failed to load HTML course details', err);
+      console.warn('Failed to load course details from database, applying fallback', err);
+      setCourse(getCourseForTech(tech));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [tech]);
 
   useEffect(() => {
+    setLoading(true);
     loadData();
-  }, []);
+  }, [loadData]);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [])
+    }, [loadData])
   );
 
   const onRefresh = () => {
@@ -99,91 +103,43 @@ export const HtmlCourseScreen: React.FC = () => {
       lessonId: lesson._id || lesson.id,
       lessonSlug: lesson.slug,
       lessonTitle: lesson.title,
-      selectedTech: selectedTech || 'html'
+      selectedTech: tech
     });
   };
 
-  const completedSet = new Set(progress?.completedLessonIds || []);
+  const completedSet = useMemo(() => {
+    return new Set(progress?.completedLessonIds || []);
+  }, [progress?.completedLessonIds]);
 
-  // Determine course data dynamically for the selected technology
-  const activeCourse = selectedTech ? getCourseForTech(selectedTech) : (course || FALLBACK_HTML_COURSE);
-  const activeTrack = FULLSTACK_TRACKS.find(t => t.id === selectedTech);
-
-  const totalLessonsCount = activeCourse?.totalLessons || 25;
-  const completedCountForActive = Array.from(completedSet).length;
-  const activePercent = totalLessonsCount > 0 ? Math.round((completedCountForActive / totalLessonsCount) * 100) : 0;
-
-  // Sort modules numerically by order
-  const sortedModules = React.useMemo(() => {
+  const activeCourse = course || getCourseForTech(tech);
+  const sortedModules = useMemo(() => {
     if (!activeCourse?.modules) return [];
     return [...activeCourse.modules].sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [activeCourse?.modules]);
 
-  // Compute technology statuses across the 9 sequential tracks
-  const tracksWithStatus = React.useMemo(() => {
-    let previousCompleted = true; // HTML (Track 1) unlocked by default
+  const allLessons = useMemo(() => {
+    return sortedModules.flatMap(m => m.lessons || []);
+  }, [sortedModules]);
 
-    return FULLSTACK_TRACKS.map((track: FullStackTrack, index: number) => {
-      const techCourse = getCourseForTech(track.id);
-      const techLessons = techCourse.modules.flatMap(m => m.lessons);
-      const totalTechLessons = techLessons.length || track.lessonsCount || 10;
-      const completedTechLessons = techLessons.filter(l => completedSet.has(l._id || l.id || '')).length;
-      
-      const percent = totalTechLessons > 0 ? Math.round((completedTechLessons / totalTechLessons) * 100) : 0;
-      const isCompleted = percent === 100;
-      const isInProgress = percent > 0 && percent < 100;
-
-      let techStatus: 'completed' | 'in_progress' | 'available' | 'locked' = 'locked';
-
-      if (isCompleted) {
-        techStatus = 'completed';
-      } else if (isInProgress) {
-        techStatus = 'in_progress';
-      } else if (previousCompleted || index === 0) {
-        techStatus = 'available';
-      } else {
-        techStatus = 'locked';
-      }
-
-      // Track N unlocks track N+1 if at least started or completed
-      if (isCompleted || isInProgress || index === 0) {
-        previousCompleted = true;
-      }
-
-      return {
-        ...track,
-        completedTechLessons,
-        totalTechLessons,
-        percent,
-        techStatus
-      };
-    });
-  }, [completedSet]);
-
-  const totalCompletedTracks = tracksWithStatus.filter(t => t.techStatus === 'completed').length;
-  const overallRoadmapPercent = Math.round((totalCompletedTracks / FULLSTACK_TRACKS.length) * 100);
+  const totalLessonsCount = activeCourse?.totalLessons || allLessons.length || activeTrack.lessonsCount || 25;
+  const completedLessonsCount = allLessons.filter(l => completedSet.has(l._id || l.id || l.slug || '')).length;
+  const percent = totalLessonsCount > 0 ? Math.min(100, Math.round((completedLessonsCount / totalLessonsCount) * 100)) : 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      {/* Top Navigation Bar */}
+      {/* Top Header Bar */}
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => {
-            if (selectedTech) {
-              setSelectedTech(null); // Back to Tech Stack Roadmap
-            } else {
-              navigation.goBack();
-            }
-          }}
+          onPress={() => navigation.goBack()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Icon name="chevron-left" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle} numberOfLines={1}>
-          {selectedTech && activeTrack ? `${activeTrack.title} Modules` : 'Full Stack Roadmap'}
+          {activeCourse?.title || `${activeTrack.title} Course`}
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -194,313 +150,139 @@ export const HtmlCourseScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
       >
-        {/* ==================================================
-            STEP 1: TECH STACK ROADMAP SELECTION VIEW
-            (9 Technologies in exact sequence)
-            ================================================== */}
-        {!selectedTech && (
-          <View>
-            {/* Header Summary Card */}
-            <View style={styles.roadmapHeaderBanner}>
-              <View style={styles.badgeRow}>
-                <View style={styles.trackPill}>
-                  <Text style={styles.trackPillText}>FULL STACK ROADMAP</Text>
-                </View>
-                <View style={styles.levelPill}>
-                  <Text style={styles.levelPillText}>9 Sequential Technologies</Text>
-                </View>
-              </View>
-
-              <Text style={styles.roadmapTitle}>Full Stack Learning Journey</Text>
-              <Text style={styles.roadmapDesc}>
-                Follow the 9-stage full stack sequence from HTML foundations to final capstone project deployment.
+        {/* Course Hero Banner */}
+        <View style={styles.courseHeroBanner}>
+          <View style={styles.badgeRow}>
+            <View style={styles.trackPill}>
+              <Text style={styles.trackPillText}>{activeTrack.title.toUpperCase()} COURSE</Text>
+            </View>
+            <View style={styles.levelPill}>
+              <Text style={styles.levelPillText}>
+                {activeCourse?.level ? `${activeCourse.level.toUpperCase()} LEVEL` : 'PRACTICAL'}
               </Text>
-
-              {/* Progress Summary Card */}
-              <View style={styles.progressCard}>
-                <View style={styles.progressTextRow}>
-                  <Text style={styles.progressStatusLabel}>Roadmap Progress</Text>
-                  <Text style={styles.progressPercent}>{totalCompletedTracks} / 9 Technologies ({overallRoadmapPercent}%)</Text>
-                </View>
-                <View style={styles.progressBarTrack}>
-                  <View style={[styles.progressBarFill, { width: `${Math.max(4, overallRoadmapPercent)}%` }]} />
-                </View>
-              </View>
-            </View>
-
-            {/* Section Heading */}
-            <View style={styles.sectionHeadingWrap}>
-              <Text style={styles.sectionHeadingTitle}>Technology Sequence</Text>
-              <Text style={styles.sectionHeadingSub}>Select any unlocked technology below to access its modules & lessons</Text>
-            </View>
-
-            {/* 9 Technology Cards */}
-            <View style={styles.techGrid}>
-              {tracksWithStatus.map((track) => {
-                const isLocked = track.techStatus === 'locked';
-                const isCompleted = track.techStatus === 'completed';
-                const isInProgress = track.techStatus === 'in_progress';
-
-                return (
-                  <TouchableOpacity
-                    key={track.id}
-                    style={[
-                      styles.techCard,
-                      isInProgress && styles.techCardInProgressBorder,
-                      isCompleted && styles.techCardCompletedBorder,
-                      isLocked && styles.techCardLocked
-                    ]}
-                    activeOpacity={isLocked ? 0.9 : 0.85}
-                    onPress={() => {
-                      if (!isLocked) {
-                        setSelectedTech(track.id);
-                      }
-                    }}
-                  >
-                    <View style={styles.techCardHeader}>
-                      <View style={[styles.techIconWrap, isCompleted && styles.techIconWrapCompleted]}>
-                        <Icon
-                          name={track.icon as any || 'code'}
-                          size={22}
-                          color={isLocked ? '#94A3B8' : isCompleted ? '#10B981' : '#4F46E5'}
-                        />
-                      </View>
-
-                      {/* Status Badge */}
-                      <View style={styles.statusBadgeWrap}>
-                        {isCompleted && (
-                          <View style={styles.badgeCompleted}>
-                            <Icon name="check" size={12} color="#047857" />
-                            <Text style={styles.badgeCompletedText}>Completed</Text>
-                          </View>
-                        )}
-                        {isInProgress && (
-                          <View style={styles.badgeInProgress}>
-                            <Text style={styles.badgeInProgressText}>{track.percent}% Progress</Text>
-                          </View>
-                        )}
-                        {track.techStatus === 'available' && (
-                          <View style={styles.badgeAvailable}>
-                            <Text style={styles.badgeAvailableText}>{track.badge}</Text>
-                          </View>
-                        )}
-                        {isLocked && (
-                          <View style={styles.badgeLocked}>
-                            <Icon name="lock" size={12} color="#64748B" />
-                            <Text style={styles.badgeLockedText}>Locked</Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-
-                    <Text style={[styles.techCardTitle, isLocked && styles.textMuted]}>{track.title}</Text>
-                    <Text style={styles.techCardSubtitle}>{track.subtitle}</Text>
-                    <Text style={styles.techCardDesc} numberOfLines={2}>{track.description}</Text>
-
-                    {/* Meta Info */}
-                    <View style={styles.techCardMetaRow}>
-                      <View style={styles.techMetaItem}>
-                        <Icon name="file-text" size={13} color="#64748B" />
-                        <Text style={styles.techMetaText}>{track.totalTechLessons} Lessons</Text>
-                      </View>
-                      <View style={styles.techMetaItem}>
-                        <Icon name="book-open" size={13} color="#64748B" />
-                        <Text style={styles.techMetaText}>{track.modulesCount} Modules</Text>
-                      </View>
-                      <View style={styles.techMetaItem}>
-                        <Icon name="clock" size={13} color="#64748B" />
-                        <Text style={styles.techMetaText}>{track.duration}</Text>
-                      </View>
-                    </View>
-
-                    {/* Progress Bar inside Card */}
-                    <View style={styles.cardProgressTrack}>
-                      <View
-                        style={[
-                          styles.cardProgressFill,
-                          { width: `${track.percent}%` },
-                          isCompleted && { backgroundColor: '#10B981' }
-                        ]}
-                      />
-                    </View>
-
-                    {/* Action Button */}
-                    <View style={{ marginTop: 14 }}>
-                      {isCompleted && (
-                        <View style={styles.btnCompleted}>
-                          <Icon name="check" size={15} color="#047857" />
-                          <Text style={styles.btnCompletedText}>Review {track.title} Modules</Text>
-                        </View>
-                      )}
-                      {isInProgress && (
-                        <View style={styles.btnPrimary}>
-                          <Text style={styles.btnPrimaryText}>Continue Learning</Text>
-                          <Icon name="arrow-right" size={15} color="#FFFFFF" />
-                        </View>
-                      )}
-                      {track.techStatus === 'available' && (
-                        <View style={styles.btnOutline}>
-                          <Text style={styles.btnOutlineText}>Start {track.title} Course</Text>
-                          <Icon name="arrow-right" size={15} color="#4F46E5" />
-                        </View>
-                      )}
-                      {isLocked && (
-                        <View style={styles.btnLocked}>
-                          <Icon name="lock" size={14} color="#94A3B8" />
-                          <Text style={styles.btnLockedText}>Complete prior track to unlock</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
             </View>
           </View>
-        )}
 
-        {/* ==================================================
-            STEP 2: SELECTED TECHNOLOGY MODULES & LESSONS VIEW
-            (Renders unique modules for HTML, CSS, JS, Node, Express, Mongo, REST API, Auth, Capstone)
-            ================================================== */}
-        {selectedTech && activeTrack && (
-          <View>
-            {/* Back Button Bar to Return to Tech Stack Roadmap */}
-            <TouchableOpacity
-              style={styles.backToRoadmapBar}
-              activeOpacity={0.7}
-              onPress={() => setSelectedTech(null)}
-            >
-              <Icon name="arrow-left" size={16} color="#4F46E5" />
-              <Text style={styles.backToRoadmapText}>Back to Full Stack Roadmap</Text>
-            </TouchableOpacity>
+          <Text style={styles.courseTitle}>{activeCourse?.title || `${activeTrack.title} — Fundamentals`}</Text>
+          <Text style={styles.courseDesc}>
+            {activeCourse?.description || activeTrack.description}
+          </Text>
 
-            {/* Compact Header for Selected Tech */}
-            <View style={styles.compactHeaderCard}>
-              <View style={styles.compactHeaderRow}>
-                <View style={styles.compactIconCircle}>
-                  <Icon name={activeTrack.icon as any || 'code'} size={24} color="#4F46E5" />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.compactHeaderTitle}>{activeTrack.title} Course</Text>
-                  <Text style={styles.compactHeaderSub}>
-                    {activeCourse.modules?.length || activeTrack.modulesCount} Progressive Modules · {activeCourse.totalLessons || activeTrack.lessonsCount} Lessons
-                  </Text>
-                </View>
-              </View>
-
-              {/* Technology Progress Meter */}
-              <View style={{ marginTop: 14 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <Text style={{ fontFamily: FONT_FAMILY, fontSize: 12, color: '#64748B' }}>Course Progress</Text>
-                  <Text style={{ fontFamily: FONT_FAMILY_MEDIUM, fontSize: 12, color: '#10B981', fontWeight: '700' }}>
-                    {activePercent}% Completed
-                  </Text>
-                </View>
-                <View style={styles.cardProgressTrack}>
-                  <View style={[styles.cardProgressFill, { width: `${activePercent}%`, backgroundColor: '#10B981' }]} />
-                </View>
-              </View>
+          {/* Progress Card */}
+          <View style={styles.progressCard}>
+            <View style={styles.progressTextRow}>
+              <Text style={styles.progressStatusLabel}>Course Progress</Text>
+              <Text style={styles.progressPercent}>
+                {completedLessonsCount} / {totalLessonsCount} Lessons ({percent}%)
+              </Text>
             </View>
+            <View style={styles.progressBarTrack}>
+              <View style={[styles.progressBarFill, { width: `${Math.max(4, percent)}%` }]} />
+            </View>
+          </View>
+        </View>
 
-            {/* Loading Spinner */}
-            {loading && !refreshing ? (
-              <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
-            ) : (
-              <View style={styles.modulesContainer}>
-                {sortedModules.map((module: HtmlModule, modIndex: number) => {
-                  const moduleId = module._id || module.id || `mod-${modIndex}`;
-                  const isExpanded = expandedModules[moduleId] ?? (modIndex === 0);
-                  const moduleLessons = module.lessons || [];
-                  const completedInModule = moduleLessons.filter(l => completedSet.has(l._id || l.id || '')).length;
-                  const moduleNum = module.order || modIndex + 1;
+        {/* Modules Section Header */}
+        <View style={styles.sectionHeadingWrap}>
+          <Text style={styles.sectionHeadingTitle}>Course Curriculum</Text>
+          <Text style={styles.sectionHeadingSub}>
+            {sortedModules.length} Modules · {totalLessonsCount} Hands-On Lessons with Embedded Practice
+          </Text>
+        </View>
 
-                  return (
-                    <View key={`mod-${selectedTech}-${modIndex}-${moduleId}`} style={styles.moduleCard}>
-                      {/* Module Header (Accordion Toggle) */}
-                      <TouchableOpacity
-                        style={styles.moduleHeader}
-                        activeOpacity={0.7}
-                        onPress={() => toggleModule(moduleId)}
-                      >
-                        <View style={styles.moduleHeaderLeft}>
-                          <View style={styles.moduleBadge}>
-                            <Text style={styles.moduleBadgeText}>MOD {moduleNum}</Text>
-                          </View>
-                          <View style={styles.moduleHeaderTextWrap}>
-                            <Text style={styles.moduleTitle}>{module.title}</Text>
-                            <Text style={styles.moduleSub}>
-                              {completedInModule}/{moduleLessons.length} Lessons Completed
-                            </Text>
-                          </View>
-                        </View>
-                        <View style={styles.expandIcon}>
-                          <Icon
-                            name={isExpanded ? 'chevron-down' : 'chevron-right'}
-                            size={20}
-                            color="#64748B"
-                          />
-                        </View>
-                      </TouchableOpacity>
+        {/* Loading Spinner */}
+        {loading && !refreshing ? (
+          <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+        ) : (
+          <View style={styles.modulesContainer}>
+            {sortedModules.map((module: HtmlModule, modIndex: number) => {
+              const moduleId = module._id || module.id || `mod-${modIndex}`;
+              const isExpanded = expandedModules[moduleId] ?? (modIndex === 0);
+              const moduleLessons = module.lessons || [];
+              const completedInModule = moduleLessons.filter(l => completedSet.has(l._id || l.id || l.slug || '')).length;
+              const moduleNum = module.order || modIndex + 1;
 
-                      {/* Module Inside Content: Lessons List */}
-                      {isExpanded && (
-                        <View style={styles.lessonsList}>
-                          {moduleLessons.map((lesson: HtmlLesson, lessonIdx: number) => {
-                            const lessonId = lesson._id || lesson.id || `les-${lessonIdx}`;
-                            const isCompleted = completedSet.has(lessonId);
-
-                            return (
-                              <TouchableOpacity
-                                key={`les-${selectedTech}-${modIndex}-${lessonIdx}-${lessonId}`}
-                                style={[
-                                  styles.lessonRow,
-                                  isCompleted && styles.lessonRowCompleted
-                                ]}
-                                activeOpacity={0.75}
-                                onPress={() => handleOpenLesson(lesson)}
-                              >
-                                <View style={styles.lessonOrderBox}>
-                                  {isCompleted ? (
-                                    <View style={styles.completedIconCircle}>
-                                      <Icon name="check" size={12} color="#FFFFFF" />
-                                    </View>
-                                  ) : (
-                                    <View style={styles.uncompletedNumberCircle}>
-                                      <Text style={styles.lessonOrderText}>
-                                        {lessonIdx + 1}
-                                      </Text>
-                                    </View>
-                                  )}
-                                </View>
-
-                                <View style={styles.lessonInfo}>
-                                  <Text
-                                    style={[
-                                      styles.lessonTitle,
-                                      isCompleted && styles.lessonTitleCompleted
-                                    ]}
-                                    numberOfLines={1}
-                                  >
-                                    {lesson.title}
-                                  </Text>
-                                  <Text style={styles.lessonDesc} numberOfLines={1}>
-                                    {lesson.description || 'Learn core concepts and complete hands-on practice'}
-                                  </Text>
-                                </View>
-
-                                <View style={styles.lessonArrow}>
-                                  <Icon name="chevron-right" size={16} color="#94A3B8" />
-                                </View>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
-                      )}
+              return (
+                <View key={`mod-${tech}-${modIndex}-${moduleId}`} style={styles.moduleCard}>
+                  {/* Module Header (Accordion Toggle) */}
+                  <TouchableOpacity
+                    style={styles.moduleHeader}
+                    activeOpacity={0.7}
+                    onPress={() => toggleModule(moduleId)}
+                  >
+                    <View style={styles.moduleHeaderLeft}>
+                      <View style={styles.moduleBadge}>
+                        <Text style={styles.moduleBadgeText}>MOD {moduleNum}</Text>
+                      </View>
+                      <View style={styles.moduleHeaderTextWrap}>
+                        <Text style={styles.moduleTitle}>{module.title}</Text>
+                        <Text style={styles.moduleSub}>
+                          {completedInModule}/{moduleLessons.length} Lessons Completed
+                        </Text>
+                      </View>
                     </View>
-                  );
-                })}
-              </View>
-            )}
+                    <View style={styles.expandIcon}>
+                      <Icon
+                        name={isExpanded ? 'chevron-down' : 'chevron-right'}
+                        size={20}
+                        color="#64748B"
+                      />
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Module Inside Content: Lessons List */}
+                  {isExpanded && (
+                    <View style={styles.lessonsList}>
+                      {moduleLessons.map((lesson: HtmlLesson, lessonIdx: number) => {
+                        const lessonId = lesson._id || lesson.id || lesson.slug || `les-${lessonIdx}`;
+                        const isCompleted = completedSet.has(lessonId) || completedSet.has(lesson.slug);
+                        const lessonNum = lesson.order || lessonIdx + 1;
+
+                        return (
+                          <TouchableOpacity
+                            key={`les-${tech}-${lessonIdx}-${lessonId}`}
+                            style={[styles.lessonRow, isCompleted && styles.lessonRowCompleted]}
+                            activeOpacity={0.75}
+                            onPress={() => handleOpenLesson(lesson)}
+                          >
+                            <View style={styles.lessonRowLeft}>
+                              <View style={[styles.lessonNumCircle, isCompleted && styles.lessonNumCircleCompleted]}>
+                                {isCompleted ? (
+                                  <Icon name="check" size={13} color="#FFFFFF" />
+                                ) : (
+                                  <Text style={styles.lessonNumText}>{lessonNum}</Text>
+                                )}
+                              </View>
+                              <View style={styles.lessonTextWrap}>
+                                <Text style={[styles.lessonTitle, isCompleted && styles.lessonTitleCompleted]}>
+                                  {lesson.title}
+                                </Text>
+                                <Text style={styles.lessonDesc} numberOfLines={2}>
+                                  {lesson.learningObjective || lesson.description || 'Hands-on practice & core concepts.'}
+                                </Text>
+                              </View>
+                            </View>
+
+                            <View style={styles.lessonRowRight}>
+                              <View style={[styles.startBadge, isCompleted && styles.startBadgeCompleted]}>
+                                <Text style={[styles.startBadgeText, isCompleted && styles.startBadgeTextCompleted]}>
+                                  {isCompleted ? 'Done' : 'Start'}
+                                </Text>
+                                <Icon
+                                  name={isCompleted ? 'check' : 'arrow-right'}
+                                  size={12}
+                                  color={isCompleted ? '#10B981' : '#4F46E5'}
+                                />
+                              </View>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -514,116 +296,116 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC'
   },
   topBar: {
-    height: 56,
+    height: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    elevation: 2
+    borderBottomColor: '#E2E8F0'
   },
   backButton: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: 10,
     backgroundColor: '#F1F5F9'
   },
   topBarTitle: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
     flex: 1,
-    textAlign: 'center',
-    marginHorizontal: SPACING.sm
+    textAlign: 'center'
   },
   container: {
-    flex: 1
+    flex: 1,
+    backgroundColor: '#F8FAFC'
   },
   contentContainer: {
-    padding: SPACING.md,
-    paddingBottom: SPACING.xxl
+    padding: 16,
+    paddingBottom: 40
   },
-  roadmapHeaderBanner: {
+  courseHeroBanner: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: SPACING.lg,
-    borderWidth: 1.5,
+    borderRadius: 18,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
+    padding: 18,
+    marginBottom: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2
   },
   badgeRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    marginBottom: 8
+    marginBottom: 10
   },
   trackPill: {
-    backgroundColor: '#EEEDFF',
+    backgroundColor: '#EEF2FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: '#C7C5FF'
+    borderRadius: 8
   },
   trackPillText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 11,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY,
+    fontSize: 10,
+    fontWeight: '800',
     color: '#4F46E5',
     letterSpacing: 0.6
   },
   levelPill: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: '#A7F3D0'
+    borderRadius: 8
   },
   levelPillText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 11,
+    fontFamily: FONT_FAMILY,
+    fontSize: 10,
     fontWeight: '700',
-    color: '#047857'
+    color: '#475569'
   },
-  roadmapTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 22,
-    fontWeight: '700',
+  courseTitle: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 20,
+    fontWeight: '800',
     color: '#0F172A',
-    marginTop: 6,
     marginBottom: 6,
-    letterSpacing: -0.3
+    lineHeight: 26
   },
-  roadmapDesc: {
+  courseDesc: {
     fontFamily: FONT_FAMILY,
     fontSize: 13,
-    color: '#64748B',
+    color: '#475569',
     lineHeight: 19,
-    marginBottom: SPACING.md
+    marginBottom: 16
   },
   progressCard: {
     backgroundColor: '#F8FAFC',
-    borderRadius: RADIUS.md,
-    padding: 14,
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0'
   },
   progressTextRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8
   },
   progressStatusLabel: {
-    fontFamily: FONT_FAMILY_MEDIUM,
+    fontFamily: FONT_FAMILY,
     fontSize: 12,
     fontWeight: '600',
-    color: '#334155'
+    color: '#64748B'
   },
   progressPercent: {
     fontFamily: FONT_FAMILY_MEDIUM,
@@ -633,8 +415,8 @@ const styles = StyleSheet.create({
   },
   progressBarTrack: {
     height: 8,
-    backgroundColor: '#E2E8F0',
     borderRadius: 4,
+    backgroundColor: '#E2E8F0',
     overflow: 'hidden'
   },
   progressBarFill: {
@@ -643,308 +425,39 @@ const styles = StyleSheet.create({
     borderRadius: 4
   },
   sectionHeadingWrap: {
-    marginBottom: SPACING.md
+    marginBottom: 14
   },
   sectionHeadingTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#0F172A'
+    fontFamily: FONT_FAMILY,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4
   },
   sectionHeadingSub: {
     fontFamily: FONT_FAMILY,
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 4
-  },
-  techGrid: {
-    gap: 16
-  },
-  techCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    padding: 18,
-    elevation: 2
-  },
-  techCardInProgressBorder: {
-    borderColor: '#4F46E5'
-  },
-  techCardCompletedBorder: {
-    borderColor: '#10B981'
-  },
-  techCardLocked: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    opacity: 0.85
-  },
-  techCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12
-  },
-  techIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#EEEDFF',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  techIconWrapCompleted: {
-    backgroundColor: '#ECFDF5'
-  },
-  statusBadgeWrap: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  badgeCompleted: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#A7F3D0'
-  },
-  badgeCompletedText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#047857'
-  },
-  badgeInProgress: {
-    backgroundColor: '#EEEDFF',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#C7C5FF'
-  },
-  badgeInProgressText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#4F46E5'
-  },
-  badgeAvailable: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#CBD5E1'
-  },
-  badgeAvailableText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#475569'
-  },
-  badgeLocked: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12
-  },
-  badgeLockedText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#64748B'
-  },
-  techCardTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 2
-  },
-  techCardSubtitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#4F46E5',
-    marginBottom: 6
-  },
-  techCardDesc: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 19,
-    marginBottom: 12
-  },
-  textMuted: {
-    color: '#64748B'
-  },
-  techCardMetaRow: {
-    flexDirection: 'row',
-    gap: 14,
-    marginBottom: 12
-  },
-  techMetaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5
-  },
-  techMetaText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 12,
-    fontWeight: '600',
     color: '#64748B'
-  },
-  cardProgressTrack: {
-    height: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 3,
-    overflow: 'hidden'
-  },
-  cardProgressFill: {
-    height: '100%',
-    backgroundColor: '#4F46E5',
-    borderRadius: 3
-  },
-  btnCompleted: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#ECFDF5',
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#A7F3D0'
-  },
-  btnCompletedText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#047857'
-  },
-  btnPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#4F46E5',
-    paddingVertical: 12,
-    borderRadius: 12
-  },
-  btnPrimaryText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF'
-  },
-  btnOutline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#EEEDFF',
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#C7C5FF'
-  },
-  btnOutlineText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#4F46E5'
-  },
-  btnLocked: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 12,
-    borderRadius: 12
-  },
-  btnLockedText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#94A3B8'
-  },
-  backToRoadmapBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#EEEDFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 14,
-    marginBottom: SPACING.md
-  },
-  backToRoadmapText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#4F46E5'
-  },
-  compactHeaderCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    marginBottom: SPACING.md,
-    elevation: 2
-  },
-  compactHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12
-  },
-  compactIconCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: '#EEEDFF',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  compactHeaderTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A'
-  },
-  compactHeaderSub: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2
   },
   loader: {
-    marginTop: 40
+    marginVertical: 30
   },
   modulesContainer: {
-    gap: 16
+    gap: 12
   },
   moduleCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 1.5,
+    borderRadius: 14,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
-    overflow: 'hidden',
-    elevation: 2
+    overflow: 'hidden'
   },
   moduleHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 18,
-    backgroundColor: '#FAFAFC'
+    padding: 14,
+    backgroundColor: '#FFFFFF'
   },
   moduleHeaderLeft: {
     flexDirection: 'row',
@@ -953,98 +466,120 @@ const styles = StyleSheet.create({
     gap: 12
   },
   moduleBadge: {
-    backgroundColor: '#EEEDFF',
-    paddingHorizontal: 10,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8,
     paddingVertical: 5,
-    borderRadius: 8
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E0E7FF'
   },
   moduleBadgeText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 11,
+    fontFamily: FONT_FAMILY,
+    fontSize: 10,
     fontWeight: '800',
-    color: '#433EFE'
+    color: '#4F46E5'
   },
   moduleHeaderTextWrap: {
     flex: 1
   },
   moduleTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 15,
+    fontFamily: FONT_FAMILY,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A'
+    color: '#0F172A',
+    marginBottom: 2
   },
   moduleSub: {
     fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 3
+    fontSize: 11,
+    color: '#64748B'
   },
   expandIcon: {
-    paddingLeft: 8
+    marginLeft: 8
   },
   lessonsList: {
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF'
+    backgroundColor: '#FAFCFF'
   },
   lessonRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 18,
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9'
   },
   lessonRowCompleted: {
-    backgroundColor: '#F8FCF8'
+    backgroundColor: '#F0FDF4'
   },
-  lessonOrderBox: {
-    width: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12
+  lessonRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+    gap: 12
   },
-  uncompletedNumberCircle: {
+  lessonNumCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginTop: 2
   },
-  lessonOrderText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 12,
+  lessonNumCircleCompleted: {
+    backgroundColor: '#10B981'
+  },
+  lessonNumText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 11,
     fontWeight: '700',
     color: '#64748B'
   },
-  completedIconCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#10B981',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  lessonInfo: {
-    flex: 1
+  lessonTextWrap: {
+    flex: 1,
+    paddingRight: 8
   },
   lessonTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0F172A'
+    fontFamily: FONT_FAMILY,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 3
   },
   lessonTitleCompleted: {
     color: '#047857'
   },
   lessonDesc: {
     fontFamily: FONT_FAMILY,
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748B',
-    marginTop: 2
+    lineHeight: 16
   },
-  lessonArrow: {
-    paddingLeft: 8
+  lessonRowRight: {
+    alignItems: 'flex-end'
+  },
+  startBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8
+  },
+  startBadgeCompleted: {
+    backgroundColor: '#DCFCE7'
+  },
+  startBadgeText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#4F46E5'
+  },
+  startBadgeTextCompleted: {
+    color: '#10B981'
   }
 });

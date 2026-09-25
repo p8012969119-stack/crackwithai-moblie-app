@@ -225,7 +225,7 @@ export const HomeScreen = ({ navigation }: any) => {
                   key={m.num}
                   style={styles.fsChecklistItem}
                   activeOpacity={0.75}
-                  onPress={() => navigation.navigate('FullStackOverview')}
+                  onPress={() => navigation.navigate('HtmlCourse', { tech: m.slug || 'html' })}
                 >
                   <View style={[styles.fsCheckIconWrap, isDone && styles.fsCheckIconWrapDone, inProg && styles.fsCheckIconWrapInProg]}>
                     <Icon

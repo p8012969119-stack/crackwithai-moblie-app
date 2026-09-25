@@ -30,6 +30,8 @@ export interface PracticeTask {
   requirements: string[];
   starterCode: string;
   expectedOutput: string;
+  referenceExample?: string;
+  referenceCode?: string;
   validationRules?: PracticeValidationRule[];
 }
 
@@ -44,6 +46,8 @@ export interface HtmlLesson {
   concept?: string;
   codeExample?: string;
   expectedOutput?: string;
+  referenceExample?: string;
+  referenceCode?: string;
   starterCode: string;
   practiceTask?: PracticeTask;
   moduleId?: string;
