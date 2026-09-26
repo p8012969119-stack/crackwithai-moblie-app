@@ -18,9 +18,7 @@ import { Meter, Notice, palette, ui } from '../../components/fullstack/Curriculu
 import { Icon } from '../../components/Icon';
 import { useAuth } from '../../store/AuthContext';
 
-const FONT_FAMILY = Platform.OS === 'android' ? 'Poppins-Regular' : 'System';
-const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'Poppins-Medium' : 'System';
-const FONT_FAMILY_BOLD = Platform.OS === 'android' ? 'Poppins-Bold' : 'System';
+const FONT_FAMILY = Platform.OS === 'ios' ? 'System' : 'sans-serif';
 
 export const FullStackOverviewScreen = () => {
   const navigation = useNavigation<any>();

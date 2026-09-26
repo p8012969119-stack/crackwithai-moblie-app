@@ -31,9 +31,8 @@ const COURSE_LOGOS: Record<string, any> = {
   capstone: require('../../assets/courses/capstone.png'),
 };
 
-const FONT_FAMILY = Platform.OS === 'android' ? 'Poppins-Regular' : 'System';
-const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'Poppins-Medium' : 'System';
-const FONT_FAMILY_BOLD = Platform.OS === 'android' ? 'Poppins-Bold' : 'System';
+const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
+const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
 export const HtmlCourseScreen: React.FC = () => {
   const navigation = useNavigation<any>();

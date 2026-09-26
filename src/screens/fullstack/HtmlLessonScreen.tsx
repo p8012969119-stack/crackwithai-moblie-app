@@ -26,9 +26,8 @@ import {
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
 
-const FONT_FAMILY = Platform.OS === 'android' ? 'Poppins-Regular' : 'System';
-const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'Poppins-Medium' : 'System';
-const FONT_FAMILY_BOLD = Platform.OS === 'android' ? 'Poppins-Bold' : 'System';
+const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
+const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
 // Helper to wrap HTML with clean responsive styling for live browser simulation
 const buildPreviewHtml = (rawHtml: string) => {
