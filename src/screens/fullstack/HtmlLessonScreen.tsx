@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   SafeAreaView,
   StatusBar,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -99,6 +100,55 @@ export const autoCloseHtmlTag = (
   return { updatedText, cursorOffset };
 };
 
+// Course Dynamic Themes
+const getTechTheme = (tech: string) => {
+  switch (tech.toLowerCase()) {
+    case 'css':
+      return {
+        primary: '#2563EB',
+        primaryDark: '#1D4ED8',
+        bg: '#F0F6FF',
+        pillBg: '#EFF6FF',
+        pillText: '#2563EB',
+        accentBg: '#DBEAFE',
+        cardBorder: '#CBD5E1'
+      };
+    case 'javascript':
+    case 'js':
+      return {
+        primary: '#D97706',
+        primaryDark: '#B45309',
+        bg: '#FFFBEB',
+        pillBg: '#FEF3C7',
+        pillText: '#B45309',
+        accentBg: '#FDE68A',
+        cardBorder: '#FCD34D'
+      };
+    case 'node':
+    case 'nodejs':
+      return {
+        primary: '#059669',
+        primaryDark: '#047857',
+        bg: '#F0FDF4',
+        pillBg: '#DCFCE7',
+        pillText: '#047857',
+        accentBg: '#A7F3D0',
+        cardBorder: '#6EE7B7'
+      };
+    case 'html':
+    default:
+      return {
+        primary: '#5653FE',
+        primaryDark: '#433EFE',
+        bg: '#F4F6FF',
+        pillBg: '#EEEDFF',
+        pillText: '#5653FE',
+        accentBg: '#C7C5FF',
+        cardBorder: '#C7D2FE'
+      };
+  }
+};
+
 // Helper to wrap HTML with clean responsive styling for live browser simulation
 const buildPreviewHtml = (rawHtml: string) => {
   return `<!DOCTYPE html>
@@ -123,7 +173,7 @@ const buildPreviewHtml = (rawHtml: string) => {
     p { margin-top: 0; margin-bottom: 10px; font-size: 14px; color: #334155; }
     ul, ol { margin: 6px 0 10px 20px; padding: 0; }
     li { margin-bottom: 4px; font-size: 14px; color: #334155; }
-    a { color: #5653fe; text-decoration: underline; }
+    a { color: #5653FE; text-decoration: underline; }
     img { max-width: 100%; height: auto; border-radius: 6px; border: 1px solid #E2E8F0; }
     table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
     th, td { border: 1px solid #CBD5E1; padding: 6px 8px; text-align: left; }
@@ -142,7 +192,7 @@ const buildPreviewHtml = (rawHtml: string) => {
       box-sizing: border-box;
     }
     input[type="submit"], button {
-      background-color: #5653fe;
+      background-color: #5653FE;
       color: #FFFFFF;
       border: none;
       padding: 8px 14px;
@@ -167,6 +217,8 @@ export const HtmlLessonScreen: React.FC = () => {
   const { lessonId, lessonSlug, selectedTech } = route.params || {};
 
   const activeTech = (selectedTech || 'html').toLowerCase();
+  const theme = useMemo(() => getTechTheme(activeTech), [activeTech]);
+
   const targetId = lessonId || lessonSlug || 'introduction-to-html';
   const initialFallback = getFallbackLessonById(targetId) || null;
 
@@ -176,11 +228,11 @@ export const HtmlLessonScreen: React.FC = () => {
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
-  // Embedded Practice States
+  // Practice States
   const [userCode, setUserCode] = useState<string>(''); // Starts empty as requested
   const [cursorSelection, setCursorSelection] = useState<{ start: number; end: number } | undefined>(undefined);
   const [showLivePreview, setShowLivePreview] = useState<boolean>(false);
-  const [showReference, setShowReference] = useState<boolean>(false);
+  const [showReferenceModal, setShowReferenceModal] = useState<boolean>(false); // Popup Modal state
   const [submitting, setSubmitting] = useState<boolean>(false);
   
   // Validation and Error Checking States
@@ -362,7 +414,7 @@ export const HtmlLessonScreen: React.FC = () => {
       setTaskResult(null);
       setShowErrorCard(false);
       setShowLivePreview(false);
-      setShowReference(false);
+      setShowReferenceModal(false);
       loadLesson(target);
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
@@ -370,7 +422,7 @@ export const HtmlLessonScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bg }]}>
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="chevron-left" size={24} color={COLORS.textPrimary} />
@@ -379,7 +431,7 @@ export const HtmlLessonScreen: React.FC = () => {
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       </SafeAreaView>
     );
@@ -387,7 +439,7 @@ export const HtmlLessonScreen: React.FC = () => {
 
   if (!lesson) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bg }]}>
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="chevron-left" size={24} color={COLORS.textPrimary} />
@@ -397,7 +449,7 @@ export const HtmlLessonScreen: React.FC = () => {
         </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Could not load the requested lesson.</Text>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: theme.primary }]} onPress={() => navigation.goBack()}>
             <Text style={styles.primaryBtnText}>Back to Course</Text>
           </TouchableOpacity>
         </View>
@@ -408,8 +460,8 @@ export const HtmlLessonScreen: React.FC = () => {
   const syntaxErrorsCount = validationResult?.errors?.length || 0;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bg }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.bg} />
 
       {/* Top Header Bar */}
       <View style={styles.topBar}>
@@ -437,329 +489,374 @@ export const HtmlLessonScreen: React.FC = () => {
 
       <ScrollView
         ref={scrollViewRef}
-        style={styles.container}
+        style={[styles.container, { backgroundColor: theme.bg }]}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
         {/* ==================================================
-            1. LESSON HEADING CARD
+            UNIFIED SINGLE PAGE WORKSPACE CONTAINER
             ================================================== */}
-        <View style={styles.lessonHeaderCard}>
-          <View style={styles.lessonOrderPill}>
-            <Text style={styles.lessonOrderPillText}>
-              LESSON {currentIndex >= 0 ? currentIndex + 1 : lesson.order} OF {techLessons.length || 25}
-            </Text>
-          </View>
-          <Text style={styles.lessonHeaderTitle}>{lesson.title}</Text>
-          {lesson.learningObjective ? (
-            <Text style={styles.lessonSubtitleText}>{lesson.learningObjective}</Text>
-          ) : lesson.description ? (
-            <Text style={styles.lessonSubtitleText}>{lesson.description}</Text>
-          ) : null}
-        </View>
+        <View style={styles.singlePagePaper}>
 
-        {/* ==================================================
-            2. CORE CONCEPT CARD
-            ================================================== */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeadingRow}>
-            <View style={styles.iconContainer}>
-              <Icon name="book-open" size={18} color="#5653fe" />
+          {/* 1. LESSON TITLE HEADER BLOCK */}
+          <View style={styles.headerBlock}>
+            <View style={[styles.lessonOrderPill, { backgroundColor: theme.pillBg }]}>
+              <Text style={[styles.lessonOrderPillText, { color: theme.pillText }]}>
+                LESSON {currentIndex >= 0 ? currentIndex + 1 : lesson.order} OF {techLessons.length || 25}
+              </Text>
             </View>
-            <Text style={styles.sectionHeading}>Core Concept</Text>
+            <Text style={styles.lessonHeaderTitle}>{lesson.title}</Text>
+            {lesson.learningObjective ? (
+              <Text style={styles.lessonSubtitleText}>{lesson.learningObjective}</Text>
+            ) : lesson.description ? (
+              <Text style={styles.lessonSubtitleText}>{lesson.description}</Text>
+            ) : null}
           </View>
-          <Text style={styles.conceptBodyText}>{lesson.concept}</Text>
-        </View>
 
-        {/* ==================================================
-            3. PRACTICE & WORKSPACE SECTION
-            ================================================== */}
-        <View style={styles.practiceSectionCard}>
-          <View style={styles.practiceHeaderRow}>
+          <View style={styles.sectionDivider} />
+
+          {/* 2. CORE CONCEPT SECTION */}
+          <View style={styles.conceptBlock}>
             <View style={styles.sectionHeadingRow}>
-              <View style={styles.iconContainer}>
-                <Icon name="terminal" size={18} color="#5653fe" />
+              <View style={[styles.iconLogoBadge, { backgroundColor: theme.pillBg }]}>
+                <Icon name="book-open" size={18} color={theme.primary} />
               </View>
-              <Text style={styles.sectionHeading}>Practice</Text>
+              <Text style={styles.sectionHeading}>Core Concept</Text>
             </View>
-            <TouchableOpacity onPress={handleResetCode} style={styles.resetBtn}>
-              <Icon name="refresh-cw" size={13} color="#64748B" />
-              <Text style={styles.resetBtnText}>Reset Code</Text>
-            </TouchableOpacity>
+            <Text style={styles.conceptBodyText}>{lesson.concept}</Text>
           </View>
 
-          {lesson.practiceTask?.description ? (
-            <Text style={styles.taskDescText}>
-              {lesson.practiceTask.description}
-            </Text>
-          ) : null}
+          <View style={styles.sectionDivider} />
 
-          {/* ==================================================
-              COLLAPSIBLE REFERENCE CODE & OUTPUT BUTTON
-              ================================================== */}
-          {lesson.codeExample ? (
-            <View style={styles.referenceWrapper}>
+          {/* 3. PRACTICE WORKSPACE SECTION */}
+          <View style={styles.practiceBlock}>
+            <View style={styles.practiceHeaderRow}>
+              <View style={styles.sectionHeadingRow}>
+                <View style={[styles.iconLogoBadge, { backgroundColor: theme.pillBg }]}>
+                  <Icon name="terminal" size={18} color={theme.primary} />
+                </View>
+                <Text style={styles.sectionHeading}>Practice Workspace</Text>
+              </View>
+              <TouchableOpacity onPress={handleResetCode} style={styles.resetBtn}>
+                <Icon name="refresh-cw" size={13} color="#64748B" />
+                <Text style={styles.resetBtnText}>Reset</Text>
+              </TouchableOpacity>
+            </View>
+
+            {lesson.practiceTask?.description ? (
+              <Text style={styles.taskDescText}>
+                {lesson.practiceTask.description}
+              </Text>
+            ) : null}
+
+            {/* REFERENCE CODE POPUP TRIGGER BUTTON */}
+            {lesson.codeExample ? (
               <TouchableOpacity
-                style={styles.referenceToggleBtn}
-                onPress={() => setShowReference(prev => !prev)}
+                style={[styles.referencePopupBtn, { backgroundColor: theme.pillBg, borderColor: theme.accentBg }]}
+                onPress={() => setShowReferenceModal(true)}
                 activeOpacity={0.8}
               >
-                <View style={styles.referenceToggleLeft}>
-                  <Icon name="file-text" size={16} color="#5653fe" />
-                  <Text style={styles.referenceToggleBtnText}>
-                    {showReference ? 'Hide Reference Code & Output' : '💡 View Reference Code & Output'}
+                <View style={styles.referencePopupLeft}>
+                  <Icon name="file-text" size={16} color={theme.primary} />
+                  <Text style={[styles.referencePopupBtnText, { color: theme.primary }]}>
+                    💡 View Reference Code & Output
                   </Text>
                 </View>
-                <Icon name={showReference ? 'chevron-down' : 'chevron-right'} size={16} color="#5653fe" />
+                <View style={[styles.openBadge, { backgroundColor: theme.primary }]}>
+                  <Text style={styles.openBadgeText}>Open Popup</Text>
+                </View>
               </TouchableOpacity>
+            ) : null}
 
-              {showReference && (
-                <View style={styles.referenceContentBox}>
-                  <View style={styles.exampleHeaderRow}>
-                    <Text style={styles.referenceSubheading}>Reference Code Example</Text>
-                    <TouchableOpacity
-                      style={styles.copyBtn}
-                      onPress={() => handleCopy(lesson.codeExample || '')}
-                    >
-                      <Icon name="copy" size={14} color="#5653fe" />
-                      <Text style={styles.copyBtnText}>{copiedCode ? 'Copied!' : 'Copy Code'}</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.codeSnippetBox}>
-                    <Text style={styles.codeText}>{lesson.codeExample}</Text>
-                  </View>
-
-                  <Text style={styles.referenceSubheading}>Reference Output Preview</Text>
-                  <View style={styles.exampleOutputWrap}>
-                    <View style={styles.exampleOutputHeader}>
-                      <View style={styles.browserDotsMini}>
-                        <View style={[styles.dotMini, { backgroundColor: '#EF4444' }]} />
-                        <View style={[styles.dotMini, { backgroundColor: '#F59E0B' }]} />
-                        <View style={[styles.dotMini, { backgroundColor: '#10B981' }]} />
-                      </View>
-                      <Text style={styles.exampleOutputLabel}>Output Preview</Text>
-                    </View>
-                    <View style={styles.exampleWebviewBox} pointerEvents="none">
-                      <WebView
-                        originWhitelist={['*']}
-                        source={{ html: buildPreviewHtml(lesson.codeExample) }}
-                        style={styles.exampleWebview}
-                        scrollEnabled={false}
-                        javaScriptEnabled={true}
-                        domStorageEnabled={true}
-                      />
-                    </View>
-                  </View>
-                </View>
-              )}
+            {/* QUICK HTML TAGS TOOLBAR */}
+            <View style={styles.tagToolbarWrap}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tagToolbarScroll}>
+                {QUICK_ELEMENTS.map((elem, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.tagButton}
+                    onPress={() => handleInsertTag(elem.snippet)}
+                  >
+                    <Text style={[styles.tagButtonText, { color: theme.primary }]}>{elem.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
-          ) : null}
 
-          {/* Quick Elements Tags Toolbar */}
-          <View style={styles.tagToolbarWrap}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tagToolbarScroll}>
-              {QUICK_ELEMENTS.map((elem, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.tagButton}
-                  onPress={() => handleInsertTag(elem.snippet)}
-                >
-                  <Text style={styles.tagButtonText}>{elem.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* MAIN EDITOR OR LIVE PREVIEW WORKSPACE */}
-          {!showLivePreview ? (
-            <View style={styles.editorBox}>
-              <TextInput
-                style={styles.codeInput}
-                multiline
-                value={userCode}
-                onChangeText={handleCodeChange}
-                selection={cursorSelection}
-                onSelectionChange={(e) => setCursorSelection(e.nativeEvent.selection)}
-                placeholder="Write your HTML code here..."
-                placeholderTextColor="#94A3B8"
-                autoCapitalize="none"
-                autoCorrect={false}
-                spellCheck={false}
-                textAlignVertical="top"
-              />
-            </View>
-          ) : (
-            <View style={styles.browserFrame}>
-              <View style={styles.browserHeader}>
-                <View style={styles.browserDotsRow}>
-                  <View style={[styles.browserDot, { backgroundColor: '#EF4444' }]} />
-                  <View style={[styles.browserDot, { backgroundColor: '#F59E0B' }]} />
-                  <View style={[styles.browserDot, { backgroundColor: '#10B981' }]} />
-                </View>
-                <View style={styles.browserUrlBar}>
-                  <Icon name="globe" size={11} color="#64748B" />
-                  <Text style={styles.browserUrlText}>http://localhost/preview.html</Text>
-                </View>
-              </View>
-              <View style={styles.webviewContainer}>
-                <WebView
-                  originWhitelist={['*']}
-                  source={{ html: buildPreviewHtml(userCode) }}
-                  style={styles.webview}
-                  javaScriptEnabled={true}
-                  domStorageEnabled={true}
+            {/* PRACTICE CODE EDITOR OR LIVE PREVIEW */}
+            {!showLivePreview ? (
+              <View style={styles.editorBox}>
+                <TextInput
+                  style={styles.codeInput}
+                  multiline
+                  value={userCode}
+                  onChangeText={handleCodeChange}
+                  selection={cursorSelection}
+                  onSelectionChange={(e) => setCursorSelection(e.nativeEvent.selection)}
+                  placeholder="Type your HTML code here..."
+                  placeholderTextColor="#94A3B8"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  spellCheck={false}
+                  textAlignVertical="top"
                 />
               </View>
-            </View>
-          )}
-
-          {/* Error / Checks Inspector Card */}
-          {showErrorCard && (
-            <View style={[styles.checkInspectorCard, syntaxErrorsCount > 0 ? styles.checkInspectorError : styles.checkInspectorSuccess]}>
-              <View style={styles.inspectorHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                  <Icon
-                    name={syntaxErrorsCount > 0 ? 'alert-circle' : 'check-circle'}
-                    size={16}
-                    color={syntaxErrorsCount > 0 ? '#DC2626' : '#059669'}
-                  />
-                  <Text style={[styles.inspectorTitle, { color: syntaxErrorsCount > 0 ? '#DC2626' : '#059669' }]}>
-                    {syntaxErrorsCount > 0
-                      ? `${syntaxErrorsCount} Syntax Error(s) Found`
-                      : 'Checks Passed! No syntax errors.'}
-                  </Text>
+            ) : (
+              <View style={styles.browserFrame}>
+                <View style={styles.browserHeader}>
+                  <View style={styles.browserDotsRow}>
+                    <View style={[styles.browserDot, { backgroundColor: '#EF4444' }]} />
+                    <View style={[styles.browserDot, { backgroundColor: '#F59E0B' }]} />
+                    <View style={[styles.browserDot, { backgroundColor: '#10B981' }]} />
+                  </View>
+                  <View style={styles.browserUrlBar}>
+                    <Icon name="globe" size={11} color="#64748B" />
+                    <Text style={styles.browserUrlText}>http://localhost/preview.html</Text>
+                  </View>
                 </View>
-                <TouchableOpacity onPress={() => setShowErrorCard(false)}>
-                  <Icon name="x-circle" size={16} color="#64748B" />
+                <View style={styles.webviewContainer}>
+                  <WebView
+                    originWhitelist={['*']}
+                    source={{ html: buildPreviewHtml(userCode) }}
+                    style={styles.webview}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                  />
+                </View>
+              </View>
+            )}
+
+            {/* Error / Checks Inspector Card */}
+            {showErrorCard && (
+              <View style={[styles.checkInspectorCard, syntaxErrorsCount > 0 ? styles.checkInspectorError : styles.checkInspectorSuccess]}>
+                <View style={styles.inspectorHeaderRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                    <Icon
+                      name={syntaxErrorsCount > 0 ? 'alert-circle' : 'check-circle'}
+                      size={16}
+                      color={syntaxErrorsCount > 0 ? '#DC2626' : '#059669'}
+                    />
+                    <Text style={[styles.inspectorTitle, { color: syntaxErrorsCount > 0 ? '#DC2626' : '#059669' }]}>
+                      {syntaxErrorsCount > 0
+                        ? `${syntaxErrorsCount} Syntax Error(s) Found`
+                        : 'Checks Passed! No syntax errors.'}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setShowErrorCard(false)}>
+                    <Icon name="x-circle" size={16} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
+
+                {syntaxErrorsCount > 0 && validationResult?.errors && (
+                  <View style={styles.errorList}>
+                    {validationResult.errors.map((err, eIdx) => (
+                      <View key={eIdx} style={styles.errorItemBox}>
+                        <Text style={styles.errorProblemText}>
+                          Line {err.line || 1}: {err.problem}
+                        </Text>
+                        {err.suggestion ? (
+                          <Text style={styles.errorSuggestionText}>
+                            Tip: {err.suggestion}
+                          </Text>
+                        ) : null}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* ACTION CONTROL BUTTONS */}
+            <View style={styles.actionButtonsRow}>
+              <TouchableOpacity
+                style={[styles.checkCodeBtn, { backgroundColor: theme.pillBg, borderColor: theme.accentBg }]}
+                activeOpacity={0.8}
+                onPress={handleCheckCode}
+              >
+                <Icon name="search" size={15} color={theme.primary} />
+                <Text style={[styles.checkCodeBtnText, { color: theme.primary }]}>Check Code</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.previewToggleBtn}
+                activeOpacity={0.8}
+                onPress={() => setShowLivePreview(prev => !prev)}
+              >
+                <Icon
+                  name={showLivePreview ? 'code' : 'eye'}
+                  size={15}
+                  color="#0F172A"
+                />
+                <Text style={styles.previewToggleBtnText}>
+                  {showLivePreview ? 'Editor' : 'Preview'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
+                activeOpacity={0.85}
+                disabled={submitting}
+                onPress={handleSubmitSolution}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Icon name="check" size={15} color="#FFFFFF" />
+                    <Text style={styles.submitBtnText}>Submit</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Submission Feedback Banner */}
+            {submissionFeedback && (
+              <View
+                style={[
+                  styles.feedbackBox,
+                  submissionFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError
+                ]}
+              >
+                <Icon
+                  name={submissionFeedback.type === 'success' ? 'check-circle' : 'alert-circle'}
+                  size={18}
+                  color={submissionFeedback.type === 'success' ? '#047857' : '#DC2626'}
+                />
+                <Text
+                  style={[
+                    styles.feedbackText,
+                    submissionFeedback.type === 'success' ? styles.feedbackTextSuccess : styles.feedbackTextError
+                  ]}
+                >
+                  {submissionFeedback.message}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.sectionDivider} />
+
+          {/* 4. LESSON NAVIGATION BUTTONS */}
+          <View style={styles.bottomNavRow}>
+            {prevLesson ? (
+              <TouchableOpacity
+                style={styles.siblingNavBtn}
+                onPress={() => navigateToSiblingLesson(prevLesson)}
+              >
+                <Icon name="arrow-left" size={15} color="#64748B" />
+                <Text style={styles.siblingNavText} numberOfLines={1}>Previous</Text>
+              </TouchableOpacity>
+            ) : <View style={{ flex: 1 }} />}
+
+            {nextLesson ? (
+              <TouchableOpacity
+                style={styles.nextLessonDarkBtn}
+                onPress={() => navigateToSiblingLesson(nextLesson)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Next Lesson</Text>
+                <Icon name="arrow-right" size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.nextLessonDarkBtn}
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.nextLessonDarkBtnText}>Back to Course</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+        </View>
+      </ScrollView>
+
+      {/* ==================================================
+          POPUP MODAL: REFERENCE CODE & OUTPUT PREVIEW
+          ================================================== */}
+      <Modal
+        visible={showReferenceModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowReferenceModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={[styles.iconLogoBadge, { backgroundColor: theme.pillBg }]}>
+                  <Icon name="file-text" size={18} color={theme.primary} />
+                </View>
+                <Text style={styles.modalTitle}>Reference Code & Output</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowReferenceModal(false)}
+                style={styles.modalCloseBtn}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Icon name="x" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Modal Content */}
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <View style={styles.exampleHeaderRow}>
+                <Text style={styles.referenceSubheading}>Reference Code Example</Text>
+                <TouchableOpacity
+                  style={[styles.copyBtn, { backgroundColor: theme.pillBg }]}
+                  onPress={() => handleCopy(lesson.codeExample || '')}
+                >
+                  <Icon name="copy" size={14} color={theme.primary} />
+                  <Text style={[styles.copyBtnText, { color: theme.primary }]}>
+                    {copiedCode ? 'Copied!' : 'Copy Code'}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
-              {syntaxErrorsCount > 0 && validationResult?.errors && (
-                <View style={styles.errorList}>
-                  {validationResult.errors.map((err, eIdx) => (
-                    <View key={eIdx} style={styles.errorItemBox}>
-                      <Text style={styles.errorProblemText}>
-                        Line {err.line || 1}: {err.problem}
-                      </Text>
-                      {err.suggestion ? (
-                        <Text style={styles.errorSuggestionText}>
-                          Tip: {err.suggestion}
-                        </Text>
-                      ) : null}
-                    </View>
-                  ))}
+              <View style={styles.codeSnippetBox}>
+                <Text style={styles.codeText}>{lesson.codeExample}</Text>
+              </View>
+
+              <Text style={styles.referenceSubheading}>Output Preview</Text>
+              <View style={styles.exampleOutputWrap}>
+                <View style={styles.exampleOutputHeader}>
+                  <View style={styles.browserDotsMini}>
+                    <View style={[styles.dotMini, { backgroundColor: '#EF4444' }]} />
+                    <View style={[styles.dotMini, { backgroundColor: '#F59E0B' }]} />
+                    <View style={[styles.dotMini, { backgroundColor: '#10B981' }]} />
+                  </View>
+                  <Text style={styles.exampleOutputLabel}>Live Preview</Text>
                 </View>
-              )}
-            </View>
-          )}
+                <View style={styles.exampleWebviewBox}>
+                  <WebView
+                    originWhitelist={['*']}
+                    source={{ html: buildPreviewHtml(lesson.codeExample || '') }}
+                    style={styles.exampleWebview}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                  />
+                </View>
+              </View>
+            </ScrollView>
 
-          {/* Action Buttons: Check Code | Preview / Editor | Submit */}
-          <View style={styles.actionButtonsRow}>
+            {/* Modal Bottom Action */}
             <TouchableOpacity
-              style={styles.checkCodeBtn}
-              activeOpacity={0.8}
-              onPress={handleCheckCode}
+              style={[styles.modalDoneBtn, { backgroundColor: theme.primary }]}
+              onPress={() => setShowReferenceModal(false)}
             >
-              <Icon name="search" size={15} color="#5653fe" />
-              <Text style={styles.checkCodeBtnText}>Check Code</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.previewToggleBtn}
-              activeOpacity={0.8}
-              onPress={() => setShowLivePreview(prev => !prev)}
-            >
-              <Icon
-                name={showLivePreview ? 'code' : 'eye'}
-                size={15}
-                color="#0F172A"
-              />
-              <Text style={styles.previewToggleBtnText}>
-                {showLivePreview ? 'Editor' : 'Preview'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
-              activeOpacity={0.85}
-              disabled={submitting}
-              onPress={handleSubmitSolution}
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Icon name="check" size={15} color="#FFFFFF" />
-                  <Text style={styles.submitBtnText}>Submit</Text>
-                </>
-              )}
+              <Text style={styles.modalDoneBtnText}>Got It, Back to Practice</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Submission Feedback Banner */}
-          {submissionFeedback && (
-            <View
-              style={[
-                styles.feedbackBox,
-                submissionFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError
-              ]}
-            >
-              <Icon
-                name={submissionFeedback.type === 'success' ? 'check-circle' : 'alert-circle'}
-                size={18}
-                color={submissionFeedback.type === 'success' ? '#047857' : '#DC2626'}
-              />
-              <Text
-                style={[
-                  styles.feedbackText,
-                  submissionFeedback.type === 'success' ? styles.feedbackTextSuccess : styles.feedbackTextError
-                ]}
-              >
-                {submissionFeedback.message}
-              </Text>
-            </View>
-          )}
         </View>
-
-        {/* Bottom Sibling Lesson Navigation */}
-        <View style={styles.bottomNavRow}>
-          {prevLesson ? (
-            <TouchableOpacity
-              style={styles.siblingNavBtn}
-              onPress={() => navigateToSiblingLesson(prevLesson)}
-            >
-              <Icon name="arrow-left" size={15} color="#64748B" />
-              <Text style={styles.siblingNavText} numberOfLines={1}>Previous</Text>
-            </TouchableOpacity>
-          ) : <View style={{ flex: 1 }} />}
-
-          {nextLesson ? (
-            <TouchableOpacity
-              style={[styles.siblingNavBtn, styles.siblingNavBtnNext]}
-              onPress={() => navigateToSiblingLesson(nextLesson)}
-            >
-              <Text style={[styles.siblingNavText, styles.siblingNavTextNext]} numberOfLines={1}>Next Lesson</Text>
-              <Icon name="arrow-right" size={15} color="#5653fe" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.siblingNavBtn, styles.siblingNavBtnNext]}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={[styles.siblingNavText, styles.siblingNavTextNext]}>Back to Course</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </ScrollView>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1,
-    backgroundColor: '#F8FAFC'
+    flex: 1
   },
   topBar: {
     height: 56,
@@ -809,11 +906,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981'
   },
   container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC'
+    flex: 1
   },
   contentContainer: {
-    padding: 16,
+    padding: 14,
     paddingBottom: 40
   },
   loaderContainer: {
@@ -834,7 +930,6 @@ const styles = StyleSheet.create({
     marginBottom: 16
   },
   primaryBtn: {
-    backgroundColor: '#5653fe',
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 10
@@ -845,32 +940,41 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF'
   },
-  lessonHeaderCard: {
+
+  /* UNIFIED SINGLE PAGE CONTAINER */
+  singlePagePaper: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 18,
-    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0'
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2
+  },
+
+  /* HEADER BLOCK */
+  headerBlock: {
+    marginBottom: 14
   },
   lessonOrderPill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EEEDFF',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
-    marginBottom: 8
+    marginBottom: 10
   },
   lessonOrderPillText: {
     fontFamily: FONT_FAMILY,
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '800',
-    color: '#5653fe',
     letterSpacing: 0.5
   },
   lessonHeaderTitle: {
     fontFamily: FONT_FAMILY,
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 6
@@ -881,30 +985,33 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 19
   },
-  sectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
+
+  /* DIVIDER */
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 16
+  },
+
+  /* CONCEPT BLOCK */
+  conceptBlock: {
+    marginVertical: 2
   },
   sectionHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: 10
   },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#EEEDFF',
+  iconLogoBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center'
   },
   sectionHeading: {
     fontFamily: FONT_FAMILY,
-    fontSize: 16,
+    fontSize: 16.5,
     fontWeight: '800',
     color: '#0F172A'
   },
@@ -915,142 +1022,23 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: 10
   },
-  referenceWrapper: {
-    marginBottom: 12
-  },
-  referenceToggleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#EEEDFF',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#C7C5FF'
-  },
-  referenceToggleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8
-  },
-  referenceToggleBtnText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#5653fe'
-  },
-  referenceContentBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  referenceSubheading: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#475569',
-    marginBottom: 6,
-    marginTop: 4
-  },
-  exampleHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6
-  },
-  copyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#EEEDFF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6
-  },
-  copyBtnText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#5653fe'
-  },
-  codeSnippetBox: {
-    backgroundColor: '#0F172A',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10
-  },
-  codeText: {
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: 12.5,
-    color: '#E2E8F0',
-    lineHeight: 19
-  },
-  exampleOutputWrap: {
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
-    overflow: 'hidden'
-  },
-  exampleOutputHeader: {
-    height: 30,
-    backgroundColor: '#F1F5F9',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    gap: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0'
-  },
-  browserDotsMini: {
-    flexDirection: 'row',
-    gap: 4
-  },
-  dotMini: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5
-  },
-  exampleOutputLabel: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#64748B',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5
-  },
-  exampleWebviewBox: {
-    height: 120,
-    backgroundColor: '#FFFFFF'
-  },
-  exampleWebview: {
-    flex: 1,
-    backgroundColor: '#FFFFFF'
-  },
-  practiceSectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#5653fe'
+
+  /* PRACTICE WORKSPACE BLOCK */
+  practiceBlock: {
+    marginVertical: 2
   },
   practiceHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8
+    marginBottom: 10
   },
   resetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 6
   },
@@ -1061,11 +1049,46 @@ const styles = StyleSheet.create({
   },
   taskDescText: {
     fontFamily: FONT_FAMILY,
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#475569',
-    lineHeight: 18,
-    marginBottom: 10
+    lineHeight: 19,
+    marginBottom: 12
   },
+
+  /* POPUP TRIGGER BUTTON */
+  referencePopupBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12
+  },
+  referencePopupLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  referencePopupBtnText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 13,
+    fontWeight: '700'
+  },
+  openBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6
+  },
+  openBadgeText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF'
+  },
+
+  /* TAG TOOLBAR */
   tagToolbarWrap: {
     marginBottom: 10
   },
@@ -1073,7 +1096,7 @@ const styles = StyleSheet.create({
     gap: 6
   },
   tagButton: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 6,
@@ -1083,21 +1106,22 @@ const styles = StyleSheet.create({
   tagButtonText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 11.5,
-    color: '#5653fe',
     fontWeight: '700'
   },
+
+  /* EDITOR & PREVIEW WORKSPACE */
   editorBox: {
     backgroundColor: '#0F172A',
     borderRadius: 12,
     padding: 12,
-    minHeight: 180,
-    marginBottom: 12
+    minHeight: 185,
+    marginBottom: 14
   },
   codeInput: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 13,
     color: '#F8FAFC',
-    minHeight: 170,
+    minHeight: 175,
     padding: 0
   },
   browserFrame: {
@@ -1106,7 +1130,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1',
     overflow: 'hidden',
-    marginBottom: 12
+    marginBottom: 14
   },
   browserHeader: {
     flexDirection: 'row',
@@ -1145,19 +1169,21 @@ const styles = StyleSheet.create({
     color: '#64748B'
   },
   webviewContainer: {
-    height: 220,
+    height: 210,
     backgroundColor: '#FFFFFF'
   },
   webview: {
     flex: 1,
     backgroundColor: '#FFFFFF'
   },
+
+  /* CHECK INSPECTOR CARD */
   checkInspectorCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     borderWidth: 1.5,
     padding: 12,
-    marginBottom: 12
+    marginBottom: 14
   },
   checkInspectorError: {
     borderColor: '#FCA5A5',
@@ -1201,10 +1227,12 @@ const styles = StyleSheet.create({
     color: '#7F1D1D',
     marginTop: 2
   },
+
+  /* ACTION CONTROL BUTTONS */
   actionButtonsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 10
+    marginBottom: 6
   },
   checkCodeBtn: {
     flex: 1,
@@ -1212,17 +1240,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#EEEDFF',
     paddingVertical: 11,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#C7C5FF'
+    borderWidth: 1
   },
   checkCodeBtnText: {
     fontFamily: FONT_FAMILY,
     fontSize: 13,
-    fontWeight: '700',
-    color: '#5653fe'
+    fontWeight: '700'
   },
   previewToggleBtn: {
     flex: 1,
@@ -1264,7 +1289,7 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 10,
     borderRadius: 8,
-    marginTop: 6
+    marginTop: 8
   },
   feedbackSuccess: {
     backgroundColor: '#F0FDF4',
@@ -1287,12 +1312,13 @@ const styles = StyleSheet.create({
   feedbackTextError: {
     color: '#B91C1C'
   },
+
+  /* BOTTOM NAVIGATION BUTTONS */
   bottomNavRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 4
+    gap: 12
   },
   siblingNavBtn: {
     flex: 1,
@@ -1300,15 +1326,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 13,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0'
-  },
-  siblingNavBtnNext: {
-    borderColor: '#C7C5FF',
-    backgroundColor: '#EEEDFF'
   },
   siblingNavText: {
     fontFamily: FONT_FAMILY,
@@ -1316,8 +1338,163 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#64748B'
   },
-  siblingNavTextNext: {
-    color: '#5653fe',
+  nextLessonDarkBtn: {
+    flex: 1.2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#0F172A',
+    paddingVertical: 13,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  nextLessonDarkBtnText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#FFFFFF'
+  },
+
+  /* POPUP MODAL STYLES */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'center',
+    padding: 16
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    maxHeight: '85%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 10
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    marginBottom: 12
+  },
+  modalTitle: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A'
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  modalBody: {
+    marginBottom: 14
+  },
+  referenceSubheading: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    marginBottom: 6,
+    marginTop: 4
+  },
+  exampleHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6
+  },
+  copyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6
+  },
+  copyBtnText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 11,
     fontWeight: '700'
+  },
+  codeSnippetBox: {
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12
+  },
+  codeText: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 12.5,
+    color: '#E2E8F0',
+    lineHeight: 19
+  },
+  exampleOutputWrap: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden'
+  },
+  exampleOutputHeader: {
+    height: 30,
+    backgroundColor: '#F1F5F9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    gap: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0'
+  },
+  browserDotsMini: {
+    flexDirection: 'row',
+    gap: 4
+  },
+  dotMini: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5
+  },
+  exampleOutputLabel: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  exampleWebviewBox: {
+    height: 150,
+    backgroundColor: '#FFFFFF'
+  },
+  exampleWebview: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
+  },
+  modalDoneBtn: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  modalDoneBtnText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF'
   }
 });
