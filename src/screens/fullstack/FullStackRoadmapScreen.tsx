@@ -31,7 +31,7 @@ const COURSE_LOGOS: Record<string, any> = {
   capstone: require('../../assets/courses/capstone.png'),
 };
 
-export interface PremiumCardStyle {
+export interface RainbowCardStyle {
   bg: string;
   border: string;
   subtitleColor: string;
@@ -43,129 +43,158 @@ export interface PremiumCardStyle {
   metaChipBg: string;
   metaChipText: string;
   metaChipBorder: string;
+  buttonBg: string;
+  buttonText: string;
 }
 
-const CARD_STYLES: Record<string, PremiumCardStyle> = {
+const CARD_STYLES: Record<string, RainbowCardStyle> = {
+  // 1. HTML: Sunset Coral Red
   html: {
-    bg: '#FFF3E0',
-    border: '#FFB74D',
-    subtitleColor: '#D84315',
-    badgeBg: '#FFE0B2',
-    badgeText: '#E65100',
-    badgeBorder: '#FFB74D',
+    bg: '#FFF5F5',
+    border: '#FEB2B2',
+    subtitleColor: '#C53030',
+    badgeBg: '#FED7D7',
+    badgeText: '#9B2C2C',
+    badgeBorder: '#FEB2B2',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#FFB74D',
-    metaChipBg: '#FFE0B2',
-    metaChipText: '#BF360C',
-    metaChipBorder: '#FFB74D',
+    logoBoxBorder: '#FEB2B2',
+    metaChipBg: '#FED7D7',
+    metaChipText: '#9B2C2C',
+    metaChipBorder: '#FEB2B2',
+    buttonBg: '#E53E3E',
+    buttonText: '#FFFFFF',
   },
+  // 2. CSS: Tangy Orange
   css: {
-    bg: '#E3F2FD',
-    border: '#64B5F6',
-    subtitleColor: '#1565C0',
-    badgeBg: '#BBDEFB',
-    badgeText: '#1565C0',
-    badgeBorder: '#64B5F6',
+    bg: '#FFFAF0',
+    border: '#FBD38D',
+    subtitleColor: '#C05621',
+    badgeBg: '#FEEBC8',
+    badgeText: '#7B341E',
+    badgeBorder: '#FBD38D',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#64B5F6',
-    metaChipBg: '#BBDEFB',
-    metaChipText: '#0D47A1',
-    metaChipBorder: '#64B5F6',
+    logoBoxBorder: '#FBD38D',
+    metaChipBg: '#FEEBC8',
+    metaChipText: '#7B341E',
+    metaChipBorder: '#FBD38D',
+    buttonBg: '#DD6B20',
+    buttonText: '#FFFFFF',
   },
+  // 3. JavaScript: Golden Sun Yellow
   javascript: {
-    bg: '#FFFDE7',
-    border: '#FDD835',
-    subtitleColor: '#F57F17',
-    badgeBg: '#FFF59D',
-    badgeText: '#E65100',
-    badgeBorder: '#FDD835',
+    bg: '#FFFFF0',
+    border: '#F6E05E',
+    subtitleColor: '#B7791F',
+    badgeBg: '#FEFCBF',
+    badgeText: '#744210',
+    badgeBorder: '#F6E05E',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#FDD835',
-    metaChipBg: '#FFF59D',
-    metaChipText: '#BF360C',
-    metaChipBorder: '#FDD835',
+    logoBoxBorder: '#F6E05E',
+    metaChipBg: '#FEFCBF',
+    metaChipText: '#744210',
+    metaChipBorder: '#F6E05E',
+    buttonBg: '#D69E2E',
+    buttonText: '#FFFFFF',
   },
+  // 4. Node.js: Fresh Emerald Green
   nodejs: {
-    bg: '#E8F5E9',
-    border: '#81C784',
-    subtitleColor: '#2E7D32',
-    badgeBg: '#C8E6C9',
-    badgeText: '#2E7D32',
-    badgeBorder: '#81C784',
+    bg: '#F0FFF4',
+    border: '#9AE6B4',
+    subtitleColor: '#276749',
+    badgeBg: '#C6F6D5',
+    badgeText: '#1C4532',
+    badgeBorder: '#9AE6B4',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#81C784',
-    metaChipBg: '#C8E6C9',
-    metaChipText: '#1B5E20',
-    metaChipBorder: '#81C784',
+    logoBoxBorder: '#9AE6B4',
+    metaChipBg: '#C6F6D5',
+    metaChipText: '#1C4532',
+    metaChipBorder: '#9AE6B4',
+    buttonBg: '#38A169',
+    buttonText: '#FFFFFF',
   },
+  // 5. Express.js: Ocean Teal Cyan
   expressjs: {
-    bg: '#ECEFF1',
-    border: '#90A4AE',
-    subtitleColor: '#37474F',
-    badgeBg: '#CFD8DC',
-    badgeText: '#37474F',
-    badgeBorder: '#90A4AE',
+    bg: '#E6FFFA',
+    border: '#81E6D9',
+    subtitleColor: '#2C7A7B',
+    badgeBg: '#B2F5EA',
+    badgeText: '#1D4044',
+    badgeBorder: '#81E6D9',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#90A4AE',
-    metaChipBg: '#CFD8DC',
-    metaChipText: '#263238',
-    metaChipBorder: '#90A4AE',
+    logoBoxBorder: '#81E6D9',
+    metaChipBg: '#B2F5EA',
+    metaChipText: '#1D4044',
+    metaChipBorder: '#81E6D9',
+    buttonBg: '#319795',
+    buttonText: '#FFFFFF',
   },
+  // 6. MongoDB: Electric Royal Blue
   mongodb: {
-    bg: '#E0F2F1',
-    border: '#4DB6AC',
-    subtitleColor: '#00695C',
-    badgeBg: '#B2DFDB',
-    badgeText: '#00695C',
-    badgeBorder: '#4DB6AC',
+    bg: '#EBF8FF',
+    border: '#90CDF4',
+    subtitleColor: '#2B6CB0',
+    badgeBg: '#BEE3F8',
+    badgeText: '#1A365D',
+    badgeBorder: '#90CDF4',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#4DB6AC',
-    metaChipBg: '#B2DFDB',
-    metaChipText: '#004D40',
-    metaChipBorder: '#4DB6AC',
+    logoBoxBorder: '#90CDF4',
+    metaChipBg: '#BEE3F8',
+    metaChipText: '#1A365D',
+    metaChipBorder: '#90CDF4',
+    buttonBg: '#3182CE',
+    buttonText: '#FFFFFF',
   },
+  // 7. REST APIs: Deep Royal Indigo
   restapi: {
-    bg: '#F3E5F5',
-    border: '#BA68C8',
-    subtitleColor: '#6A1B9A',
-    badgeBg: '#E1BEE7',
-    badgeText: '#6A1B9A',
-    badgeBorder: '#BA68C8',
+    bg: '#EBF4FF',
+    border: '#A3BFFA',
+    subtitleColor: '#3C366B',
+    badgeBg: '#C3DAFE',
+    badgeText: '#2C5282',
+    badgeBorder: '#A3BFFA',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#BA68C8',
-    metaChipBg: '#E1BEE7',
-    metaChipText: '#4A148C',
-    metaChipBorder: '#BA68C8',
+    logoBoxBorder: '#A3BFFA',
+    metaChipBg: '#C3DAFE',
+    metaChipText: '#2C5282',
+    metaChipBorder: '#A3BFFA',
+    buttonBg: '#4C51BF',
+    buttonText: '#FFFFFF',
   },
+  // 8. Auth: Mystic Purple Violet
   auth: {
-    bg: '#FFEBEE',
-    border: '#E57373',
-    subtitleColor: '#C62828',
-    badgeBg: '#FFCDD2',
-    badgeText: '#C62828',
-    badgeBorder: '#E57373',
+    bg: '#FAF5FF',
+    border: '#D6BCFA',
+    subtitleColor: '#6B46C1',
+    badgeBg: '#E9D8FD',
+    badgeText: '#322659',
+    badgeBorder: '#D6BCFA',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#E57373',
-    metaChipBg: '#FFCDD2',
-    metaChipText: '#B71C1C',
-    metaChipBorder: '#E57373',
+    logoBoxBorder: '#D6BCFA',
+    metaChipBg: '#E9D8FD',
+    metaChipText: '#322659',
+    metaChipBorder: '#D6BCFA',
+    buttonBg: '#805AD5',
+    buttonText: '#FFFFFF',
   },
+  // 9. Capstone: Electric Magenta Pink
   capstone: {
-    bg: '#E8EAF6',
-    border: '#7986CB',
-    subtitleColor: '#283593',
-    badgeBg: '#C5CAE9',
-    badgeText: '#283593',
-    badgeBorder: '#7986CB',
+    bg: '#FFF5F7',
+    border: '#FEB2C2',
+    subtitleColor: '#B83280',
+    badgeBg: '#FED7E2',
+    badgeText: '#521B41',
+    badgeBorder: '#FEB2C2',
     logoBoxBg: '#FFFFFF',
-    logoBoxBorder: '#7986CB',
-    metaChipBg: '#C5CAE9',
-    metaChipText: '#1A237E',
-    metaChipBorder: '#7986CB',
+    logoBoxBorder: '#FEB2C2',
+    metaChipBg: '#FED7E2',
+    metaChipText: '#521B41',
+    metaChipBorder: '#FEB2C2',
+    buttonBg: '#D53F8C',
+    buttonText: '#FFFFFF',
   },
 };
 
-const DEFAULT_CARD_STYLE: PremiumCardStyle = {
+const DEFAULT_CARD_STYLE: RainbowCardStyle = {
   bg: '#FFFFFF',
   border: '#E2E8F0',
   subtitleColor: '#5653fe',
@@ -177,6 +206,8 @@ const DEFAULT_CARD_STYLE: PremiumCardStyle = {
   metaChipBg: '#F8FAFC',
   metaChipText: '#64748B',
   metaChipBorder: '#E2E8F0',
+  buttonBg: '#5653fe',
+  buttonText: '#FFFFFF',
 };
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
@@ -299,7 +330,7 @@ export const FullStackRoadmapScreen: React.FC = () => {
                           resizeMode="contain"
                         />
                       ) : (
-                        <Icon name={track.icon as any || 'code'} size={22} color="#5653fe" />
+                        <Icon name={track.icon as any || 'code'} size={22} color={cardStyle.buttonBg} />
                       )}
                     </View>
 
@@ -378,11 +409,13 @@ export const FullStackRoadmapScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  {/* Action CTA Button - SAME color for all cards */}
+                  {/* Action CTA Button - Matched Rainbow Color for each card */}
                   <View style={styles.ctaButtonRow}>
-                    <View style={styles.ctaButton}>
-                      <Text style={styles.ctaButtonText}>Start {track.title} Course</Text>
-                      <Icon name="arrow-right" size={14} color="#FFFFFF" />
+                    <View style={[styles.ctaButton, { backgroundColor: cardStyle.buttonBg, shadowColor: cardStyle.buttonBg }]}>
+                      <Text style={[styles.ctaButtonText, { color: cardStyle.buttonText }]}>
+                        Start {track.title} Course
+                      </Text>
+                      <Icon name="arrow-right" size={14} color={cardStyle.buttonText} />
                     </View>
                   </View>
                 </TouchableOpacity>
