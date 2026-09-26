@@ -29,6 +29,82 @@ import { COLORS } from '../../constants/theme';
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
+// Self-closing / void elements in HTML
+const VOID_OR_SELF_CLOSING_TAGS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr', '!doctype'
+]);
+
+// Quick HTML Elements for the toolbar
+const QUICK_ELEMENTS = [
+  { label: '<h1>', snippet: '<h1>Heading</h1>' },
+  { label: '<p>', snippet: '<p>Paragraph text</p>' },
+  { label: '<a>', snippet: '<a href="#">Link</a>' },
+  { label: '<img>', snippet: '<img src="https://picsum.photos/200" alt="Image" />' },
+  { label: '<button>', snippet: '<button>Click Me</button>' },
+  { label: '<ul>', snippet: '<ul>\n  <li>Item 1</li>\n  <li>Item 2</li>\n</ul>' },
+  { label: '<li>', snippet: '<li>List item</li>' },
+  { label: '<div>', snippet: '<div>\n  <p>Content</p>\n</div>' },
+  { label: '<form>', snippet: '<form>\n  <input type="text" placeholder="Name" />\n  <button type="submit">Submit</button>\n</form>' },
+  { label: '<input>', snippet: '<input type="text" placeholder="Enter text" />' },
+  { label: '<table>', snippet: '<table border="1">\n  <tr>\n    <th>Name</th>\n    <th>Role</th>\n  </tr>\n  <tr>\n    <td>Alex</td>\n    <td>Developer</td>\n  </tr>\n</table>' }
+];
+
+/**
+ * Auto-closes HTML tags when typing '>'
+ * Example: user types '<p' then '>' -> inserts '</p>' so it becomes '<p></p>'
+ */
+export const autoCloseHtmlTag = (
+  newText: string,
+  oldText: string
+): { updatedText: string; cursorOffset: number | null } => {
+  // Only trigger when user added a single character and it is '>'
+  if (newText.length !== oldText.length + 1) {
+    return { updatedText: newText, cursorOffset: null };
+  }
+
+  // Find where the new character was added
+  let diffIndex = -1;
+  for (let i = 0; i < newText.length; i++) {
+    if (newText[i] !== oldText[i]) {
+      diffIndex = i;
+      break;
+    }
+  }
+
+  if (diffIndex === -1 || newText[diffIndex] !== '>') {
+    return { updatedText: newText, cursorOffset: null };
+  }
+
+  const textBefore = newText.slice(0, diffIndex + 1);
+  const textAfter = newText.slice(diffIndex + 1);
+
+  // Match an opening tag right before '>' like <p>, <h1>, <div class="...">
+  // Do NOT match closing tags (starts with </), comments (<!--), or self-closing (<tag ... />)
+  const tagMatch = textBefore.match(/<([a-zA-Z][a-zA-Z0-9\-]*)(?:\s+[^<>]*)?>$/);
+  if (!tagMatch) {
+    return { updatedText: newText, cursorOffset: null };
+  }
+
+  const tagName = tagMatch[1].toLowerCase();
+
+  // If void/self-closing tag or explicitly terminated with '/>', do not auto-close
+  if (VOID_OR_SELF_CLOSING_TAGS.has(tagName) || textBefore.endsWith('/>')) {
+    return { updatedText: newText, cursorOffset: null };
+  }
+
+  const closingTag = `</${tagName}>`;
+
+  // Avoid duplicate if the text immediately following is already the closing tag
+  if (textAfter.startsWith(closingTag)) {
+    return { updatedText: newText, cursorOffset: null };
+  }
+
+  const updatedText = textBefore + closingTag + textAfter;
+  const cursorOffset = diffIndex + 1; // position cursor right between <tag> and </tag>
+
+  return { updatedText, cursorOffset };
+};
+
 // Helper to wrap HTML with clean responsive styling for live browser simulation
 const buildPreviewHtml = (rawHtml: string) => {
   return `<!DOCTYPE html>
@@ -40,34 +116,34 @@ const buildPreviewHtml = (rawHtml: string) => {
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      padding: 16px;
+      padding: 14px;
       margin: 0;
       color: #0F172A;
       background-color: #FFFFFF;
       line-height: 1.5;
     }
-    h1, h2, h3, h4, h5, h6 { color: #1E293B; margin-top: 14px; margin-bottom: 8px; font-weight: 700; }
-    h1 { font-size: 24px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px; }
-    h2 { font-size: 20px; }
-    h3 { font-size: 16px; }
-    p { margin-top: 0; margin-bottom: 12px; font-size: 14px; color: #334155; }
-    ul, ol { margin: 8px 0 12px 20px; padding: 0; }
+    h1, h2, h3, h4, h5, h6 { color: #1E293B; margin-top: 10px; margin-bottom: 6px; font-weight: 700; }
+    h1 { font-size: 22px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; }
+    h2 { font-size: 18px; }
+    h3 { font-size: 15px; }
+    p { margin-top: 0; margin-bottom: 10px; font-size: 14px; color: #334155; }
+    ul, ol { margin: 6px 0 10px 20px; padding: 0; }
     li { margin-bottom: 4px; font-size: 14px; color: #334155; }
     a { color: #4F46E5; text-decoration: underline; }
-    img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #E2E8F0; }
-    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13px; }
-    th, td { border: 1px solid #CBD5E1; padding: 8px 10px; text-align: left; }
+    img { max-width: 100%; height: auto; border-radius: 6px; border: 1px solid #E2E8F0; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+    th, td { border: 1px solid #CBD5E1; padding: 6px 8px; text-align: left; }
     th { background-color: #F1F5F9; color: #0F172A; font-weight: 700; }
-    form { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; margin: 14px 0; }
-    label { display: block; font-weight: 600; margin-top: 8px; margin-bottom: 4px; font-size: 13px; color: #1E293B; }
+    form { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; margin: 10px 0; }
+    label { display: block; font-weight: 600; margin-top: 6px; margin-bottom: 4px; font-size: 12px; color: #1E293B; }
     input, select, textarea {
       width: 100%;
       font-family: inherit;
-      font-size: 14px;
-      padding: 8px 10px;
+      font-size: 13px;
+      padding: 7px 9px;
       border: 1px solid #CBD5E1;
       border-radius: 6px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       background-color: #FFFFFF;
       box-sizing: border-box;
     }
@@ -75,18 +151,18 @@ const buildPreviewHtml = (rawHtml: string) => {
       background-color: #4F46E5;
       color: #FFFFFF;
       border: none;
-      padding: 9px 16px;
+      padding: 8px 14px;
       border-radius: 6px;
       font-weight: 700;
       font-size: 13px;
       cursor: pointer;
-      margin-top: 8px;
+      margin-top: 6px;
       width: auto;
     }
   </style>
 </head>
 <body>
-  ${rawHtml || '<p style="color: #94A3B8; font-style: italic;">(Output is empty. Write your HTML code in the editor above.)</p>'}
+  ${rawHtml || '<p style="color: #94A3B8; font-style: italic;">(Output is empty. Write your HTML code in the editor.)</p>'}
 </body>
 </html>`;
 };
@@ -105,18 +181,17 @@ export const HtmlLessonScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(!initialFallback);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
-  const [copiedRef, setCopiedRef] = useState<boolean>(false);
 
   // Embedded Practice States
   const [userCode, setUserCode] = useState<string>('');
-  const [activePracticeTab, setActivePracticeTab] = useState<'editor' | 'preview' | 'target'>('editor');
+  const [cursorSelection, setCursorSelection] = useState<{ start: number; end: number } | undefined>(undefined);
+  const [activePracticeTab, setActivePracticeTab] = useState<'editor' | 'preview'>('editor');
   const [submitting, setSubmitting] = useState<boolean>(false);
   
   // Validation and Error Checking States
   const [validationResult, setValidationResult] = useState<HtmlValidationResult | null>(null);
   const [taskResult, setTaskResult] = useState<PracticeVerificationResult | null>(null);
   const [showErrorCard, setShowErrorCard] = useState<boolean>(false);
-  const [showRefSolution, setShowRefSolution] = useState<boolean>(false);
   const [submissionFeedback, setSubmissionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -149,7 +224,6 @@ export const HtmlLessonScreen: React.FC = () => {
         const starter = resolved.practiceTask?.starterCode || resolved.starterCode || '';
         setUserCode(starter);
 
-        // Pre-evaluate task requirements
         if (resolved.practiceTask) {
           setTaskResult(verifyPracticeTask(starter, resolved.practiceTask));
         }
@@ -169,15 +243,10 @@ export const HtmlLessonScreen: React.FC = () => {
     }
   }, [lessonId, lessonSlug, loadLesson]);
 
-  const handleCopy = (text: string, isRef = false) => {
+  const handleCopy = (text: string) => {
     Clipboard.setString(text);
-    if (isRef) {
-      setCopiedRef(true);
-      setTimeout(() => setCopiedRef(false), 2000);
-    } else {
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    }
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
   const handleResetCode = () => {
@@ -190,23 +259,43 @@ export const HtmlLessonScreen: React.FC = () => {
     setSubmissionFeedback(null);
   };
 
-  // Check Code for Errors & Mistakes (syntax + task requirements)
+  // Check Code for Errors & Mistakes
   const handleCheckCode = () => {
     const syntaxCheck = validateHtml(userCode);
     setValidationResult(syntaxCheck);
 
-    let taskCheck: PracticeVerificationResult | null = null;
     if (lesson?.practiceTask) {
-      taskCheck = verifyPracticeTask(userCode, lesson.practiceTask);
+      const taskCheck = verifyPracticeTask(userCode, lesson.practiceTask);
       setTaskResult(taskCheck);
     }
 
     setShowErrorCard(true);
   };
 
-  // Quick HTML tag snippet insertion
-  const handleInsertSnippet = (snippet: string) => {
-    setUserCode(prev => prev + '\n' + snippet);
+  // Handle typing with Auto-Closing HTML Tags
+  const handleCodeChange = (text: string) => {
+    const { updatedText, cursorOffset } = autoCloseHtmlTag(text, userCode);
+    setUserCode(updatedText);
+
+    if (cursorOffset !== null) {
+      setCursorSelection({ start: cursorOffset, end: cursorOffset });
+      setTimeout(() => {
+        setCursorSelection(undefined);
+      }, 50);
+    }
+
+    if (submissionFeedback) setSubmissionFeedback(null);
+  };
+
+  // Quick HTML element tag insertion
+  const handleInsertTag = (tagSnippet: string) => {
+    setUserCode(prev => {
+      const trimmed = prev.trimEnd();
+      return trimmed ? `${trimmed}\n${tagSnippet}` : tagSnippet;
+    });
+    if (activePracticeTab !== 'editor') {
+      setActivePracticeTab('editor');
+    }
   };
 
   const handleSubmitSolution = async () => {
@@ -215,7 +304,7 @@ export const HtmlLessonScreen: React.FC = () => {
     setSubmissionFeedback(null);
 
     try {
-      // 1. Run Structural Check
+      // 1. Run Structural Syntax Check
       const syntaxCheck = validateHtml(userCode);
       setValidationResult(syntaxCheck);
 
@@ -223,7 +312,7 @@ export const HtmlLessonScreen: React.FC = () => {
         setShowErrorCard(true);
         setSubmissionFeedback({
           type: 'error',
-          message: `Fix the ${syntaxCheck.errors.length} syntax error(s) below before submitting.`
+          message: `Fix the ${syntaxCheck.errors.length} syntax error(s) before submitting.`
         });
         setSubmitting(false);
         return;
@@ -239,7 +328,7 @@ export const HtmlLessonScreen: React.FC = () => {
           const missing = taskCheck.checks.filter(c => !c.passed).length;
           setSubmissionFeedback({
             type: 'error',
-            message: `${missing} requirement(s) not satisfied. Check requirements checklist below.`
+            message: `${missing} requirement(s) not met. Tap Check Code to view details.`
           });
           setSubmitting(false);
           return;
@@ -266,7 +355,7 @@ export const HtmlLessonScreen: React.FC = () => {
     }
   };
 
-  // Sibling Lessons Lookup (in the current technology track only)
+  // Sibling Lessons Lookup
   const activeCourse = useMemo(() => getCourseForTech(activeTech), [activeTech]);
   const techLessons = useMemo(() => activeCourse.modules.flatMap(m => m.lessons), [activeCourse]);
 
@@ -328,11 +417,7 @@ export const HtmlLessonScreen: React.FC = () => {
     );
   }
 
-  const referenceCode = lesson.practiceTask?.referenceExample || lesson.practiceTask?.referenceCode || lesson.codeExample || '';
-  const expectedOutputHtml = lesson.practiceTask?.referenceExample || lesson.codeExample || `<p>${lesson.expectedOutput || 'Output display'}</p>`;
   const syntaxErrorsCount = validationResult?.errors?.length || 0;
-  const isSyntaxClean = validationResult && syntaxErrorsCount === 0;
-  const isTaskPassing = taskResult?.allPassed;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -368,7 +453,9 @@ export const HtmlLessonScreen: React.FC = () => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Lesson Header Card */}
+        {/* ==================================================
+            1. LESSON HEADING
+            ================================================== */}
         <View style={styles.lessonHeaderCard}>
           <View style={styles.lessonOrderPill}>
             <Text style={styles.lessonOrderPillText}>
@@ -376,19 +463,16 @@ export const HtmlLessonScreen: React.FC = () => {
             </Text>
           </View>
           <Text style={styles.lessonHeaderTitle}>{lesson.title}</Text>
-
-          {lesson.learningObjective && (
-            <View style={styles.objectiveBox}>
-              <View style={styles.objectiveHeaderRow}>
-                <Icon name="sparkles" size={16} color="#4F46E5" />
-                <Text style={styles.objectiveHeaderTitle}>Learning Objective</Text>
-              </View>
-              <Text style={styles.objectiveText}>{lesson.learningObjective}</Text>
-            </View>
-          )}
+          {lesson.learningObjective ? (
+            <Text style={styles.lessonSubtitleText}>{lesson.learningObjective}</Text>
+          ) : lesson.description ? (
+            <Text style={styles.lessonSubtitleText}>{lesson.description}</Text>
+          ) : null}
         </View>
 
-        {/* Core Concept Explanation */}
+        {/* ==================================================
+            2. CORE CONCEPT
+            ================================================== */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeadingRow}>
             <Icon name="book-open" size={18} color="#4F46E5" />
@@ -397,8 +481,10 @@ export const HtmlLessonScreen: React.FC = () => {
           <Text style={styles.conceptBodyText}>{lesson.concept}</Text>
         </View>
 
-        {/* Code Example Section */}
-        {lesson.codeExample && (
+        {/* ==================================================
+            3. CODE EXAMPLE WITH OUTPUT
+            ================================================== */}
+        {lesson.codeExample ? (
           <View style={styles.sectionCard}>
             <View style={styles.exampleHeaderRow}>
               <View style={styles.sectionHeadingRow}>
@@ -407,33 +493,50 @@ export const HtmlLessonScreen: React.FC = () => {
               </View>
               <TouchableOpacity
                 style={styles.copyBtn}
-                onPress={() => handleCopy(lesson.codeExample || '', false)}
+                onPress={() => handleCopy(lesson.codeExample || '')}
               >
                 <Icon name="copy" size={14} color="#4F46E5" />
                 <Text style={styles.copyBtnText}>{copiedCode ? 'Copied!' : 'Copy Code'}</Text>
               </TouchableOpacity>
             </View>
 
+            {/* Code Snippet Box */}
             <View style={styles.codeSnippetBox}>
               <Text style={styles.codeText}>{lesson.codeExample}</Text>
             </View>
 
-            {lesson.expectedOutput && (
-              <View style={styles.expectedOutputBox}>
-                <Text style={styles.expectedOutputTitle}>Expected Output:</Text>
-                <Text style={styles.expectedOutputText}>{lesson.expectedOutput}</Text>
+            {/* Output Preview */}
+            <View style={styles.exampleOutputWrap}>
+              <View style={styles.exampleOutputHeader}>
+                <View style={styles.browserDotsMini}>
+                  <View style={[styles.dotMini, { backgroundColor: '#EF4444' }]} />
+                  <View style={[styles.dotMini, { backgroundColor: '#F59E0B' }]} />
+                  <View style={[styles.dotMini, { backgroundColor: '#10B981' }]} />
+                </View>
+                <Text style={styles.exampleOutputLabel}>Output Preview</Text>
               </View>
-            )}
+              <View style={styles.exampleWebviewBox} pointerEvents="none">
+                <WebView
+                  originWhitelist={['*']}
+                  source={{ html: buildPreviewHtml(lesson.codeExample) }}
+                  style={styles.exampleWebview}
+                  scrollEnabled={false}
+                  javaScriptEnabled={true}
+                  domStorageEnabled={true}
+                />
+              </View>
+            </View>
           </View>
-        )}
+        ) : null}
 
         {/* ==================================================
-            EMBEDDED PRACTICE WORKSPACE (INSIDE LESSON)
+            4. PRACTICE (TEXT EDITOR + LIVE PREVIEW + CHECKS)
             ================================================== */}
         <View style={styles.practiceSectionCard}>
           <View style={styles.practiceHeaderRow}>
-            <View style={styles.taskBadge}>
-              <Text style={styles.taskBadgeText}>LESSON PRACTICE TASK</Text>
+            <View style={styles.sectionHeadingRow}>
+              <Icon name="terminal" size={18} color="#4F46E5" />
+              <Text style={styles.sectionHeading}>Practice</Text>
             </View>
             <TouchableOpacity onPress={handleResetCode} style={styles.resetBtn}>
               <Icon name="refresh-cw" size={13} color="#64748B" />
@@ -441,73 +544,28 @@ export const HtmlLessonScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.taskTitle}>
-            {lesson.practiceTask?.title || `Practice: ${lesson.title}`}
-          </Text>
-          <Text style={styles.taskDesc}>
-            {lesson.practiceTask?.description || 'Apply what you learned by writing the required HTML code.'}
-          </Text>
-
-          {/* Task Requirements Checklist */}
-          {lesson.practiceTask?.requirements && lesson.practiceTask.requirements.length > 0 && (
-            <View style={styles.requirementsList}>
-              <Text style={styles.requirementsHeader}>Task Requirements:</Text>
-              {lesson.practiceTask.requirements.map((req, rIdx) => {
-                const checkState = taskResult?.checks?.[rIdx];
-                const isPassed = checkState?.passed;
-
-                return (
-                  <View key={rIdx} style={styles.requirementRow}>
-                    <View style={[styles.reqCheckCircle, isPassed && styles.reqCheckCirclePassed]}>
-                      <Icon name="check" size={10} color={isPassed ? '#FFFFFF' : '#94A3B8'} />
-                    </View>
-                    <Text style={[styles.requirementText, isPassed && styles.requirementTextPassed]}>
-                      {req}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          {/* Reference Code Toggle (Solution Reference) */}
-          {referenceCode ? (
-            <View style={styles.refSolutionContainer}>
-              <TouchableOpacity
-                style={styles.refSolutionToggleBar}
-                activeOpacity={0.75}
-                onPress={() => setShowRefSolution(prev => !prev)}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Icon name="eye" size={14} color="#4F46E5" />
-                  <Text style={styles.refSolutionToggleText}>
-                    {showRefSolution ? 'Hide Reference Code' : 'View Reference Code (Solution Guide)'}
-                  </Text>
-                </View>
-                <Icon name={showRefSolution ? 'arrow-up' : 'chevron-down'} size={16} color="#4F46E5" />
-              </TouchableOpacity>
-
-              {showRefSolution && (
-                <View style={styles.refSolutionBody}>
-                  <View style={styles.refSolutionHeader}>
-                    <Text style={styles.refSolutionLabel}>REFERENCE IMPLEMENTATION</Text>
-                    <TouchableOpacity
-                      style={styles.copyRefBtn}
-                      onPress={() => handleCopy(referenceCode, true)}
-                    >
-                      <Icon name="copy" size={12} color="#FFFFFF" />
-                      <Text style={styles.copyRefBtnText}>{copiedRef ? 'Copied!' : 'Copy'}</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <Text style={styles.refCodeText}>{referenceCode}</Text>
-                  </ScrollView>
-                </View>
-              )}
-            </View>
+          {lesson.practiceTask?.description ? (
+            <Text style={styles.taskDescText}>
+              {lesson.practiceTask.description}
+            </Text>
           ) : null}
 
-          {/* Practice Segmented Tabs: Editor | Live Preview | Expected Target */}
+          {/* Quick Elements Tags Toolbar */}
+          <View style={styles.tagToolbarWrap}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tagToolbarScroll}>
+              {QUICK_ELEMENTS.map((elem, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.tagButton}
+                  onPress={() => handleInsertTag(elem.snippet)}
+                >
+                  <Text style={styles.tagButtonText}>{elem.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Practice View Switcher: Code Editor | Live Preview */}
           <View style={styles.practiceTabBar}>
             <TouchableOpacity
               style={[styles.practiceTab, activePracticeTab === 'editor' && styles.practiceTabActive]}
@@ -536,74 +594,29 @@ export const HtmlLessonScreen: React.FC = () => {
                 Live Preview
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.practiceTab, activePracticeTab === 'target' && styles.practiceTabActive]}
-              onPress={() => setActivePracticeTab('target')}
-            >
-              <Icon
-                name="layout"
-                size={14}
-                color={activePracticeTab === 'target' ? '#4F46E5' : '#64748B'}
-              />
-              <Text style={[styles.practiceTabText, activePracticeTab === 'target' && styles.practiceTabTextActive]}>
-                Visual Target
-              </Text>
-            </TouchableOpacity>
           </View>
 
-          {/* TAB 1: CODE EDITOR */}
+          {/* TAB 1: CODE EDITOR (with Auto-Closing Tags) */}
           {activePracticeTab === 'editor' && (
-            <View>
-              {/* Quick HTML Tag Insertion Bar */}
-              <View style={styles.tagToolbar}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tagToolbarScroll}>
-                  {[
-                    '<h1></h1>',
-                    '<p></p>',
-                    '<a href="#"></a>',
-                    '<strong></strong>',
-                    '<ul>\n  <li></li>\n</ul>',
-                    '<li></li>',
-                    '<table border="1">\n  <tr><th></th></tr>\n  <tr><td></td></tr>\n</table>',
-                    '<form>\n  <label></label>\n  <input type="text" />\n  <button type="submit">Submit</button>\n</form>',
-                    '<input type="text" />',
-                    '<button></button>',
-                    '<img src="" alt="" />'
-                  ].map((tag, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      style={styles.tagButton}
-                      onPress={() => handleInsertSnippet(tag)}
-                    >
-                      <Text style={styles.tagButtonText}>{tag.split(/[\s\n>]/)[0]}&gt;</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              {/* Code TextInput */}
-              <View style={styles.editorBox}>
-                <TextInput
-                  style={styles.codeInput}
-                  multiline
-                  value={userCode}
-                  onChangeText={(text) => {
-                    setUserCode(text);
-                    if (submissionFeedback) setSubmissionFeedback(null);
-                  }}
-                  placeholder="Write your HTML code here..."
-                  placeholderTextColor="#94A3B8"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  spellCheck={false}
-                  textAlignVertical="top"
-                />
-              </View>
+            <View style={styles.editorBox}>
+              <TextInput
+                style={styles.codeInput}
+                multiline
+                value={userCode}
+                onChangeText={handleCodeChange}
+                selection={cursorSelection}
+                onSelectionChange={(e) => setCursorSelection(e.nativeEvent.selection)}
+                placeholder="Write your HTML code here..."
+                placeholderTextColor="#94A3B8"
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                textAlignVertical="top"
+              />
             </View>
           )}
 
-          {/* TAB 2: LIVE PREVIEW (WEBVIEW RENDERING USER CODE) */}
+          {/* TAB 2: LIVE PREVIEW */}
           {activePracticeTab === 'preview' && (
             <View style={styles.browserFrame}>
               <View style={styles.browserHeader}>
@@ -614,16 +627,9 @@ export const HtmlLessonScreen: React.FC = () => {
                 </View>
                 <View style={styles.browserUrlBar}>
                   <Icon name="globe" size={11} color="#64748B" />
-                  <Text style={styles.browserUrlText}>http://localhost:5001/preview.html</Text>
+                  <Text style={styles.browserUrlText}>http://localhost/preview.html</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.refreshIconBtn}
-                  onPress={() => setUserCode(prev => prev)}
-                >
-                  <Icon name="refresh-cw" size={12} color="#64748B" />
-                </TouchableOpacity>
               </View>
-
               <View style={styles.webviewContainer}>
                 <WebView
                   originWhitelist={['*']}
@@ -636,58 +642,20 @@ export const HtmlLessonScreen: React.FC = () => {
             </View>
           )}
 
-          {/* TAB 3: VISUAL TARGET (REFERENCE IMAGE / WEBVIEW RENDERING EXPECTED OUTPUT) */}
-          {activePracticeTab === 'target' && (
-            <View style={styles.browserFrame}>
-              <View style={[styles.browserHeader, { backgroundColor: '#EEF2FF' }]}>
-                <View style={styles.browserDotsRow}>
-                  <View style={[styles.browserDot, { backgroundColor: '#EF4444' }]} />
-                  <View style={[styles.browserDot, { backgroundColor: '#F59E0B' }]} />
-                  <View style={[styles.browserDot, { backgroundColor: '#10B981' }]} />
-                </View>
-                <View style={[styles.browserUrlBar, { backgroundColor: '#FFFFFF' }]}>
-                  <Icon name="check-circle" size={11} color="#4F46E5" />
-                  <Text style={[styles.browserUrlText, { color: '#4F46E5', fontWeight: '700' }]}>
-                    Expected Visual Target
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.webviewContainer}>
-                <WebView
-                  originWhitelist={['*']}
-                  source={{ html: buildPreviewHtml(expectedOutputHtml) }}
-                  style={styles.webview}
-                  javaScriptEnabled={true}
-                  domStorageEnabled={true}
-                />
-              </View>
-
-              <View style={styles.targetExplainBox}>
-                <Icon name="info" size={14} color="#4F46E5" />
-                <Text style={styles.targetExplainText}>
-                  {lesson.practiceTask?.expectedOutput || lesson.expectedOutput || 'Your code should render this visual layout.'}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {/* Code Inspection & Error Checking Card */}
+          {/* Error / Checks Inspector Card */}
           {showErrorCard && (
-            <View style={styles.checkInspectorCard}>
+            <View style={[styles.checkInspectorCard, syntaxErrorsCount > 0 ? styles.checkInspectorError : styles.checkInspectorSuccess]}>
               <View style={styles.inspectorHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
                   <Icon
-                    name={syntaxErrorsCount > 0 ? 'alert-circle' : isTaskPassing ? 'check-circle' : 'info'}
+                    name={syntaxErrorsCount > 0 ? 'alert-circle' : 'check-circle'}
                     size={16}
-                    color={syntaxErrorsCount > 0 ? '#DC2626' : isTaskPassing ? '#10B981' : '#F59E0B'}
+                    color={syntaxErrorsCount > 0 ? '#DC2626' : '#059669'}
                   />
-                  <Text style={styles.inspectorTitle}>
+                  <Text style={[styles.inspectorTitle, { color: syntaxErrorsCount > 0 ? '#DC2626' : '#059669' }]}>
                     {syntaxErrorsCount > 0
-                      ? `${syntaxErrorsCount} Syntax Issue(s) Detected`
-                      : isTaskPassing
-                      ? 'All Checks Passed!'
-                      : 'Code Analysis'}
+                      ? `${syntaxErrorsCount} Syntax Error(s) Found`
+                      : 'Checks Passed! No syntax errors.'}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => setShowErrorCard(false)}>
@@ -695,40 +663,27 @@ export const HtmlLessonScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
 
-              {/* Syntax Errors List */}
-              {syntaxErrorsCount > 0 ? (
+              {syntaxErrorsCount > 0 && validationResult?.errors && (
                 <View style={styles.errorList}>
-                  {validationResult?.errors.map((err, eIdx) => (
+                  {validationResult.errors.map((err, eIdx) => (
                     <View key={eIdx} style={styles.errorItemBox}>
                       <Text style={styles.errorProblemText}>
-                        • Line {err.line || 1}: {err.problem}
+                        Line {err.line || 1}: {err.problem}
                       </Text>
-                      <Text style={styles.errorSuggestionText}>
-                        Tip: {err.suggestion}
-                      </Text>
+                      {err.suggestion ? (
+                        <Text style={styles.errorSuggestionText}>
+                          Tip: {err.suggestion}
+                        </Text>
+                      ) : null}
                     </View>
                   ))}
-                </View>
-              ) : isSyntaxClean ? (
-                <View style={styles.cleanSyntaxNotice}>
-                  <Text style={styles.cleanSyntaxText}>
-                    ✓ HTML tag structure and syntax are properly formatted.
-                  </Text>
-                </View>
-              ) : null}
-
-              {/* Task Requirements Status */}
-              {taskResult && (
-                <View style={{ marginTop: 8 }}>
-                  <Text style={styles.reqSummaryText}>{taskResult.feedback}</Text>
                 </View>
               )}
             </View>
           )}
 
-          {/* Action Buttons Row: Check Code | Run Preview | Submit */}
+          {/* Action Buttons: Check Code | Preview | Submit */}
           <View style={styles.actionButtonsRow}>
-            {/* Check Code Button */}
             <TouchableOpacity
               style={styles.checkCodeBtn}
               activeOpacity={0.8}
@@ -738,7 +693,6 @@ export const HtmlLessonScreen: React.FC = () => {
               <Text style={styles.checkCodeBtnText}>Check Code</Text>
             </TouchableOpacity>
 
-            {/* Run / Preview Toggle Button */}
             <TouchableOpacity
               style={styles.previewToggleBtn}
               activeOpacity={0.8}
@@ -754,7 +708,6 @@ export const HtmlLessonScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
 
-            {/* Submit Button */}
             <TouchableOpacity
               style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
               activeOpacity={0.85}
@@ -772,7 +725,7 @@ export const HtmlLessonScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Submission Feedback Message Banner */}
+          {/* Submission Feedback Banner */}
           {submissionFeedback && (
             <View
               style={[
@@ -795,23 +748,6 @@ export const HtmlLessonScreen: React.FC = () => {
               </Text>
             </View>
           )}
-        </View>
-
-        {/* Lesson Completion Status Card */}
-        <View style={[styles.completionStatusCard, isCompleted && styles.completionStatusCardActive]}>
-          <View style={[styles.completionStatusIcon, isCompleted && styles.completionStatusIconActive]}>
-            <Icon name="check" size={18} color={isCompleted ? '#FFFFFF' : '#94A3B8'} />
-          </View>
-          <View style={styles.completionStatusTextWrap}>
-            <Text style={[styles.completionStatusTitle, isCompleted && styles.completionStatusTitleActive]}>
-              {isCompleted ? 'Lesson Completed ✓' : 'Practice in Progress'}
-            </Text>
-            <Text style={styles.completionStatusSub}>
-              {isCompleted
-                ? 'Your practice solution was verified and saved to the database.'
-                : 'Write your code, check for errors, and submit to finish this lesson.'}
-            </Text>
-          </View>
         </View>
 
         {/* Bottom Sibling Lesson Navigation */}
@@ -965,32 +901,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 10
+    marginBottom: 6
   },
-  objectiveBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: '#4F46E5'
-  },
-  objectiveHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4
-  },
-  objectiveHeaderTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#4F46E5'
-  },
-  objectiveText: {
+  lessonSubtitleText: {
     fontFamily: FONT_FAMILY,
     fontSize: 13,
-    color: '#334155',
-    lineHeight: 18
+    color: '#64748B',
+    lineHeight: 19
   },
   sectionCard: {
     backgroundColor: '#FFFFFF',
@@ -1003,20 +920,20 @@ const styles = StyleSheet.create({
   sectionHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10
+    gap: 8
   },
   sectionHeading: {
     fontFamily: FONT_FAMILY,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     color: '#0F172A'
   },
   conceptBodyText: {
     fontFamily: FONT_FAMILY,
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#334155',
-    lineHeight: 20
+    lineHeight: 21,
+    marginTop: 10
   },
   exampleHeaderRow: {
     flexDirection: 'row',
@@ -1043,33 +960,55 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
     borderRadius: 10,
     padding: 12,
-    marginBottom: 10
+    marginBottom: 12
   },
   codeText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: 12,
+    fontSize: 12.5,
     color: '#E2E8F0',
-    lineHeight: 18
+    lineHeight: 19
   },
-  expectedOutputBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    padding: 10,
+  exampleOutputWrap: {
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0'
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden'
   },
-  expectedOutputTitle: {
-    fontFamily: FONT_FAMILY,
+  exampleOutputHeader: {
+    height: 32,
+    backgroundColor: '#F1F5F9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0'
+  },
+  browserDotsMini: {
+    flexDirection: 'row',
+    gap: 4
+  },
+  dotMini: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5
+  },
+  exampleOutputLabel: {
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 11,
     fontWeight: '700',
-    color: '#475569',
-    marginBottom: 2
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
   },
-  expectedOutputText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#0F172A',
-    lineHeight: 16
+  exampleWebviewBox: {
+    height: 130,
+    backgroundColor: '#FFFFFF'
+  },
+  exampleWebview: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
   },
   practiceSectionCard: {
     backgroundColor: '#FFFFFF',
@@ -1085,18 +1024,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8
   },
-  taskBadge: {
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6
-  },
-  taskBadgeText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#FFFFFF'
-  },
   resetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1111,122 +1038,32 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#64748B'
   },
-  taskTitle: {
+  taskDescText: {
     fontFamily: FONT_FAMILY,
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4
-  },
-  taskDesc: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
+    fontSize: 12.5,
     color: '#475569',
     lineHeight: 18,
-    marginBottom: 12
+    marginBottom: 10
   },
-  requirementsList: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 12,
+  tagToolbarWrap: {
+    marginBottom: 10
+  },
+  tagToolbarScroll: {
+    gap: 6
+  },
+  tagButton: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 14
+    borderColor: '#E2E8F0'
   },
-  requirementsHeader: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 8
-  },
-  requirementRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginBottom: 6
-  },
-  reqCheckCircle: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2
-  },
-  reqCheckCirclePassed: {
-    backgroundColor: '#10B981'
-  },
-  requirementText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#475569',
-    flex: 1,
-    lineHeight: 18
-  },
-  requirementTextPassed: {
-    color: '#047857',
-    fontWeight: '600'
-  },
-  refSolutionContainer: {
-    marginBottom: 14,
-    borderRadius: 10,
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-    overflow: 'hidden'
-  },
-  refSolutionToggleBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10
-  },
-  refSolutionToggleText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#4F46E5'
-  },
-  refSolutionBody: {
-    backgroundColor: '#0F172A',
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#C7D2FE'
-  },
-  refSolutionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8
-  },
-  refSolutionLabel: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#94A3B8'
-  },
-  copyRefBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#334155',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4
-  },
-  copyRefBtnText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF'
-  },
-  refCodeText: {
+  tagButtonText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: 12,
-    color: '#38BDF8',
-    lineHeight: 18
+    fontSize: 11.5,
+    color: '#4F46E5',
+    fontWeight: '700'
   },
   practiceTabBar: {
     flexDirection: 'row',
@@ -1254,7 +1091,7 @@ const styles = StyleSheet.create({
   },
   practiceTabText: {
     fontFamily: FONT_FAMILY,
-    fontSize: 11,
+    fontSize: 12,
     color: '#64748B',
     fontWeight: '600'
   },
@@ -1262,38 +1099,18 @@ const styles = StyleSheet.create({
     color: '#4F46E5',
     fontWeight: '700'
   },
-  tagToolbar: {
-    marginBottom: 8
-  },
-  tagToolbarScroll: {
-    gap: 6
-  },
-  tagButton: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  tagButtonText: {
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: 11,
-    color: '#4F46E5',
-    fontWeight: '700'
-  },
   editorBox: {
     backgroundColor: '#0F172A',
     borderRadius: 12,
     padding: 12,
-    minHeight: 160,
+    minHeight: 180,
     marginBottom: 12
   },
   codeInput: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 13,
     color: '#F8FAFC',
-    minHeight: 150,
+    minHeight: 170,
     padding: 0
   },
   browserFrame: {
@@ -1340,57 +1157,46 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#64748B'
   },
-  refreshIconBtn: {
-    padding: 2
-  },
   webviewContainer: {
-    height: 200,
+    height: 220,
     backgroundColor: '#FFFFFF'
   },
   webview: {
     flex: 1,
     backgroundColor: '#FFFFFF'
   },
-  targetExplainBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    padding: 8,
-    backgroundColor: '#F8FAFC',
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0'
-  },
-  targetExplainText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
-    color: '#475569',
-    flex: 1
-  },
   checkInspectorCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
     padding: 12,
     marginBottom: 12
+  },
+  checkInspectorError: {
+    borderColor: '#FCA5A5',
+    backgroundColor: '#FEF2F2'
+  },
+  checkInspectorSuccess: {
+    borderColor: '#A7F3D0',
+    backgroundColor: '#F0FDF4'
   },
   inspectorHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8
+    marginBottom: 6
   },
   inspectorTitle: {
     fontFamily: FONT_FAMILY,
     fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A'
+    fontWeight: '700'
   },
   errorList: {
-    gap: 6
+    gap: 6,
+    marginTop: 4
   },
   errorItemBox: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#FFFFFF',
     borderRadius: 6,
     padding: 8,
     borderLeftWidth: 3,
@@ -1407,24 +1213,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#7F1D1D',
     marginTop: 2
-  },
-  cleanSyntaxNotice: {
-    backgroundColor: '#F0FDF4',
-    padding: 8,
-    borderRadius: 6,
-    borderLeftWidth: 3,
-    borderLeftColor: '#10B981'
-  },
-  cleanSyntaxText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#047857',
-    fontWeight: '600'
-  },
-  reqSummaryText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
-    color: '#475569'
   },
   actionButtonsRow: {
     flexDirection: 'row',
@@ -1512,55 +1300,12 @@ const styles = StyleSheet.create({
   feedbackTextError: {
     color: '#B91C1C'
   },
-  completionStatusCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 12
-  },
-  completionStatusCardActive: {
-    borderColor: '#10B981',
-    backgroundColor: '#F0FDF4'
-  },
-  completionStatusIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  completionStatusIconActive: {
-    backgroundColor: '#10B981'
-  },
-  completionStatusTextWrap: {
-    flex: 1
-  },
-  completionStatusTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#64748B'
-  },
-  completionStatusTitleActive: {
-    color: '#047857'
-  },
-  completionStatusSub: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 2
-  },
   bottomNavRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12
+    gap: 12,
+    marginTop: 4
   },
   siblingNavBtn: {
     flex: 1,
