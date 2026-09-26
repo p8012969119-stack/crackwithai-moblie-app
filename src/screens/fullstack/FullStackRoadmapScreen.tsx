@@ -111,24 +111,6 @@ export const FullStackRoadmapScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
       >
-        {/* Section Heading & Progress */}
-        <View style={styles.sectionHeaderWrap}>
-          <View style={styles.sectionHeaderTop}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sectionTitle}>Curriculum Courses</Text>
-              <Text style={styles.sectionSubtitle}>
-                9 Sequential Courses • {completedModules} of 9 finished
-              </Text>
-            </View>
-            <View style={styles.progressBadge}>
-              <Text style={styles.progressBadgeText}>{overallPercentage}%</Text>
-            </View>
-          </View>
-          <View style={styles.progressBarTrack}>
-            <View style={[styles.progressBarFill, { width: `${Math.max(4, overallPercentage)}%` }]} />
-          </View>
-        </View>
-
         {/* Loading Spinner */}
         {loading && !refreshing ? (
           <ActivityIndicator size="large" color={COLORS.primary} style={{ marginVertical: 30 }} />
@@ -166,10 +148,10 @@ export const FullStackRoadmapScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  {/* Sleek Dark Pill Action Button - Matching Reference Images */}
+                  {/* Polished Dark Pill Action Button */}
                   <View style={styles.ctaButton}>
-                    <Text style={styles.ctaButtonText}>Start {track.title} Course</Text>
-                    <Icon name="arrow-right" size={16} color="#FFFFFF" />
+                    <Text style={styles.ctaButtonText}>Start</Text>
+                    <Icon name="arrow-right" size={15} color="#FFFFFF" />
                   </View>
                 </TouchableOpacity>
               );
@@ -220,62 +202,6 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40
   },
-  sectionHeaderWrap: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2
-  },
-  sectionHeaderTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12
-  },
-  sectionTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4
-  },
-  sectionSubtitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#64748B'
-  },
-  progressBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#A7F3D0'
-  },
-  progressBadgeText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#059669'
-  },
-  progressBarTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#E2E8F0',
-    overflow: 'hidden'
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#10B981',
-    borderRadius: 3
-  },
   coursesList: {
     gap: 16
   },
@@ -292,7 +218,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    marginBottom: 14
+    marginBottom: 16
   },
   courseLogoImage: {
     width: 44,
@@ -314,45 +240,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1E293B'
   },
-  metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 18
-  },
-  metaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10
-  },
-  metaChipText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0F172A'
-  },
   ctaButton: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1E293B',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#111827',
+    paddingVertical: 12,
+    paddingHorizontal: 22,
     borderRadius: 24,
-    shadowColor: '#1E293B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 5,
+    elevation: 4
   },
   ctaButtonText: {
     fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 14,
     fontWeight: '800',
-    color: '#FFFFFF'
+    color: '#FFFFFF',
+    letterSpacing: 0.2
   }
 });
