@@ -31,19 +31,19 @@ const COURSE_LOGOS: Record<string, any> = {
   capstone: require('../../assets/courses/capstone.png'),
 };
 
-const LOGO_BOX_STYLES: Record<string, { bg: string; border: string }> = {
-  html: { bg: '#FFF3E0', border: '#FFE0B2' },
-  css: { bg: '#E1F5FE', border: '#B3E5FC' },
-  javascript: { bg: '#FFFDE7', border: '#FFF59D' },
-  nodejs: { bg: '#E8F5E9', border: '#C8E6C9' },
-  expressjs: { bg: '#F1F5F9', border: '#CBD5E1' },
-  mongodb: { bg: '#E0F2F1', border: '#B2DFDB' },
-  restapi: { bg: '#F3E8FF', border: '#E9D5FF' },
-  auth: { bg: '#FFE4E6', border: '#FECDD3' },
-  capstone: { bg: '#E0E7FF', border: '#C7D2FE' },
+const CARD_STYLES: Record<string, { bg: string; border: string }> = {
+  html: { bg: '#FFF8F0', border: '#FFD8B5' },
+  css: { bg: '#F0F9FF', border: '#BAE6FD' },
+  javascript: { bg: '#FEFCE8', border: '#FEF08A' },
+  nodejs: { bg: '#F0FDF4', border: '#BBF7D0' },
+  expressjs: { bg: '#F8FAFC', border: '#CBD5E1' },
+  mongodb: { bg: '#ECFDF5', border: '#A7F3D0' },
+  restapi: { bg: '#F5F3FF', border: '#DDD6FE' },
+  auth: { bg: '#FFF1F2', border: '#FECDD3' },
+  capstone: { bg: '#EEF2FF', border: '#C7D2FE' },
 };
 
-const DEFAULT_LOGO_STYLE = { bg: '#F1F5F9', border: '#E2E8F0' };
+const DEFAULT_CARD_STYLE = { bg: '#FFFFFF', border: '#E2E8F0' };
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
@@ -136,22 +136,22 @@ export const FullStackRoadmapScreen: React.FC = () => {
           <View style={styles.coursesList}>
             {FULLSTACK_TRACKS.map((track, index) => {
               const courseNum = index + 1;
-              const logoStyle = LOGO_BOX_STYLES[track.id] || DEFAULT_LOGO_STYLE;
+              const cardStyle = CARD_STYLES[track.id] || DEFAULT_CARD_STYLE;
               return (
                 <TouchableOpacity
                   key={track.id}
-                  style={styles.courseCard}
+                  style={[
+                    styles.courseCard,
+                    {
+                      backgroundColor: cardStyle.bg,
+                      borderColor: cardStyle.border,
+                    }
+                  ]}
                   activeOpacity={0.85}
                   onPress={() => handleOpenCourse(track.id)}
                 >
                   <View style={styles.cardHeaderRow}>
-                    <View style={[
-                      styles.courseIconBox,
-                      {
-                        backgroundColor: logoStyle.bg,
-                        borderColor: logoStyle.border,
-                      }
-                    ]}>
+                    <View style={styles.courseIconBox}>
                       {COURSE_LOGOS[track.id] ? (
                         <Image
                           source={COURSE_LOGOS[track.id]}
@@ -312,10 +312,8 @@ const styles = StyleSheet.create({
     gap: 14
   },
   courseCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1.2,
-    borderColor: '#E2E8F0',
     padding: 16,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
@@ -333,7 +331,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0F172A',
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   },
   ctaButtonRow: {
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: 'rgba(15, 23, 42, 0.06)',
     paddingTop: 10
   },
   ctaButton: {
