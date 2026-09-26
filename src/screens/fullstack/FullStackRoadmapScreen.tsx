@@ -31,19 +31,153 @@ const COURSE_LOGOS: Record<string, any> = {
   capstone: require('../../assets/courses/capstone.png'),
 };
 
-const CARD_STYLES: Record<string, { bg: string; border: string }> = {
-  html: { bg: '#FFF8F0', border: '#FFD8B5' },
-  css: { bg: '#F0F9FF', border: '#BAE6FD' },
-  javascript: { bg: '#FEFCE8', border: '#FEF08A' },
-  nodejs: { bg: '#F0FDF4', border: '#BBF7D0' },
-  expressjs: { bg: '#F8FAFC', border: '#CBD5E1' },
-  mongodb: { bg: '#ECFDF5', border: '#A7F3D0' },
-  restapi: { bg: '#F5F3FF', border: '#DDD6FE' },
-  auth: { bg: '#FFF1F2', border: '#FECDD3' },
-  capstone: { bg: '#EEF2FF', border: '#C7D2FE' },
+export interface PremiumCardStyle {
+  bg: string;
+  border: string;
+  subtitleColor: string;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
+  logoBoxBg: string;
+  logoBoxBorder: string;
+  metaChipBg: string;
+  metaChipText: string;
+  metaChipBorder: string;
+}
+
+const CARD_STYLES: Record<string, PremiumCardStyle> = {
+  html: {
+    bg: '#FFF3E0',
+    border: '#FFB74D',
+    subtitleColor: '#D84315',
+    badgeBg: '#FFE0B2',
+    badgeText: '#E65100',
+    badgeBorder: '#FFB74D',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#FFB74D',
+    metaChipBg: '#FFE0B2',
+    metaChipText: '#BF360C',
+    metaChipBorder: '#FFB74D',
+  },
+  css: {
+    bg: '#E3F2FD',
+    border: '#64B5F6',
+    subtitleColor: '#1565C0',
+    badgeBg: '#BBDEFB',
+    badgeText: '#1565C0',
+    badgeBorder: '#64B5F6',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#64B5F6',
+    metaChipBg: '#BBDEFB',
+    metaChipText: '#0D47A1',
+    metaChipBorder: '#64B5F6',
+  },
+  javascript: {
+    bg: '#FFFDE7',
+    border: '#FDD835',
+    subtitleColor: '#F57F17',
+    badgeBg: '#FFF59D',
+    badgeText: '#E65100',
+    badgeBorder: '#FDD835',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#FDD835',
+    metaChipBg: '#FFF59D',
+    metaChipText: '#BF360C',
+    metaChipBorder: '#FDD835',
+  },
+  nodejs: {
+    bg: '#E8F5E9',
+    border: '#81C784',
+    subtitleColor: '#2E7D32',
+    badgeBg: '#C8E6C9',
+    badgeText: '#2E7D32',
+    badgeBorder: '#81C784',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#81C784',
+    metaChipBg: '#C8E6C9',
+    metaChipText: '#1B5E20',
+    metaChipBorder: '#81C784',
+  },
+  expressjs: {
+    bg: '#ECEFF1',
+    border: '#90A4AE',
+    subtitleColor: '#37474F',
+    badgeBg: '#CFD8DC',
+    badgeText: '#37474F',
+    badgeBorder: '#90A4AE',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#90A4AE',
+    metaChipBg: '#CFD8DC',
+    metaChipText: '#263238',
+    metaChipBorder: '#90A4AE',
+  },
+  mongodb: {
+    bg: '#E0F2F1',
+    border: '#4DB6AC',
+    subtitleColor: '#00695C',
+    badgeBg: '#B2DFDB',
+    badgeText: '#00695C',
+    badgeBorder: '#4DB6AC',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#4DB6AC',
+    metaChipBg: '#B2DFDB',
+    metaChipText: '#004D40',
+    metaChipBorder: '#4DB6AC',
+  },
+  restapi: {
+    bg: '#F3E5F5',
+    border: '#BA68C8',
+    subtitleColor: '#6A1B9A',
+    badgeBg: '#E1BEE7',
+    badgeText: '#6A1B9A',
+    badgeBorder: '#BA68C8',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#BA68C8',
+    metaChipBg: '#E1BEE7',
+    metaChipText: '#4A148C',
+    metaChipBorder: '#BA68C8',
+  },
+  auth: {
+    bg: '#FFEBEE',
+    border: '#E57373',
+    subtitleColor: '#C62828',
+    badgeBg: '#FFCDD2',
+    badgeText: '#C62828',
+    badgeBorder: '#E57373',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#E57373',
+    metaChipBg: '#FFCDD2',
+    metaChipText: '#B71C1C',
+    metaChipBorder: '#E57373',
+  },
+  capstone: {
+    bg: '#E8EAF6',
+    border: '#7986CB',
+    subtitleColor: '#283593',
+    badgeBg: '#C5CAE9',
+    badgeText: '#283593',
+    badgeBorder: '#7986CB',
+    logoBoxBg: '#FFFFFF',
+    logoBoxBorder: '#7986CB',
+    metaChipBg: '#C5CAE9',
+    metaChipText: '#1A237E',
+    metaChipBorder: '#7986CB',
+  },
 };
 
-const DEFAULT_CARD_STYLE = { bg: '#FFFFFF', border: '#E2E8F0' };
+const DEFAULT_CARD_STYLE: PremiumCardStyle = {
+  bg: '#FFFFFF',
+  border: '#E2E8F0',
+  subtitleColor: '#5653fe',
+  badgeBg: '#F1F5F9',
+  badgeText: '#64748B',
+  badgeBorder: '#CBD5E1',
+  logoBoxBg: '#FFFFFF',
+  logoBoxBorder: '#E2E8F0',
+  metaChipBg: '#F8FAFC',
+  metaChipText: '#64748B',
+  metaChipBorder: '#E2E8F0',
+};
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
@@ -151,7 +285,13 @@ export const FullStackRoadmapScreen: React.FC = () => {
                   onPress={() => handleOpenCourse(track.id)}
                 >
                   <View style={styles.cardHeaderRow}>
-                    <View style={styles.courseIconBox}>
+                    <View style={[
+                      styles.courseIconBox,
+                      {
+                        backgroundColor: cardStyle.logoBoxBg,
+                        borderColor: cardStyle.logoBoxBorder,
+                      }
+                    ]}>
                       {COURSE_LOGOS[track.id] ? (
                         <Image
                           source={COURSE_LOGOS[track.id]}
@@ -164,39 +304,81 @@ export const FullStackRoadmapScreen: React.FC = () => {
                     </View>
 
                     <View style={styles.cardHeaderCenter}>
-                      <View style={styles.orderBadge}>
-                        <Text style={styles.orderBadgeText}>COURSE {courseNum} OF 9</Text>
+                      <View style={[
+                        styles.orderBadge,
+                        {
+                          backgroundColor: cardStyle.badgeBg,
+                          borderColor: cardStyle.badgeBorder,
+                        }
+                      ]}>
+                        <Text style={[styles.orderBadgeText, { color: cardStyle.badgeText }]}>
+                          COURSE {courseNum} OF 9
+                        </Text>
                       </View>
                       <Text style={styles.courseName}>{track.title}</Text>
                     </View>
 
-                    <View style={styles.levelBadge}>
-                      <Text style={styles.levelBadgeText}>{track.level || 'Beginner'}</Text>
+                    <View style={[
+                      styles.levelBadge,
+                      {
+                        backgroundColor: cardStyle.badgeBg,
+                        borderColor: cardStyle.badgeBorder,
+                      }
+                    ]}>
+                      <Text style={[styles.levelBadgeText, { color: cardStyle.badgeText }]}>
+                        {track.level || 'Beginner'}
+                      </Text>
                     </View>
                   </View>
 
-                  <Text style={styles.courseSubtitle}>{track.subtitle}</Text>
+                  <Text style={[styles.courseSubtitle, { color: cardStyle.subtitleColor }]}>
+                    {track.subtitle}
+                  </Text>
                   <Text style={styles.courseDesc} numberOfLines={2}>
                     {track.description}
                   </Text>
 
                   {/* Metadata Chips Row */}
                   <View style={styles.metaRow}>
-                    <View style={styles.metaChip}>
-                      <Icon name="book-open" size={12} color="#64748B" />
-                      <Text style={styles.metaChipText}>{track.modulesCount || 4} Modules</Text>
+                    <View style={[
+                      styles.metaChip,
+                      {
+                        backgroundColor: cardStyle.metaChipBg,
+                        borderColor: cardStyle.metaChipBorder,
+                      }
+                    ]}>
+                      <Icon name="book-open" size={12} color={cardStyle.metaChipText} />
+                      <Text style={[styles.metaChipText, { color: cardStyle.metaChipText }]}>
+                        {track.modulesCount || 4} Modules
+                      </Text>
                     </View>
-                    <View style={styles.metaChip}>
-                      <Icon name="file-text" size={12} color="#64748B" />
-                      <Text style={styles.metaChipText}>{track.lessonsCount || 20} Lessons</Text>
+                    <View style={[
+                      styles.metaChip,
+                      {
+                        backgroundColor: cardStyle.metaChipBg,
+                        borderColor: cardStyle.metaChipBorder,
+                      }
+                    ]}>
+                      <Icon name="file-text" size={12} color={cardStyle.metaChipText} />
+                      <Text style={[styles.metaChipText, { color: cardStyle.metaChipText }]}>
+                        {track.lessonsCount || 20} Lessons
+                      </Text>
                     </View>
-                    <View style={styles.metaChip}>
-                      <Icon name="clock" size={12} color="#64748B" />
-                      <Text style={styles.metaChipText}>{track.duration || '4 hours'}</Text>
+                    <View style={[
+                      styles.metaChip,
+                      {
+                        backgroundColor: cardStyle.metaChipBg,
+                        borderColor: cardStyle.metaChipBorder,
+                      }
+                    ]}>
+                      <Icon name="clock" size={12} color={cardStyle.metaChipText} />
+                      <Text style={[styles.metaChipText, { color: cardStyle.metaChipText }]}>
+                        {track.duration || '4 hours'}
+                      </Text>
                     </View>
                   </View>
 
-                  {/* Action CTA Button */}
+                  {/* Action CTA Button - SAME color for all cards */}
                   <View style={styles.ctaButtonRow}>
                     <View style={styles.ctaButton}>
                       <Text style={styles.ctaButtonText}>Start {track.title} Course</Text>
@@ -309,37 +491,35 @@ const styles = StyleSheet.create({
     borderRadius: 3
   },
   coursesList: {
-    gap: 14
+    gap: 16
   },
   courseCard: {
-    borderRadius: 16,
-    borderWidth: 1.2,
-    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1.8,
+    padding: 18,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3
   },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 8
+    marginBottom: 10
   },
   courseIconBox: {
-    width: 48,
-    height: 48,
+    width: 50,
+    height: 50,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     elevation: 2,
     overflow: 'hidden',
     padding: 4
@@ -353,97 +533,89 @@ const styles = StyleSheet.create({
   },
   orderBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginBottom: 2
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginBottom: 4
   },
   orderBadgeText: {
     fontFamily: FONT_FAMILY,
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#64748B'
+    fontSize: 10,
+    fontWeight: '800'
   },
   courseName: {
     fontFamily: FONT_FAMILY,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A'
   },
   levelBadge: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6
+    borderRadius: 6,
+    borderWidth: 1
   },
   levelBadgeText: {
     fontFamily: FONT_FAMILY,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#64748B'
+    fontSize: 11,
+    fontWeight: '700'
   },
   courseSubtitle: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#5653fe',
+    fontSize: 14,
+    fontWeight: '800',
     marginBottom: 6
   },
   courseDesc: {
     fontFamily: FONT_FAMILY,
     fontSize: 12,
-    color: '#475569',
+    color: '#334155',
     lineHeight: 18,
-    marginBottom: 12
+    marginBottom: 14
   },
   metaRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 14
+    marginBottom: 16
   },
   metaChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#F8FAFC',
+    gap: 6,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8
   },
   metaChipText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
-    color: '#64748B',
-    fontWeight: '600'
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 12,
+    fontWeight: '700'
   },
   ctaButtonRow: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(15, 23, 42, 0.06)',
-    paddingTop: 10
+    borderTopColor: 'rgba(15, 23, 42, 0.08)',
+    paddingTop: 12
   },
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#5653fe',
-    paddingVertical: 12,
+    paddingVertical: 13,
     paddingHorizontal: 16,
-    borderRadius: 10,
+    borderRadius: 12,
     shadowColor: '#5653fe',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3
   },
   ctaButtonText: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     color: '#FFFFFF'
   }
 });
