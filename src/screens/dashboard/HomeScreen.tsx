@@ -30,6 +30,17 @@ import { Icon } from '../../components/Icon';
 import { fullstackApi } from '../../api/fullstackApi';
 import { FullStackCourseProgress } from '../../types/fullstack';
 
+const FS_COURSE_LOGOS: Record<string, any> = {
+  html: require('../../assets/courses/html.png'),
+  css: require('../../assets/courses/css.png'),
+  javascript: require('../../assets/courses/javascript.png'),
+  nodejs: require('../../assets/courses/nodejs.png'),
+  expressjs: require('../../assets/courses/expressjs.png'),
+  mongodb: require('../../assets/courses/mongodb.png'),
+  'rest-api': require('../../assets/courses/restapi.png'),
+  'final-project': require('../../assets/courses/capstone.png'),
+};
+
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -234,6 +245,9 @@ export const HomeScreen = ({ navigation }: any) => {
                       color={isDone ? '#10B981' : inProg ? '#818CF8' : '#64748B'}
                     />
                   </View>
+                  {FS_COURSE_LOGOS[m.slug] && (
+                    <Image source={FS_COURSE_LOGOS[m.slug]} style={styles.fsCourseMiniLogo} resizeMode="contain" />
+                  )}
                   <Text style={[styles.fsChecklistTitle, isDone && styles.fsChecklistTitleDone]}>
                     <Text style={styles.fsModuleNum}>M{m.num} · </Text>
                     {m.name}
@@ -712,6 +726,11 @@ const styles = StyleSheet.create({
   },
   fsCheckIconWrapInProg: {
     backgroundColor: 'rgba(99, 102, 241, 0.25)',
+  },
+  fsCourseMiniLogo: {
+    width: 18,
+    height: 18,
+    marginRight: 8,
   },
   fsChecklistTitle: {
     flex: 1,

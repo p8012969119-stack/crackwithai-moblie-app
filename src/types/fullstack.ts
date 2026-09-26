@@ -14,6 +14,7 @@ export interface FullStackTrack {
   level?: string;
   route?: string | null;
   techStatus?: 'completed' | 'in_progress' | 'available' | 'locked';
+  logo?: string;
 }
 
 export interface PracticeValidationRule {

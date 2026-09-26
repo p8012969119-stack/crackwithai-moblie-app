@@ -9,7 +9,8 @@ import {
   RefreshControl,
   SafeAreaView,
   StatusBar,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { fullstackApi } from '../../api/fullstackApi';
@@ -17,6 +18,18 @@ import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress } from '../../typ
 import { FALLBACK_HTML_COURSE, FULLSTACK_TRACKS, getCourseForTech } from '../../data/fullstackHtmlData';
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
+
+const COURSE_LOGOS: Record<string, any> = {
+  html: require('../../assets/courses/html.png'),
+  css: require('../../assets/courses/css.png'),
+  javascript: require('../../assets/courses/javascript.png'),
+  nodejs: require('../../assets/courses/nodejs.png'),
+  expressjs: require('../../assets/courses/expressjs.png'),
+  mongodb: require('../../assets/courses/mongodb.png'),
+  restapi: require('../../assets/courses/restapi.png'),
+  auth: require('../../assets/courses/auth.png'),
+  capstone: require('../../assets/courses/capstone.png'),
+};
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
@@ -152,18 +165,30 @@ export const HtmlCourseScreen: React.FC = () => {
       >
         {/* Course Hero Banner */}
         <View style={styles.courseHeroBanner}>
-          <View style={styles.badgeRow}>
-            <View style={styles.trackPill}>
-              <Text style={styles.trackPillText}>{activeTrack.title.toUpperCase()} COURSE</Text>
-            </View>
-            <View style={styles.levelPill}>
-              <Text style={styles.levelPillText}>
-                {activeCourse?.level ? `${activeCourse.level.toUpperCase()} LEVEL` : 'PRACTICAL'}
-              </Text>
+          <View style={styles.heroTopRow}>
+            {COURSE_LOGOS[tech] && (
+              <View style={styles.courseHeroLogoBox}>
+                <Image
+                  source={COURSE_LOGOS[tech]}
+                  style={styles.courseHeroLogo}
+                  resizeMode="contain"
+                />
+              </View>
+            )}
+            <View style={styles.heroTopContent}>
+              <View style={styles.badgeRow}>
+                <View style={styles.trackPill}>
+                  <Text style={styles.trackPillText}>{activeTrack.title.toUpperCase()} COURSE</Text>
+                </View>
+                <View style={styles.levelPill}>
+                  <Text style={styles.levelPillText}>
+                    {activeCourse?.level ? `${activeCourse.level.toUpperCase()} LEVEL` : 'PRACTICAL'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.courseTitle}>{activeCourse?.title || `${activeTrack.title} — Fundamentals`}</Text>
             </View>
           </View>
-
-          <Text style={styles.courseTitle}>{activeCourse?.title || `${activeTrack.title} — Fundamentals`}</Text>
           <Text style={styles.courseDesc}>
             {activeCourse?.description || activeTrack.description}
           </Text>
@@ -341,6 +366,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8
+  },
+  courseHeroLogoBox: {
+    width: 54,
+    height: 54,
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+    padding: 5
+  },
+  courseHeroLogo: {
+    width: 42,
+    height: 42
+  },
+  heroTopContent: {
+    flex: 1
   },
   badgeRow: {
     flexDirection: 'row',

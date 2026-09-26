@@ -18,6 +18,16 @@ const logos: Record<string, ImageSourcePropType> = {
   'pika': require('../assets/tool-logos/pika.png'),
   'gamma': require('../assets/tool-logos/gamma.png'),
   'zapier': require('../assets/tool-logos/zapier.png'),
+  // Full Stack & Curriculum Course Logos
+  'html': require('../assets/tool-logos/html.png'),
+  'css': require('../assets/tool-logos/css.png'),
+  'javascript': require('../assets/tool-logos/javascript.png'),
+  'nodejs': require('../assets/tool-logos/nodejs.png'),
+  'expressjs': require('../assets/tool-logos/expressjs.png'),
+  'mongodb': require('../assets/tool-logos/mongodb.png'),
+  'restapi': require('../assets/tool-logos/restapi.png'),
+  'auth': require('../assets/tool-logos/auth.png'),
+  'capstone': require('../assets/tool-logos/capstone.png'),
 };
 const slugs: Record<string, string> = {
   'chatgpt-mastery': 'chatgpt', 'google-gemini-ai': 'gemini', 'claude-ai-professional': 'claude',
@@ -26,6 +36,16 @@ const slugs: Record<string, string> = {
   'perplexity-ai-research': 'perplexity', 'runway-ai-video-generation': 'runway',
   'elevenlabs-ai-voice': 'elevenlabs', 'notion-ai-productivity': 'notion',
   'pika-ai-video-creator': 'pika', 'gamma-ai-presentation': 'gamma', 'zapier-ai-automation': 'zapier',
+  // Full Stack Course Slugs
+  'html': 'html', 'html-course': 'html', 'html-from-beginner-to-practical': 'html', 'html-fundamentals': 'html',
+  'css': 'css', 'css-modern-responsive-design': 'css', 'css-responsive-design': 'css',
+  'javascript': 'javascript', 'javascript-modern-es6': 'javascript', 'js': 'javascript',
+  'nodejs': 'nodejs', 'nodejs-server-runtime': 'nodejs', 'node': 'nodejs',
+  'expressjs': 'expressjs', 'expressjs-backend-framework': 'expressjs', 'express': 'expressjs',
+  'mongodb': 'mongodb', 'mongodb-database-mongoose': 'mongodb', 'mongo': 'mongodb',
+  'restapi': 'restapi', 'rest-api': 'restapi', 'rest-api-architecture': 'restapi', 'rest-auth': 'restapi',
+  'auth': 'auth', 'authentication': 'auth', 'authentication-jwt-security': 'auth',
+  'capstone': 'capstone', 'fullstack-final-project': 'capstone', 'final-project': 'capstone',
 };
 export function resolveLogoUri(value?: string): string | undefined {
   if (!value) return undefined;
@@ -36,7 +56,19 @@ export function resolveLogoUri(value?: string): string | undefined {
 export const ToolLogo = ({courseKey, slug, logoUrl, size = 64}: {courseKey: string; slug?: string; logoUrl?: string; size?: number}) => {
   // Slugs are authoritative. Never pick another brand from a title's incidental words.
   const normalizedTitle = courseKey.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const key = slugs[slug || normalizedTitle];
+  let key = slugs[slug || ''] || slugs[normalizedTitle];
+  if (!key) {
+    const s = `${slug || ''} ${normalizedTitle}`.toLowerCase();
+    if (s.includes('html')) key = 'html';
+    else if (s.includes('css')) key = 'css';
+    else if (s.includes('javascript') || s.includes('js')) key = 'javascript';
+    else if (s.includes('nodejs') || s.includes('node')) key = 'nodejs';
+    else if (s.includes('express')) key = 'expressjs';
+    else if (s.includes('mongo')) key = 'mongodb';
+    else if (s.includes('rest') || s.includes('api')) key = 'restapi';
+    else if (s.includes('auth') || s.includes('jwt') || s.includes('security')) key = 'auth';
+    else if (s.includes('capstone') || s.includes('final-project')) key = 'capstone';
+  }
   const local = key ? logos[key] : undefined;
   const uri = resolveLogoUri(logoUrl);
   const [failedUri, setFailedUri] = useState<string>();

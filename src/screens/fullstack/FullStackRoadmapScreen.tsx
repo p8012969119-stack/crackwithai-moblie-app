@@ -9,7 +9,8 @@ import {
   RefreshControl,
   SafeAreaView,
   StatusBar,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { fullstackApi } from '../../api/fullstackApi';
@@ -17,6 +18,18 @@ import { FullStackCourseProgress } from '../../types/fullstack';
 import { FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
+
+const COURSE_LOGOS: Record<string, any> = {
+  html: require('../../assets/courses/html.png'),
+  css: require('../../assets/courses/css.png'),
+  javascript: require('../../assets/courses/javascript.png'),
+  nodejs: require('../../assets/courses/nodejs.png'),
+  expressjs: require('../../assets/courses/expressjs.png'),
+  mongodb: require('../../assets/courses/mongodb.png'),
+  restapi: require('../../assets/courses/restapi.png'),
+  auth: require('../../assets/courses/auth.png'),
+  capstone: require('../../assets/courses/capstone.png'),
+};
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
@@ -118,7 +131,15 @@ export const FullStackRoadmapScreen: React.FC = () => {
                 >
                   <View style={styles.cardHeaderRow}>
                     <View style={styles.courseIconBox}>
-                      <Icon name={track.icon as any || 'code'} size={22} color="#4F46E5" />
+                      {COURSE_LOGOS[track.id] ? (
+                        <Image
+                          source={COURSE_LOGOS[track.id]}
+                          style={styles.courseLogoImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Icon name={track.icon as any || 'code'} size={22} color="#4F46E5" />
+                      )}
                     </View>
 
                     <View style={styles.cardHeaderCenter}>
@@ -288,12 +309,25 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   courseIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    overflow: 'hidden',
+    padding: 4
+  },
+  courseLogoImage: {
+    width: 38,
+    height: 38
   },
   cardHeaderCenter: {
     flex: 1
