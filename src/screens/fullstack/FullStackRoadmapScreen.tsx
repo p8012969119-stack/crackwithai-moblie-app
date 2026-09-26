@@ -166,22 +166,6 @@ export const FullStackRoadmapScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  {/* Metadata Chips Row: Modules, Lessons, Hours */}
-                  <View style={styles.metaRow}>
-                    <View style={styles.metaChip}>
-                      <Icon name="book-open" size={13} color="#0F172A" />
-                      <Text style={styles.metaChipText}>{track.modulesCount || 4} Modules</Text>
-                    </View>
-                    <View style={styles.metaChip}>
-                      <Icon name="file-text" size={13} color="#0F172A" />
-                      <Text style={styles.metaChipText}>{track.lessonsCount || 20} Lessons</Text>
-                    </View>
-                    <View style={styles.metaChip}>
-                      <Icon name="clock" size={13} color="#0F172A" />
-                      <Text style={styles.metaChipText}>{track.duration || '4 hours'}</Text>
-                    </View>
-                  </View>
-
                   {/* Sleek Dark Pill Action Button - Matching Reference Images */}
                   <View style={styles.ctaButton}>
                     <Text style={styles.ctaButtonText}>Start {track.title} Course</Text>
