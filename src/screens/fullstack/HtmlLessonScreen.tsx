@@ -26,8 +26,8 @@ import {
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
 
-const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
-const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
+const FONT_FAMILY = Platform.OS === 'android' ? 'Roboto' : 'System';
+const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'Roboto' : 'System';
 
 // Self-closing / void elements in HTML
 const VOID_OR_SELF_CLOSING_TAGS = new Set([
@@ -57,12 +57,10 @@ export const autoCloseHtmlTag = (
   newText: string,
   oldText: string
 ): { updatedText: string; cursorOffset: number | null } => {
-  // Only trigger when user added a single character and it is '>'
   if (newText.length !== oldText.length + 1) {
     return { updatedText: newText, cursorOffset: null };
   }
 
-  // Find where the new character was added
   let diffIndex = -1;
   for (let i = 0; i < newText.length; i++) {
     if (newText[i] !== oldText[i]) {
@@ -78,8 +76,6 @@ export const autoCloseHtmlTag = (
   const textBefore = newText.slice(0, diffIndex + 1);
   const textAfter = newText.slice(diffIndex + 1);
 
-  // Match an opening tag right before '>' like <p>, <h1>, <div class="...">
-  // Do NOT match closing tags (starts with </), comments (<!--), or self-closing (<tag ... />)
   const tagMatch = textBefore.match(/<([a-zA-Z][a-zA-Z0-9\-]*)(?:\s+[^<>]*)?>$/);
   if (!tagMatch) {
     return { updatedText: newText, cursorOffset: null };
@@ -87,20 +83,18 @@ export const autoCloseHtmlTag = (
 
   const tagName = tagMatch[1].toLowerCase();
 
-  // If void/self-closing tag or explicitly terminated with '/>', do not auto-close
   if (VOID_OR_SELF_CLOSING_TAGS.has(tagName) || textBefore.endsWith('/>')) {
     return { updatedText: newText, cursorOffset: null };
   }
 
   const closingTag = `</${tagName}>`;
 
-  // Avoid duplicate if the text immediately following is already the closing tag
   if (textAfter.startsWith(closingTag)) {
     return { updatedText: newText, cursorOffset: null };
   }
 
   const updatedText = textBefore + closingTag + textAfter;
-  const cursorOffset = diffIndex + 1; // position cursor right between <tag> and </tag>
+  const cursorOffset = diffIndex + 1;
 
   return { updatedText, cursorOffset };
 };
@@ -129,7 +123,7 @@ const buildPreviewHtml = (rawHtml: string) => {
     p { margin-top: 0; margin-bottom: 10px; font-size: 14px; color: #334155; }
     ul, ol { margin: 6px 0 10px 20px; padding: 0; }
     li { margin-bottom: 4px; font-size: 14px; color: #334155; }
-    a { color: #4F46E5; text-decoration: underline; }
+    a { color: #5653fe; text-decoration: underline; }
     img { max-width: 100%; height: auto; border-radius: 6px; border: 1px solid #E2E8F0; }
     table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
     th, td { border: 1px solid #CBD5E1; padding: 6px 8px; text-align: left; }
@@ -148,7 +142,7 @@ const buildPreviewHtml = (rawHtml: string) => {
       box-sizing: border-box;
     }
     input[type="submit"], button {
-      background-color: #4F46E5;
+      background-color: #5653fe;
       color: #FFFFFF;
       border: none;
       padding: 8px 14px;
@@ -183,9 +177,10 @@ export const HtmlLessonScreen: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
   // Embedded Practice States
-  const [userCode, setUserCode] = useState<string>('');
+  const [userCode, setUserCode] = useState<string>(''); // Starts empty as requested
   const [cursorSelection, setCursorSelection] = useState<{ start: number; end: number } | undefined>(undefined);
-  const [activePracticeTab, setActivePracticeTab] = useState<'editor' | 'preview'>('editor');
+  const [showLivePreview, setShowLivePreview] = useState<boolean>(false);
+  const [showReference, setShowReference] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   
   // Validation and Error Checking States
@@ -200,8 +195,7 @@ export const HtmlLessonScreen: React.FC = () => {
     const fallback = getFallbackLessonById(id);
     if (fallback) {
       setLesson(fallback);
-      const starter = fallback.practiceTask?.starterCode || fallback.starterCode || '';
-      setUserCode(starter);
+      setUserCode(''); // Empty editor start
       setLoading(false);
     } else {
       setLoading(true);
@@ -220,13 +214,7 @@ export const HtmlLessonScreen: React.FC = () => {
         const completedIds: string[] = progressData?.completedLessonIds || [];
         const isDone = completedIds.includes(resolvedId) || (resolved.slug ? completedIds.includes(resolved.slug) : false);
         setIsCompleted(isDone);
-
-        const starter = resolved.practiceTask?.starterCode || resolved.starterCode || '';
-        setUserCode(starter);
-
-        if (resolved.practiceTask) {
-          setTaskResult(verifyPracticeTask(starter, resolved.practiceTask));
-        }
+        setUserCode(''); // Empty editor start
       }
     } catch (err) {
       console.warn('Failed to load lesson from database', err);
@@ -250,13 +238,12 @@ export const HtmlLessonScreen: React.FC = () => {
   };
 
   const handleResetCode = () => {
-    if (!lesson) return;
-    const starter = lesson.practiceTask?.starterCode || lesson.starterCode || '';
-    setUserCode(starter);
+    setUserCode('');
     setValidationResult(null);
     setTaskResult(null);
     setShowErrorCard(false);
     setSubmissionFeedback(null);
+    setShowLivePreview(false);
   };
 
   // Check Code for Errors & Mistakes
@@ -293,8 +280,8 @@ export const HtmlLessonScreen: React.FC = () => {
       const trimmed = prev.trimEnd();
       return trimmed ? `${trimmed}\n${tagSnippet}` : tagSnippet;
     });
-    if (activePracticeTab !== 'editor') {
-      setActivePracticeTab('editor');
+    if (showLivePreview) {
+      setShowLivePreview(false);
     }
   };
 
@@ -374,7 +361,8 @@ export const HtmlLessonScreen: React.FC = () => {
       setValidationResult(null);
       setTaskResult(null);
       setShowErrorCard(false);
-      setActivePracticeTab('editor');
+      setShowLivePreview(false);
+      setShowReference(false);
       loadLesson(target);
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     }
@@ -454,7 +442,7 @@ export const HtmlLessonScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* ==================================================
-            1. LESSON HEADING
+            1. LESSON HEADING CARD
             ================================================== */}
         <View style={styles.lessonHeaderCard}>
           <View style={styles.lessonOrderPill}>
@@ -471,71 +459,27 @@ export const HtmlLessonScreen: React.FC = () => {
         </View>
 
         {/* ==================================================
-            2. CORE CONCEPT
+            2. CORE CONCEPT CARD
             ================================================== */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeadingRow}>
-            <Icon name="book-open" size={18} color="#4F46E5" />
+            <View style={styles.iconContainer}>
+              <Icon name="book-open" size={18} color="#5653fe" />
+            </View>
             <Text style={styles.sectionHeading}>Core Concept</Text>
           </View>
           <Text style={styles.conceptBodyText}>{lesson.concept}</Text>
         </View>
 
         {/* ==================================================
-            3. CODE EXAMPLE WITH OUTPUT
-            ================================================== */}
-        {lesson.codeExample ? (
-          <View style={styles.sectionCard}>
-            <View style={styles.exampleHeaderRow}>
-              <View style={styles.sectionHeadingRow}>
-                <Icon name="code" size={18} color="#4F46E5" />
-                <Text style={styles.sectionHeading}>Code Example</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.copyBtn}
-                onPress={() => handleCopy(lesson.codeExample || '')}
-              >
-                <Icon name="copy" size={14} color="#4F46E5" />
-                <Text style={styles.copyBtnText}>{copiedCode ? 'Copied!' : 'Copy Code'}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Code Snippet Box */}
-            <View style={styles.codeSnippetBox}>
-              <Text style={styles.codeText}>{lesson.codeExample}</Text>
-            </View>
-
-            {/* Output Preview */}
-            <View style={styles.exampleOutputWrap}>
-              <View style={styles.exampleOutputHeader}>
-                <View style={styles.browserDotsMini}>
-                  <View style={[styles.dotMini, { backgroundColor: '#EF4444' }]} />
-                  <View style={[styles.dotMini, { backgroundColor: '#F59E0B' }]} />
-                  <View style={[styles.dotMini, { backgroundColor: '#10B981' }]} />
-                </View>
-                <Text style={styles.exampleOutputLabel}>Output Preview</Text>
-              </View>
-              <View style={styles.exampleWebviewBox} pointerEvents="none">
-                <WebView
-                  originWhitelist={['*']}
-                  source={{ html: buildPreviewHtml(lesson.codeExample) }}
-                  style={styles.exampleWebview}
-                  scrollEnabled={false}
-                  javaScriptEnabled={true}
-                  domStorageEnabled={true}
-                />
-              </View>
-            </View>
-          </View>
-        ) : null}
-
-        {/* ==================================================
-            4. PRACTICE (TEXT EDITOR + LIVE PREVIEW + CHECKS)
+            3. PRACTICE & WORKSPACE SECTION
             ================================================== */}
         <View style={styles.practiceSectionCard}>
           <View style={styles.practiceHeaderRow}>
             <View style={styles.sectionHeadingRow}>
-              <Icon name="terminal" size={18} color="#4F46E5" />
+              <View style={styles.iconContainer}>
+                <Icon name="terminal" size={18} color="#5653fe" />
+              </View>
               <Text style={styles.sectionHeading}>Practice</Text>
             </View>
             <TouchableOpacity onPress={handleResetCode} style={styles.resetBtn}>
@@ -548,6 +492,68 @@ export const HtmlLessonScreen: React.FC = () => {
             <Text style={styles.taskDescText}>
               {lesson.practiceTask.description}
             </Text>
+          ) : null}
+
+          {/* ==================================================
+              COLLAPSIBLE REFERENCE CODE & OUTPUT BUTTON
+              ================================================== */}
+          {lesson.codeExample ? (
+            <View style={styles.referenceWrapper}>
+              <TouchableOpacity
+                style={styles.referenceToggleBtn}
+                onPress={() => setShowReference(prev => !prev)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.referenceToggleLeft}>
+                  <Icon name="file-text" size={16} color="#5653fe" />
+                  <Text style={styles.referenceToggleBtnText}>
+                    {showReference ? 'Hide Reference Code & Output' : '💡 View Reference Code & Output'}
+                  </Text>
+                </View>
+                <Icon name={showReference ? 'chevron-down' : 'chevron-right'} size={16} color="#5653fe" />
+              </TouchableOpacity>
+
+              {showReference && (
+                <View style={styles.referenceContentBox}>
+                  <View style={styles.exampleHeaderRow}>
+                    <Text style={styles.referenceSubheading}>Reference Code Example</Text>
+                    <TouchableOpacity
+                      style={styles.copyBtn}
+                      onPress={() => handleCopy(lesson.codeExample || '')}
+                    >
+                      <Icon name="copy" size={14} color="#5653fe" />
+                      <Text style={styles.copyBtnText}>{copiedCode ? 'Copied!' : 'Copy Code'}</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.codeSnippetBox}>
+                    <Text style={styles.codeText}>{lesson.codeExample}</Text>
+                  </View>
+
+                  <Text style={styles.referenceSubheading}>Reference Output Preview</Text>
+                  <View style={styles.exampleOutputWrap}>
+                    <View style={styles.exampleOutputHeader}>
+                      <View style={styles.browserDotsMini}>
+                        <View style={[styles.dotMini, { backgroundColor: '#EF4444' }]} />
+                        <View style={[styles.dotMini, { backgroundColor: '#F59E0B' }]} />
+                        <View style={[styles.dotMini, { backgroundColor: '#10B981' }]} />
+                      </View>
+                      <Text style={styles.exampleOutputLabel}>Output Preview</Text>
+                    </View>
+                    <View style={styles.exampleWebviewBox} pointerEvents="none">
+                      <WebView
+                        originWhitelist={['*']}
+                        source={{ html: buildPreviewHtml(lesson.codeExample) }}
+                        style={styles.exampleWebview}
+                        scrollEnabled={false}
+                        javaScriptEnabled={true}
+                        domStorageEnabled={true}
+                      />
+                    </View>
+                  </View>
+                </View>
+              )}
+            </View>
           ) : null}
 
           {/* Quick Elements Tags Toolbar */}
@@ -565,39 +571,8 @@ export const HtmlLessonScreen: React.FC = () => {
             </ScrollView>
           </View>
 
-          {/* Practice View Switcher: Code Editor | Live Preview */}
-          <View style={styles.practiceTabBar}>
-            <TouchableOpacity
-              style={[styles.practiceTab, activePracticeTab === 'editor' && styles.practiceTabActive]}
-              onPress={() => setActivePracticeTab('editor')}
-            >
-              <Icon
-                name="code"
-                size={14}
-                color={activePracticeTab === 'editor' ? '#4F46E5' : '#64748B'}
-              />
-              <Text style={[styles.practiceTabText, activePracticeTab === 'editor' && styles.practiceTabTextActive]}>
-                Code Editor
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.practiceTab, activePracticeTab === 'preview' && styles.practiceTabActive]}
-              onPress={() => setActivePracticeTab('preview')}
-            >
-              <Icon
-                name="eye"
-                size={14}
-                color={activePracticeTab === 'preview' ? '#4F46E5' : '#64748B'}
-              />
-              <Text style={[styles.practiceTabText, activePracticeTab === 'preview' && styles.practiceTabTextActive]}>
-                Live Preview
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* TAB 1: CODE EDITOR (with Auto-Closing Tags) */}
-          {activePracticeTab === 'editor' && (
+          {/* MAIN EDITOR OR LIVE PREVIEW WORKSPACE */}
+          {!showLivePreview ? (
             <View style={styles.editorBox}>
               <TextInput
                 style={styles.codeInput}
@@ -614,10 +589,7 @@ export const HtmlLessonScreen: React.FC = () => {
                 textAlignVertical="top"
               />
             </View>
-          )}
-
-          {/* TAB 2: LIVE PREVIEW */}
-          {activePracticeTab === 'preview' && (
+          ) : (
             <View style={styles.browserFrame}>
               <View style={styles.browserHeader}>
                 <View style={styles.browserDotsRow}>
@@ -682,29 +654,29 @@ export const HtmlLessonScreen: React.FC = () => {
             </View>
           )}
 
-          {/* Action Buttons: Check Code | Preview | Submit */}
+          {/* Action Buttons: Check Code | Preview / Editor | Submit */}
           <View style={styles.actionButtonsRow}>
             <TouchableOpacity
               style={styles.checkCodeBtn}
               activeOpacity={0.8}
               onPress={handleCheckCode}
             >
-              <Icon name="search" size={15} color="#4F46E5" />
+              <Icon name="search" size={15} color="#5653fe" />
               <Text style={styles.checkCodeBtnText}>Check Code</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.previewToggleBtn}
               activeOpacity={0.8}
-              onPress={() => setActivePracticeTab(activePracticeTab === 'preview' ? 'editor' : 'preview')}
+              onPress={() => setShowLivePreview(prev => !prev)}
             >
               <Icon
-                name={activePracticeTab === 'preview' ? 'code' : 'eye'}
+                name={showLivePreview ? 'code' : 'eye'}
                 size={15}
                 color="#0F172A"
               />
               <Text style={styles.previewToggleBtnText}>
-                {activePracticeTab === 'preview' ? 'Editor' : 'Preview'}
+                {showLivePreview ? 'Editor' : 'Preview'}
               </Text>
             </TouchableOpacity>
 
@@ -768,7 +740,7 @@ export const HtmlLessonScreen: React.FC = () => {
               onPress={() => navigateToSiblingLesson(nextLesson)}
             >
               <Text style={[styles.siblingNavText, styles.siblingNavTextNext]} numberOfLines={1}>Next Lesson</Text>
-              <Icon name="arrow-right" size={15} color="#4F46E5" />
+              <Icon name="arrow-right" size={15} color="#5653fe" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -862,7 +834,7 @@ const styles = StyleSheet.create({
     marginBottom: 16
   },
   primaryBtn: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#5653fe',
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 10
@@ -883,7 +855,7 @@ const styles = StyleSheet.create({
   },
   lessonOrderPill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#EEEDFF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -893,7 +865,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
     fontSize: 10,
     fontWeight: '800',
-    color: '#4F46E5',
+    color: '#5653fe',
     letterSpacing: 0.5
   },
   lessonHeaderTitle: {
@@ -922,6 +894,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8
   },
+  iconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#EEEDFF',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   sectionHeading: {
     fontFamily: FONT_FAMILY,
     fontSize: 16,
@@ -935,17 +915,58 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: 10
   },
+  referenceWrapper: {
+    marginBottom: 12
+  },
+  referenceToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#EEEDFF',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#C7C5FF'
+  },
+  referenceToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  referenceToggleBtnText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#5653fe'
+  },
+  referenceContentBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0'
+  },
+  referenceSubheading: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    marginBottom: 6,
+    marginTop: 4
+  },
   exampleHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10
+    marginBottom: 6
   },
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#EEEDFF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6
@@ -954,13 +975,13 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
     fontSize: 11,
     fontWeight: '700',
-    color: '#4F46E5'
+    color: '#5653fe'
   },
   codeSnippetBox: {
     backgroundColor: '#0F172A',
     borderRadius: 10,
     padding: 12,
-    marginBottom: 12
+    marginBottom: 10
   },
   codeText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
@@ -969,19 +990,19 @@ const styles = StyleSheet.create({
     lineHeight: 19
   },
   exampleOutputWrap: {
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden'
   },
   exampleOutputHeader: {
-    height: 32,
+    height: 30,
     backgroundColor: '#F1F5F9',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    gap: 8,
+    paddingHorizontal: 10,
+    gap: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0'
   },
@@ -996,14 +1017,14 @@ const styles = StyleSheet.create({
   },
   exampleOutputLabel: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: '#64748B',
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
   exampleWebviewBox: {
-    height: 130,
+    height: 120,
     backgroundColor: '#FFFFFF'
   },
   exampleWebview: {
@@ -1016,7 +1037,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderWidth: 1.5,
-    borderColor: '#6366F1'
+    borderColor: '#5653fe'
   },
   practiceHeaderRow: {
     flexDirection: 'row',
@@ -1062,41 +1083,7 @@ const styles = StyleSheet.create({
   tagButtonText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 11.5,
-    color: '#4F46E5',
-    fontWeight: '700'
-  },
-  practiceTabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 10,
-    padding: 3,
-    marginBottom: 10
-  },
-  practiceTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 8,
-    borderRadius: 8
-  },
-  practiceTabActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2
-  },
-  practiceTabText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '600'
-  },
-  practiceTabTextActive: {
-    color: '#4F46E5',
+    color: '#5653fe',
     fontWeight: '700'
   },
   editorBox: {
@@ -1225,26 +1212,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#EEEDFF',
     paddingVertical: 11,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#C7D2FE'
+    borderColor: '#C7C5FF'
   },
   checkCodeBtnText: {
     fontFamily: FONT_FAMILY,
     fontSize: 13,
     fontWeight: '700',
-    color: '#4F46E5'
+    color: '#5653fe'
   },
   previewToggleBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     backgroundColor: '#F1F5F9',
     paddingVertical: 11,
-    paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0'
@@ -1320,8 +1307,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0'
   },
   siblingNavBtnNext: {
-    borderColor: '#C7D2FE',
-    backgroundColor: '#EEF2FF'
+    borderColor: '#C7C5FF',
+    backgroundColor: '#EEEDFF'
   },
   siblingNavText: {
     fontFamily: FONT_FAMILY,
@@ -1330,7 +1317,7 @@ const styles = StyleSheet.create({
     color: '#64748B'
   },
   siblingNavTextNext: {
-    color: '#4F46E5',
+    color: '#5653fe',
     fontWeight: '700'
   }
 });
