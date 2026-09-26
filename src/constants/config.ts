@@ -1,6 +1,6 @@
 import { NativeModules, Platform } from 'react-native';
 
-const DEV_LAN_IP = '172.168.7.120';
+const DEV_LAN_IP = '172.168.9.242';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 

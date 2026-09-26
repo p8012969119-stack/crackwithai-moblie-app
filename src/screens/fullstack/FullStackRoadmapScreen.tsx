@@ -31,6 +31,20 @@ const COURSE_LOGOS: Record<string, any> = {
   capstone: require('../../assets/courses/capstone.png'),
 };
 
+const LOGO_BOX_STYLES: Record<string, { bg: string; border: string }> = {
+  html: { bg: '#FFF3E0', border: '#FFE0B2' },
+  css: { bg: '#E1F5FE', border: '#B3E5FC' },
+  javascript: { bg: '#FFFDE7', border: '#FFF59D' },
+  nodejs: { bg: '#E8F5E9', border: '#C8E6C9' },
+  expressjs: { bg: '#F1F5F9', border: '#CBD5E1' },
+  mongodb: { bg: '#E0F2F1', border: '#B2DFDB' },
+  restapi: { bg: '#F3E8FF', border: '#E9D5FF' },
+  auth: { bg: '#FFE4E6', border: '#FECDD3' },
+  capstone: { bg: '#E0E7FF', border: '#C7D2FE' },
+};
+
+const DEFAULT_LOGO_STYLE = { bg: '#F1F5F9', border: '#E2E8F0' };
+
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
@@ -122,6 +136,7 @@ export const FullStackRoadmapScreen: React.FC = () => {
           <View style={styles.coursesList}>
             {FULLSTACK_TRACKS.map((track, index) => {
               const courseNum = index + 1;
+              const logoStyle = LOGO_BOX_STYLES[track.id] || DEFAULT_LOGO_STYLE;
               return (
                 <TouchableOpacity
                   key={track.id}
@@ -130,7 +145,13 @@ export const FullStackRoadmapScreen: React.FC = () => {
                   onPress={() => handleOpenCourse(track.id)}
                 >
                   <View style={styles.cardHeaderRow}>
-                    <View style={styles.courseIconBox}>
+                    <View style={[
+                      styles.courseIconBox,
+                      {
+                        backgroundColor: logoStyle.bg,
+                        borderColor: logoStyle.border,
+                      }
+                    ]}>
                       {COURSE_LOGOS[track.id] ? (
                         <Image
                           source={COURSE_LOGOS[track.id]}
@@ -138,7 +159,7 @@ export const FullStackRoadmapScreen: React.FC = () => {
                           resizeMode="contain"
                         />
                       ) : (
-                        <Icon name={track.icon as any || 'code'} size={22} color="#4F46E5" />
+                        <Icon name={track.icon as any || 'code'} size={22} color="#5653fe" />
                       )}
                     </View>
 
@@ -179,7 +200,7 @@ export const FullStackRoadmapScreen: React.FC = () => {
                   <View style={styles.ctaButtonRow}>
                     <View style={styles.ctaButton}>
                       <Text style={styles.ctaButtonText}>Start {track.title} Course</Text>
-                      <Icon name="arrow-right" size={14} color="#4F46E5" />
+                      <Icon name="arrow-right" size={14} color="#FFFFFF" />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -312,9 +333,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0F172A',
@@ -370,7 +389,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 13,
     fontWeight: '700',
-    color: '#4F46E5',
+    color: '#5653fe',
     marginBottom: 6
   },
   courseDesc: {
@@ -411,15 +430,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#EEF2FF',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10
+    backgroundColor: '#5653fe',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    shadowColor: '#5653fe',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2
   },
   ctaButtonText: {
-    fontFamily: FONT_FAMILY,
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 13,
     fontWeight: '700',
-    color: '#4F46E5'
+    color: '#FFFFFF'
   }
 });
