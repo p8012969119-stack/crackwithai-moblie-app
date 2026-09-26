@@ -11,10 +11,7 @@ export const setDynamicApiBaseUrl = (url: string | null) => {
 };
 
 export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
-  if (currentUrl.includes(DEV_LAN_IP) || currentUrl.includes('172.168.7.')) {
-    return LOCAL_URL;
-  }
-  if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1')) {
+  if (currentUrl.includes('127.0.0.1') || currentUrl.includes('localhost')) {
     return DEV_LAN_URL;
   }
   return LOCAL_URL;
@@ -29,12 +26,7 @@ export const getDevApiBaseUrl = (): string => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // On Android physical/emulator devices with ADB reverse, 127.0.0.1:5001 connects directly over USB.
-  if (Platform.OS === 'android') {
-    return LOCAL_URL;
-  }
-
-  // Extract host IP from Metro bundle URL (e.g. http://172.168.7.120:8081/index.bundle?...)
+  // Extract host IP from Metro bundle URL (e.g. http://172.168.9.242:8081/index.bundle?...)
   const scriptURL = typeof NativeModules !== 'undefined' ? NativeModules?.SourceCode?.scriptURL : undefined;
   if (scriptURL && typeof scriptURL === 'string' && /^https?:\/\//i.test(scriptURL)) {
     try {
@@ -48,7 +40,12 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  // Use Mac LAN IP so physical iPhone devices on local Wi-Fi can reach port 5001
+  // On Android physical/emulator devices with ADB reverse, 127.0.0.1:5001 connects directly over USB.
+  if (Platform.OS === 'android') {
+    return LOCAL_URL;
+  }
+
+  // Use Mac LAN IP so physical devices on local Wi-Fi can reach port 5001
   return DEV_LAN_URL;
 };
 
@@ -65,4 +62,3 @@ export const CONFIG = {
     SETTINGS: '@crackwithai_settings',
   },
 };
-
