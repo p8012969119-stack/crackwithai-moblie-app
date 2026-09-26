@@ -15,7 +15,7 @@ import {
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { fullstackApi } from '../../api/fullstackApi';
 import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress } from '../../types/fullstack';
-import { FALLBACK_HTML_COURSE, FULLSTACK_TRACKS, getCourseForTech } from '../../data/fullstackHtmlData';
+import { getCourseForTech, FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
 
@@ -31,8 +31,23 @@ const COURSE_LOGOS: Record<string, any> = {
   capstone: require('../../assets/courses/capstone.png'),
 };
 
-const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
-const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
+// Course Dynamic Brand Theme Colors
+const TECH_BRAND_COLORS: Record<string, { bg: string; border: string; text: string; pillBg: string; pillText: string; accent: string }> = {
+  html: { bg: '#FFF4ED', border: '#FFD8C2', text: '#9A3412', pillBg: '#FFEDD5', pillText: '#C2410C', accent: '#EA580C' },
+  css: { bg: '#F0F6FF', border: '#BAE6FD', text: '#1E40AF', pillBg: '#DBEAFE', pillText: '#1E40AF', accent: '#2563EB' },
+  javascript: { bg: '#FEFCE8', border: '#FDE68A', text: '#92400E', pillBg: '#FEF3C7', pillText: '#B45309', accent: '#D97706' },
+  nodejs: { bg: '#F0FDF4', border: '#A7F3D0', text: '#065F46', pillBg: '#DCFCE7', pillText: '#047857', accent: '#059669' },
+  expressjs: { bg: '#ECFDF5', border: '#6EE7B7', text: '#065F46', pillBg: '#D1FAE5', pillText: '#047857', accent: '#059669' },
+  mongodb: { bg: '#ECFDF5', border: '#A7F3D0', text: '#065F46', pillBg: '#DCFCE7', pillText: '#047857', accent: '#059669' },
+  restapi: { bg: '#F5F3FF', border: '#DDD6FE', text: '#5B21B6', pillBg: '#EDE9FE', pillText: '#6D28D9', accent: '#7C3AED' },
+  auth: { bg: '#FFF1F2', border: '#FECDD3', text: '#9F1239', pillBg: '#FFE4E6', pillText: '#BE123C', accent: '#E11D48' },
+  capstone: { bg: '#FAF5FF', border: '#E9D5FF', text: '#6B21A8', pillBg: '#F3E8FF', pillText: '#7E22CE', accent: '#9333EA' },
+};
+
+const DEFAULT_BRAND_COLOR = { bg: '#FFF4ED', border: '#FFD8C2', text: '#9A3412', pillBg: '#FFEDD5', pillText: '#C2410C', accent: '#EA580C' };
+
+// Omit invalid font strings on Android to prevent system cursive theme fallback
+const FONT_FAMILY = Platform.OS === 'android' ? undefined : 'System';
 
 export const HtmlCourseScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -42,6 +57,10 @@ export const HtmlCourseScreen: React.FC = () => {
   const tech = (route.params?.tech || route.params?.courseSlug || 'html').toLowerCase();
   const activeTrack = useMemo(() => {
     return FULLSTACK_TRACKS.find(t => t.id === tech) || FULLSTACK_TRACKS[0];
+  }, [tech]);
+
+  const brandColor = useMemo(() => {
+    return TECH_BRAND_COLORS[tech] || DEFAULT_BRAND_COLOR;
   }, [tech]);
 
   const [course, setCourse] = useState<HtmlCourse | null>(null);
@@ -161,10 +180,12 @@ export const HtmlCourseScreen: React.FC = () => {
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[brandColor.accent]} />}
       >
-        {/* Course Hero Banner */}
-        <View style={styles.courseHeroBanner}>
+        {/* ==================================================
+            HERO CARD (DYNAMIC COURSE BRAND BACKGROUND COLOR)
+            ================================================== */}
+        <View style={[styles.courseHeroBanner, { backgroundColor: brandColor.bg, borderColor: brandColor.border }]}>
           <View style={styles.heroTopRow}>
             {COURSE_LOGOS[tech] && (
               <View style={styles.courseHeroLogoBox}>
@@ -177,8 +198,10 @@ export const HtmlCourseScreen: React.FC = () => {
             )}
             <View style={styles.heroTopContent}>
               <View style={styles.badgeRow}>
-                <View style={styles.trackPill}>
-                  <Text style={styles.trackPillText}>{activeTrack.title.toUpperCase()} COURSE</Text>
+                <View style={[styles.trackPill, { backgroundColor: brandColor.pillBg }]}>
+                  <Text style={[styles.trackPillText, { color: brandColor.pillText }]}>
+                    {activeTrack.title.toUpperCase()} COURSE
+                  </Text>
                 </View>
                 <View style={styles.levelPill}>
                   <Text style={styles.levelPillText}>
@@ -186,10 +209,13 @@ export const HtmlCourseScreen: React.FC = () => {
                   </Text>
                 </View>
               </View>
-              <Text style={styles.courseTitle}>{activeCourse?.title || `${activeTrack.title} — Fundamentals`}</Text>
+              <Text style={[styles.courseTitle, { color: brandColor.text }]}>
+                {activeCourse?.title || `${activeTrack.title} — Fundamentals`}
+              </Text>
             </View>
           </View>
-          <Text style={styles.courseDesc}>
+
+          <Text style={[styles.courseDesc, { color: brandColor.text, opacity: 0.9 }]}>
             {activeCourse?.description || activeTrack.description}
           </Text>
 
@@ -202,7 +228,7 @@ export const HtmlCourseScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.progressBarTrack}>
-              <View style={[styles.progressBarFill, { width: `${Math.max(4, percent)}%` }]} />
+              <View style={[styles.progressBarFill, { width: `${Math.max(4, percent)}%`, backgroundColor: '#10B981' }]} />
             </View>
           </View>
         </View>
@@ -217,7 +243,7 @@ export const HtmlCourseScreen: React.FC = () => {
 
         {/* Loading Spinner */}
         {loading && !refreshing ? (
-          <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+          <ActivityIndicator size="large" color={brandColor.accent} style={styles.loader} />
         ) : (
           <View style={styles.modulesContainer}>
             {sortedModules.map((module: HtmlModule, modIndex: number) => {
@@ -236,8 +262,8 @@ export const HtmlCourseScreen: React.FC = () => {
                     onPress={() => toggleModule(moduleId)}
                   >
                     <View style={styles.moduleHeaderLeft}>
-                      <View style={styles.moduleBadge}>
-                        <Text style={styles.moduleBadgeText}>MOD {moduleNum}</Text>
+                      <View style={[styles.moduleBadge, { backgroundColor: brandColor.pillBg, borderColor: brandColor.border }]}>
+                        <Text style={[styles.moduleBadgeText, { color: brandColor.pillText }]}>MOD {moduleNum}</Text>
                       </View>
                       <View style={styles.moduleHeaderTextWrap}>
                         <Text style={styles.moduleTitle}>{module.title}</Text>
@@ -289,14 +315,20 @@ export const HtmlCourseScreen: React.FC = () => {
                             </View>
 
                             <View style={styles.lessonRowRight}>
-                              <View style={[styles.startBadge, isCompleted && styles.startBadgeCompleted]}>
-                                <Text style={[styles.startBadgeText, isCompleted && styles.startBadgeTextCompleted]}>
+                              <View style={[
+                                styles.startBadgePill,
+                                isCompleted ? styles.startBadgeCompleted : { backgroundColor: brandColor.pillBg }
+                              ]}>
+                                <Text style={[
+                                  styles.startBadgeText,
+                                  isCompleted ? styles.startBadgeTextCompleted : { color: brandColor.pillText }
+                                ]}>
                                   {isCompleted ? 'Done' : 'Start'}
                                 </Text>
                                 <Icon
                                   name={isCompleted ? 'check' : 'arrow-right'}
                                   size={12}
-                                  color={isCompleted ? '#10B981' : '#4F46E5'}
+                                  color={isCompleted ? '#10B981' : brandColor.pillText}
                                 />
                               </View>
                             </View>
@@ -339,7 +371,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9'
   },
   topBarTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
@@ -355,30 +386,28 @@ const styles = StyleSheet.create({
     paddingBottom: 40
   },
   courseHeroBanner: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 18,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 20,
     marginBottom: 20,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3
   },
   heroTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 8
+    gap: 14,
+    marginBottom: 10
   },
   courseHeroLogoBox: {
-    width: 54,
-    height: 54,
-    borderRadius: 15,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.2,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
@@ -387,11 +416,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
-    padding: 5
+    padding: 6
   },
   courseHeroLogo: {
-    width: 42,
-    height: 42
+    width: 44,
+    height: 44
   },
   heroTopContent: {
     flex: 1
@@ -400,52 +429,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 10
+    marginBottom: 6
   },
   trackPill: {
-    backgroundColor: '#EEF2FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8
   },
   trackPillText: {
-    fontFamily: FONT_FAMILY,
     fontSize: 10,
     fontWeight: '800',
-    color: '#4F46E5',
     letterSpacing: 0.6
   },
   levelPill: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0'
   },
   levelPillText: {
-    fontFamily: FONT_FAMILY,
     fontSize: 10,
     fontWeight: '700',
     color: '#475569'
   },
   courseTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 6,
-    lineHeight: 26
+    marginBottom: 4,
+    lineHeight: 27
   },
   courseDesc: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 20,
     marginBottom: 16
   },
   progressCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0'
   },
@@ -456,15 +479,13 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   progressStatusLabel: {
-    fontFamily: FONT_FAMILY,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748B'
   },
   progressPercent: {
-    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#10B981'
   },
   progressBarTrack: {
@@ -475,21 +496,18 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#10B981',
     borderRadius: 4
   },
   sectionHeadingWrap: {
     marginBottom: 14
   },
   sectionHeadingTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 4
   },
   sectionHeadingSub: {
-    fontFamily: FONT_FAMILY,
     fontSize: 12,
     color: '#64748B'
   },
@@ -497,20 +515,25 @@ const styles = StyleSheet.create({
     marginVertical: 30
   },
   modulesContainer: {
-    gap: 12
+    gap: 14
   },
   moduleCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2
   },
   moduleHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 14,
+    padding: 16,
     backgroundColor: '#FFFFFF'
   },
   moduleHeaderLeft: {
@@ -520,32 +543,26 @@ const styles = StyleSheet.create({
     gap: 12
   },
   moduleBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E0E7FF'
+    borderRadius: 8,
+    borderWidth: 1
   },
   moduleBadgeText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#4F46E5'
+    fontSize: 10.5,
+    fontWeight: '800'
   },
   moduleHeaderTextWrap: {
     flex: 1
   },
   moduleTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
     marginBottom: 2
   },
   moduleSub: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
+    fontSize: 11.5,
     color: '#64748B'
   },
   expandIcon: {
@@ -560,8 +577,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9'
   },
@@ -575,9 +592,9 @@ const styles = StyleSheet.create({
     gap: 12
   },
   lessonNumCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -587,8 +604,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981'
   },
   lessonNumText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: '700',
     color: '#64748B'
   },
@@ -597,8 +613,7 @@ const styles = StyleSheet.create({
     paddingRight: 8
   },
   lessonTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#1E293B',
     marginBottom: 3
@@ -607,31 +622,27 @@ const styles = StyleSheet.create({
     color: '#047857'
   },
   lessonDesc: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
+    fontSize: 11.5,
     color: '#64748B',
-    lineHeight: 16
+    lineHeight: 16.5
   },
   lessonRowRight: {
     alignItems: 'flex-end'
   },
-  startBadge: {
+  startBadgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 8
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 9999
   },
   startBadgeCompleted: {
     backgroundColor: '#DCFCE7'
   },
   startBadgeText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#4F46E5'
+    fontSize: 11.5,
+    fontWeight: '800'
   },
   startBadgeTextCompleted: {
     color: '#10B981'
