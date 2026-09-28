@@ -42,6 +42,12 @@ export interface HtmlLesson {
   title: string;
   slug: string;
   order: number;
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced' | string;
+  category?: string;
+  explanation?: string;
+  user_raw_idea?: string;
+  engineered_prompt?: string;
+  why_it_works?: string;
   description?: string;
   learningObjective?: string;
   concept?: string;

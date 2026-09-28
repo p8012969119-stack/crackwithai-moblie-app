@@ -6,6 +6,21 @@ export interface PromptStage {
   tag: string;
   badge: string;
   description: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  category: string;
+  concept: string;
+  explanation: string;
+  user_raw_idea: string;
+  engineered_prompt: string;
+  why_it_works: string;
+  starterCode: string;
+  practiceTask: {
+    title: string;
+    description: string;
+    requirements: string[];
+    starterCode: string;
+    expectedOutput: string;
+  };
 }
 
 export interface PromptMistake {
@@ -44,75 +59,291 @@ export interface RealWorldScenario {
 export const PROMPT_STAGES: PromptStage[] = [
   {
     id: 1,
-    slug: 'what-is-prompt-engineering',
-    title: 'What is Prompt Engineering?',
-    subtitle: 'Learn how to give clear instructions to AI',
-    tag: 'Core Concept',
-    badge: 'Stage 1',
-    description: 'Understand how prompts work and compare vague prompts with high-performing structured prompts.'
+    slug: 'defining-personas',
+    title: 'Lesson 1 — Defining Personas',
+    subtitle: 'Giving the AI a specific professional identity forces correct jargon, tone & depth.',
+    tag: 'Role Persona',
+    badge: 'Lesson 1',
+    description: 'Giving the AI a specific professional identity forces it to adopt the correct jargon, tone, and depth of knowledge required.',
+    difficulty: 'Beginner',
+    category: 'Role-Based Prompting',
+    concept: 'Defining Personas',
+    explanation: 'Giving the AI a specific professional identity forces it to adopt the correct jargon, tone, and depth of knowledge required.',
+    user_raw_idea: 'Write an article about healthy eating.',
+    engineered_prompt: 'Act as a Registered Clinical Dietitian. Task: Write a 300-word introductory article about the benefits of a plant-based diet for office workers. Constraints: Focus on energy levels, avoid overly medical jargon, and include 3 actionable meal swaps. Format: Use bullet points for the meal swaps.',
+    why_it_works: "Locks the AI into a certified health professional's perspective rather than pulling generic internet blog posts.",
+    starterCode: 'Act as a Registered Clinical Dietitian. Task: Write a short 200-word article about plant-based meals for office workers. Include 3 quick meal ideas as bullet points.',
+    practiceTask: {
+      title: 'Persona Definition Task',
+      description: 'Define an explicit expert role (Dietitian, Engineer, Mentor) in your prompt and instruct the AI to write a target response.',
+      requirements: ['Assign a specific expert persona', 'Specify topic and target audience', 'Set length or output constraints'],
+      starterCode: 'Act as a Registered Clinical Dietitian. Task: Write a 300-word introductory article about the benefits of a plant-based diet for office workers. Constraints: Focus on energy levels and include 3 actionable meal swaps.',
+      expectedOutput: 'Professional dietitian article with 3 meal swaps in bullet points.'
+    }
   },
   {
     id: 2,
-    slug: 'prompt-builder',
-    title: 'The 5-Element Prompt Formula',
-    subtitle: 'Build prompts using Role, Task, Context, Constraints, Output',
-    tag: 'Interactive Builder',
-    badge: 'Stage 2',
-    description: 'Use the interactive 5-block prompt builder to assemble professional-grade instructions.'
+    slug: 'adding-style-and-constraints',
+    title: 'Lesson 2 — Adding Style & Constraints',
+    subtitle: 'Setting boundaries ensures output fits exact operational requirements.',
+    tag: 'Constraints',
+    badge: 'Lesson 2',
+    description: 'Setting boundaries ensures the AI output fits your exact professional or operational requirements without extra fluff.',
+    difficulty: 'Beginner',
+    category: 'Constraints & Formatting',
+    concept: 'Adding Style & Constraints',
+    explanation: 'Setting boundaries ensures the AI output fits your exact professional or operational requirements without extra fluff.',
+    user_raw_idea: 'Email my boss that I am sick today.',
+    engineered_prompt: 'Act as a Corporate Employee. Task: Draft a professional, brief email to my direct manager informing them that I am taking a sick day today due to sudden fever. Constraints: Keep it under 4 lines, maintain a respectful and direct tone, and mention that I will check urgent messages in the evening.',
+    why_it_works: 'Prevents the AI from sounding overly dramatic or sharing unnecessary medical details, keeping it clean.',
+    starterCode: 'Act as a Corporate Employee. Task: Draft a concise 4-line email to my manager taking a sick day today.',
+    practiceTask: {
+      title: 'Constraint Enforcement Task',
+      description: 'Draft a concise email prompt specifying exact line limits, respectful tone, and essential details.',
+      requirements: ['Set a clear line limit (under 4 lines)', 'Maintain a professional corporate tone', 'Include key operational detail'],
+      starterCode: 'Act as a Corporate Employee. Task: Draft a professional email to my manager taking a sick day today. Constraints: Under 4 lines, respectful tone, mention evening check-in.',
+      expectedOutput: 'Short, 4-line corporate sick leave email.'
+    }
   },
   {
     id: 3,
-    slug: 'avoid-mistakes',
-    title: 'Avoid These 5 Common Mistakes',
-    subtitle: 'Transform broken, vague prompts into crisp commands',
-    tag: 'Mistake Lab',
-    badge: 'Stage 3',
-    description: 'Inspect real prompt anti-patterns, understand why models fail, and test better alternatives.'
+    slug: 'audience-adaptation',
+    title: 'Lesson 3 — Audience Adaptation',
+    subtitle: 'Specifying who the output is for changes vocabulary and tone.',
+    tag: 'Audience',
+    badge: 'Lesson 3',
+    description: 'Specifying who the output is for changes the complexity of vocabulary, depth of explanation, and tone used by the AI.',
+    difficulty: 'Beginner',
+    category: 'Target Audience',
+    concept: 'Audience Adaptation',
+    explanation: 'Specifying who the output is for changes the complexity of vocabulary, depth of explanation, and tone used by the AI.',
+    user_raw_idea: 'Explain blockchain.',
+    engineered_prompt: 'Act as a Tech Teacher. Task: Explain the concept of blockchain technology. Context: Target audience is 10-year-old children. Constraints: Do not use cryptographic jargon. Use an analogy involving a shared digital diary or ledger that everyone can see but no one can erase. Max 2 paragraphs.',
+    why_it_works: 'Forces the model to strip away complex math or coding terms and replace them with universally understandable concepts.',
+    starterCode: 'Act as a Tech Teacher. Task: Explain blockchain to 10-year-old kids using a digital diary analogy in 2 paragraphs.',
+    practiceTask: {
+      title: 'Audience Adaptation Task',
+      description: 'Prompt AI to explain a complex topic to a 10-year-old child using an intuitive real-world analogy.',
+      requirements: ['Specify target audience (10-year-old kids)', 'Include a specific real-world analogy', 'Limit length to 2 paragraphs'],
+      starterCode: 'Act as a Tech Teacher. Task: Explain blockchain technology to 10-year-old children using a digital diary analogy without technical jargon. Max 2 paragraphs.',
+      expectedOutput: '2-paragraph kid-friendly explanation of blockchain using a shared digital diary analogy.'
+    }
   },
   {
     id: 4,
-    slug: 'prompt-techniques',
-    title: 'Prompting Techniques',
-    subtitle: 'Zero-shot, Few-shot, Role & Step-by-Step prompting',
-    tag: 'Power Techniques',
-    badge: 'Stage 4',
-    description: 'Master specialized prompting patterns that dramatically boost AI intelligence and precision.'
+    slug: 'markdown-and-tables',
+    title: 'Lesson 4 — Markdown & Tables',
+    subtitle: 'Specifying output structure saves formatting and cleanup time.',
+    tag: 'Markdown',
+    badge: 'Lesson 4',
+    description: 'AI can present data in tables, JSON, markdown, or lists. Specifying this directly saves immense formatting and clean-up time.',
+    difficulty: 'Beginner',
+    category: 'Formatting Output',
+    concept: 'Markdown & Tables',
+    explanation: 'AI can present data in tables, JSON, markdown, or lists. Specifying this directly saves immense formatting and clean-up time.',
+    user_raw_idea: 'Give me a list of top tech companies and their founders.',
+    engineered_prompt: 'Act as a Tech Historian. Task: List 5 globally dominant technology companies founded after 1975. Format: Present the output strictly as a clean Markdown table with three columns: Company Name, Founder(s), and Year Founded. Order chronologically.',
+    why_it_works: "Eliminates conversational introductions like 'Sure, here is your list' and outputs data ready to be parsed or pasted into documentation.",
+    starterCode: 'Act as a Tech Historian. Task: List 5 tech companies in a Markdown table with columns: Company Name | Founder(s) | Year Founded.',
+    practiceTask: {
+      title: 'Markdown Table Formatting Task',
+      description: 'Instruct AI to return a clean Markdown table with specified columns and chronological order.',
+      requirements: ['Request Markdown table format', 'Define explicit table columns', 'Specify sorting order'],
+      starterCode: 'Act as a Tech Historian. Task: List 5 major tech companies in a Markdown table with columns: Company Name, Founder(s), Year Founded.',
+      expectedOutput: 'Clean Markdown table listing 5 tech companies with exact 3 columns.'
+    }
   },
   {
     id: 5,
-    slug: 'iterative-prompting',
-    title: 'Iterative Prompting Loop',
-    subtitle: 'Prompt → Response → Critique → Refine → Master',
-    tag: 'Refinement Cycle',
-    badge: 'Stage 5',
-    description: 'Prompting is a conversation. Learn how to steer, correct, and iteratively refine model outputs.'
+    slug: 'providing-examples-few-shot',
+    title: 'Lesson 5 — Providing Examples',
+    subtitle: 'Providing examples teaches exact pattern and classification logic.',
+    tag: 'Few-Shot',
+    badge: 'Lesson 5',
+    description: 'Providing examples teaches the AI the exact pattern, formatting, and classification logic you expect before it processes data.',
+    difficulty: 'Intermediate',
+    category: 'Few-Shot Prompting',
+    concept: 'Providing Examples',
+    explanation: 'Providing examples teaches the AI the exact pattern, formatting, and classification logic you expect before it processes data.',
+    user_raw_idea: 'Categorize inputs into positive or negative: The food was cold, Excellent service, The screen is cracked.',
+    engineered_prompt: "Act as an AI Data Labeling Engine. Task: Classify customer feedback into 'Positive' or 'Negative'.\n\nExamples:\n- 'Delivery took two weeks' -> Negative\n- 'Absolutely love the color!' -> Positive\n\nNow classify these text inputs:\n1. 'The food was cold'\n2. 'Excellent service'\nFormat: Output as a clean bulleted list.",
+    why_it_works: 'By showing patterns first, the model outputs clean classifications without conversational filler.',
+    starterCode: "Act as an AI Data Labeling Engine. Task: Classify text into 'Positive' or 'Negative' using 2 demonstration examples.",
+    practiceTask: {
+      title: 'Few-Shot Classification Task',
+      description: 'Provide 2 demonstration input-output pairs to train AI classification on target sentences.',
+      requirements: ['Include at least 2 demonstration examples', 'Specify target categories (Positive / Negative)', 'Request bulleted list output'],
+      starterCode: "Act as an AI Data Labeling Engine. Task: Classify feedback into 'Positive' or 'Negative'.\nExamples:\n- 'Delivery was slow' -> Negative\n- 'Awesome product' -> Positive\n\nInputs:\n1. 'The food was cold'\n2. 'Excellent service'",
+      expectedOutput: 'Clean Few-Shot classification list.'
+    }
   },
   {
     id: 6,
-    slug: 'real-world-practice',
-    title: 'Real-World Prompt Challenges',
-    subtitle: 'Code, Email, Research, Content, Data & Creative',
-    tag: 'Hands-on Labs',
-    badge: 'Stage 6',
-    description: 'Solve realistic workplace challenges across coding, communications, research, and data workflows.'
+    slug: 'content-summarization',
+    title: 'Lesson 6 — Content Summarization',
+    subtitle: 'Directing focus prevents missing crucial information during summaries.',
+    tag: 'Summarization',
+    badge: 'Lesson 6',
+    description: 'Instructing the AI on what specific data points to focus on prevents it from missing crucial information during a summary.',
+    difficulty: 'Intermediate',
+    category: 'Information Extraction',
+    concept: 'Content Summarization',
+    explanation: 'Instructing the AI on what specific data points to focus on prevents it from missing crucial information during a summary.',
+    user_raw_idea: 'Summarize this meeting note.',
+    engineered_prompt: 'Act as an Executive Secretary. Task: Summarize the attached transcript of a business meeting. Constraints: Extract only three distinct sections: 1. Core Decisions Made, 2. Assigned Action Items (with names), 3. Next Meeting Date. Ignore all casual side-conversations. Max 150 words.',
+    why_it_works: 'Filters out background noise and pleasantries, giving management a highly actionable brief.',
+    starterCode: 'Act as an Executive Secretary. Task: Summarize meeting notes into 3 sections: Core Decisions, Action Items, and Next Meeting Date.',
+    practiceTask: {
+      title: 'Structured Summarization Task',
+      description: 'Prompt AI to extract decisions, action items, and next meeting dates from meeting transcripts.',
+      requirements: ['Specify 3 required extraction sections', 'Instruct AI to ignore casual conversation', 'Set word count cap (under 150 words)'],
+      starterCode: 'Act as an Executive Secretary. Task: Summarize meeting notes into 3 sections: 1. Core Decisions, 2. Action Items with names, 3. Next Meeting Date. Max 150 words.',
+      expectedOutput: 'Structured meeting summary in 3 distinct sections.'
+    }
   },
   {
     id: 7,
-    slug: 'debugging-guardrails',
-    title: 'Prompt Debugging & Guardrails',
-    subtitle: 'Prevent hallucinations and lock down output schemas',
-    tag: 'Quality & Safety',
-    badge: 'Stage 7',
-    description: 'Ground responses strictly in reference data and enforce negative constraints to eliminate hallucinations.'
+    slug: 'altering-emotional-resonance',
+    title: 'Lesson 7 — Altering Emotional Resonance',
+    subtitle: 'Prompting for specific tone alters word choice for brand alignment.',
+    tag: 'Tone & Style',
+    badge: 'Lesson 7',
+    description: 'Prompting for a specific tone (e.g., empathetic, assertive, persuasive) alters word choice to suit corporate policies or brand voices.',
+    difficulty: 'Intermediate',
+    category: 'Tone Modulation',
+    concept: 'Altering Emotional Resonance',
+    explanation: 'Prompting for a specific tone (e.g., empathetic, assertive, persuasive) alters word choice to suit corporate policies or brand voices.',
+    user_raw_idea: 'Tell a client their feature request is denied.',
+    engineered_prompt: 'Act as a Senior Product Manager. Task: Draft a response to a high-value enterprise client explaining that their custom software feature request cannot be built this quarter. Tone: Empathetic, highly professional, yet firm. Constraints: Frame it around keeping our platform stable and offer a workaround or timeline review for next quarter.',
+    why_it_works: 'Prevents the response from sounding rude or overly defensive, keeping customer satisfaction intact.',
+    starterCode: 'Act as a Senior Product Manager. Task: Write an empathetic yet firm email declining a client feature request for this quarter while offering a next quarter review.',
+    practiceTask: {
+      title: 'Empathetic Customer Denial Task',
+      description: 'Draft a product manager email declining a feature request with empathetic and professional tone.',
+      requirements: ['Set persona to Senior Product Manager', 'Maintain empathetic yet firm tone', 'Offer alternative workaround or future review'],
+      starterCode: 'Act as a Senior Product Manager. Task: Write a response to an enterprise client declining their custom feature request for this quarter. Tone: Empathetic, professional, firm. Offer a next quarter review.',
+      expectedOutput: 'Empathetic product manager denial email with workaround.'
+    }
   },
   {
     id: 8,
-    slug: 'final-challenge',
-    title: 'Build Your Own AI Assistant',
-    subtitle: 'Capstone: Production AI Customer Support Prompt',
-    tag: 'Capstone Project',
-    badge: 'Stage 8',
-    description: 'Design a robust production prompt meeting all 5 professional rubric criteria to earn your official certificate.'
+    slug: 'dynamic-brainstorming',
+    title: 'Lesson 8 — Dynamic Brainstorming',
+    subtitle: 'Negative constraints force AI to break away from cliché tropes.',
+    tag: 'Brainstorming',
+    badge: 'Lesson 8',
+    description: 'Placing negative constraints (telling AI what NOT to do) forces it to break away from cliché, heavily repeated internet tropes.',
+    difficulty: 'Intermediate',
+    category: 'Creative Generation',
+    concept: 'Dynamic Brainstorming',
+    explanation: 'Placing negative constraints (telling AI what NOT to do) forces it to break away from cliché, heavily repeated internet tropes.',
+    user_raw_idea: 'Give me marketing ideas for a coffee shop.',
+    engineered_prompt: 'Act as a Creative Marketing Director. Task: Brainstorm 5 unique local marketing campaign ideas for a boutique coffee shop. Constraints: Do NOT suggest loyalty punch cards, discount coupons, or basic Instagram giveaways. Focus entirely on experiential or community-driven marketing.',
+    why_it_works: 'Forces the model to skip the obvious, standard suggestions and generate truly innovative marketing angles.',
+    starterCode: 'Act as a Creative Marketing Director. Task: Brainstorm 5 coffee shop marketing ideas. Negative Constraints: Do NOT suggest punch cards or Instagram giveaways.',
+    practiceTask: {
+      title: 'Negative Constraint Marketing Task',
+      description: 'Brainstorm marketing ideas while placing negative constraints against cliché options.',
+      requirements: ['Assign Creative Marketing Director persona', 'Include negative constraints (no coupons, no basic giveaways)', 'Focus on experiential / community marketing'],
+      starterCode: 'Act as a Creative Marketing Director. Task: Brainstorm 5 unique local marketing ideas for a coffee shop. Constraints: Do NOT suggest punch cards, discounts, or basic Instagram giveaways.',
+      expectedOutput: '5 unique coffee shop marketing ideas using negative constraints.'
+    }
+  },
+  {
+    id: 9,
+    slug: 'chain-of-thought-reasoning',
+    title: 'Lesson 9 — Chain-of-Thought (CoT)',
+    subtitle: 'Thinking step-by-step reduces logic errors and fake calculations.',
+    tag: 'Reasoning',
+    badge: 'Lesson 9',
+    description: 'Forcing the AI to think out loud step-by-step prevents computational rushes and severely reduces logic errors or fake calculations.',
+    difficulty: 'Advanced',
+    category: 'Reasoning & Logic',
+    concept: 'Chain-of-Thought (CoT)',
+    explanation: 'Forcing the AI to think out loud step-by-step prevents computational rushes and severely reduces logic errors or fake calculations.',
+    user_raw_idea: 'If a store buys 10 apples for $5 and sells 8 of them for $1 each, what is the profit percentage?',
+    engineered_prompt: 'Act as a Mathematical Logic Tutor. Task: Solve the word problem provided in the context. Context: Store buys 10 apples for a total of $5. Sells 8 apples for $1 each. Constraints: Think step-by-step. Break down your answer into: Cost Price per unit, Total Revenue, Net Profit, and Profit Percentage. Do not skip steps.',
+    why_it_works: 'Forces the model to calculate the unit cost and total revenue sequentially before outputting the percentage, eliminating bad math.',
+    starterCode: 'Act as a Mathematical Logic Tutor. Solve step-by-step: Store buys 10 apples for $5 and sells 8 for $1 each. Show unit cost, revenue, profit, and profit percentage.',
+    practiceTask: {
+      title: 'Chain-of-Thought Math Task',
+      description: 'Solve a profit percentage word problem by instructing AI to think step-by-step.',
+      requirements: ['Require step-by-step reasoning', 'Break down cost price, revenue, and profit', 'Output explicit percentage calculation'],
+      starterCode: 'Act as a Mathematical Logic Tutor. Task: Solve step-by-step: Store buys 10 apples for $5 and sells 8 of them for $1 each. Show Cost Price per unit, Total Revenue, Net Profit, and Profit Percentage.',
+      expectedOutput: 'Step-by-step math solution calculating 60% profit percentage.'
+    }
+  },
+  {
+    id: 10,
+    slug: 'preventing-hallucinations',
+    title: 'Lesson 10 — Preventing Hallucinations',
+    subtitle: 'Giving an explicit escape hatch stops fake answers when data is missing.',
+    tag: 'Guardrails',
+    badge: 'Lesson 10',
+    description: 'Giving the AI a strict "escape hatch" (telling it to say "I don\'t know") stops it from making up fake answers when data is missing.',
+    difficulty: 'Advanced',
+    category: 'Defensive Prompting',
+    concept: 'Preventing Hallucinations',
+    explanation: 'Giving the AI a strict "escape hatch" (telling it to say "I don\'t know") stops it from making up fake answers when data is missing.',
+    user_raw_idea: 'Who won the corporate golf championship at TechCorp in 2025?',
+    engineered_prompt: "Act as a Corporate Records Archivist. Task: Answer the question regarding company event winners. Constraints: Rely strictly on verified historical data. If the answer is not found in your public training data or if you are unsure of the exact name, reply exactly with: 'Information not available in company archives.' Do not guess.",
+    why_it_works: 'Explicitly forbids speculation, protecting your application or database from delivering hallucinated or false answers.',
+    starterCode: "Act as a Corporate Records Archivist. Answer event winner query. Strict Rule: If not in data, respond exactly: 'Information not available in company archives.'",
+    practiceTask: {
+      title: 'Defensive Escape Hatch Task',
+      description: 'Write a defensive prompt with a strict escape hatch phrase to prevent AI hallucinations.',
+      requirements: ['Include Corporate Archivist persona', 'Instruct strict reliance on verified data', 'Define exact fallback escape hatch text'],
+      starterCode: "Act as a Corporate Records Archivist. Task: Answer company event winner query. Constraints: Rely strictly on verified data. If unsure, reply exactly with: 'Information not available in company archives.' Do not guess.",
+      expectedOutput: "Defensive prompt returning exact 'Information not available' fallback."
+    }
+  },
+  {
+    id: 11,
+    slug: 'dynamic-meta-prompting',
+    title: 'Lesson 11 — Dynamic Meta-Prompting',
+    subtitle: 'Using AI to optimize prompts creates robust instructions.',
+    tag: 'Meta-Prompting',
+    badge: 'Lesson 11',
+    description: 'Using AI to write or optimize a prompt for another AI creates highly complex instructions that a human might not think to structure manually.',
+    difficulty: 'Advanced',
+    category: 'System Prompt Optimization',
+    concept: 'Dynamic Meta-Prompting',
+    explanation: 'Using AI to write or optimize a prompt for another AI creates highly complex instructions that a human might not think to structure manually.',
+    user_raw_idea: 'Make a prompt that helps me learn vocabulary words.',
+    engineered_prompt: 'Act as an Expert Prompt Engineer. Task: Write a comprehensive, robust system prompt for an AI Vocabulary Tutor. Constraints: The generated prompt must instruct the AI to quiz the user on one word at a time, provide immediate feedback, track scores, and use spaced repetition principles. Output only the finished system prompt code block.',
+    why_it_works: 'Leverages the LLM’s deep understanding of prompt dynamics to build an incredibly stable interactive system.',
+    starterCode: 'Act as an Expert Prompt Engineer. Task: Write a robust system prompt for an AI Vocabulary Tutor that quizzes one word at a time and tracks scores.',
+    practiceTask: {
+      title: 'System Meta-Prompt Generation Task',
+      description: 'Prompt AI to design a production-grade system prompt for a Vocabulary Tutor app.',
+      requirements: ['Assign Expert Prompt Engineer role', 'Require one-word quiz mechanism & score tracking', 'Output only finished system prompt code block'],
+      starterCode: 'Act as an Expert Prompt Engineer. Task: Write a robust system prompt for an AI Vocabulary Tutor. Constraints: Quiz one word at a time, track scores, use spaced repetition. Output only the prompt code block.',
+      expectedOutput: 'Production-ready system prompt for Vocabulary Tutor.'
+    }
+  },
+  {
+    id: 12,
+    slug: 'secure-code-generation',
+    title: 'Lesson 12 — Secure Code Generation',
+    subtitle: 'Adding security and testing requirements prevents buggy scripts.',
+    tag: 'Code Safety',
+    badge: 'Lesson 12',
+    description: 'Adding security, optimization, and testing requirements into a programming prompt prevents buggy or highly vulnerable scripts.',
+    difficulty: 'Advanced',
+    category: 'Code Synthesis',
+    concept: 'Secure Code Generation',
+    explanation: 'Adding security, optimization, and testing requirements into a programming prompt prevents buggy or highly vulnerable scripts.',
+    user_raw_idea: 'Write an SQL query to delete old users.',
+    engineered_prompt: 'Act as a Senior Database Administrator. Task: Write a PostgreSQL query to delete accounts that have been inactive for over 3 years. Constraints: Include safety measures. Use a soft-delete mechanism (updating an is_deleted status) rather than a hard destructive drop. Include a transaction block (BEGIN and COMMIT) to ensure safety.',
+    why_it_works: 'Ensures the generated code adheres to enterprise safety and data retention laws, preventing catastrophic human error.',
+    starterCode: 'Act as a Senior Database Administrator. Task: Write a PostgreSQL query for 3-year inactive user accounts using soft-delete and transaction block (BEGIN / COMMIT).',
+    practiceTask: {
+      title: 'Secure SQL Synthesis Task',
+      description: 'Prompt AI for a PostgreSQL query using soft-delete mechanism and safe transaction blocks.',
+      requirements: ['Set Senior DBA persona', 'Require soft-delete mechanism (is_deleted)', 'Include BEGIN and COMMIT transaction safety'],
+      starterCode: 'Act as a Senior Database Administrator. Task: Write a PostgreSQL query to handle accounts inactive for over 3 years. Constraints: Use soft-delete (is_deleted status) and transaction block (BEGIN and COMMIT).',
+      expectedOutput: 'Secure PostgreSQL script with soft-delete and transaction bounds.'
+    }
   }
 ];
 

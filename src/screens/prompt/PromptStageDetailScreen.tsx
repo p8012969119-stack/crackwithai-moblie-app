@@ -13,20 +13,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { useAuth } from '../../store/AuthContext';
 import { fullstackApi } from '../../api/fullstackApi';
 import { storage } from '../../services/storage';
 import { Icon } from '../../components/Icon';
-import { COLORS } from '../../constants/theme';
 import { PROMPT_STAGES, PromptStage } from './promptCourseData';
 import { PromptEvaluator, PromptEvaluationResult } from './PromptEvaluator';
-import {
-  PromptBuilderWidget,
-  PromptMistakesWidget,
-  PromptTechniquesWidget,
-  PromptScenariosWidget,
-  PromptFinalChallengeWidget,
-} from './PromptStageWidgets';
 
 const FONT_FAMILY = Platform.OS === 'android' ? undefined : 'System';
 
@@ -47,6 +40,7 @@ export const PromptStageDetailScreen: React.FC = () => {
   const [currentStageId, setCurrentStageId] = useState<number>(Number(stageIdParam));
   const [promptText, setPromptText] = useState<string>('');
   const [testing, setTesting] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
   const [evaluation, setEvaluation] = useState<PromptEvaluationResult | null>(null);
   const [showErrorCard, setShowErrorCard] = useState<boolean>(false);
   const [showReferenceModal, setShowReferenceModal] = useState<boolean>(false);
@@ -58,46 +52,23 @@ export const PromptStageDetailScreen: React.FC = () => {
   const currentStage: PromptStage =
     PROMPT_STAGES.find((s) => s.id === currentStageId) || PROMPT_STAGES[0];
 
-  const getDefaultPromptForStage = useCallback((id: number) => {
-    switch (id) {
-      case 1:
-        return 'You are a JavaScript teacher. Explain JavaScript to a beginner using 5 simple points and one real-world example.';
-      case 2:
-        return '[ROLE] You are an experienced computer science teacher\n\n[TASK] Explain how API authentication works\n\n[CONTEXT] The learner knows basic JavaScript but is new to JWT tokens\n\n[CONSTRAINTS] Keep it under 150 words and use simple analogies\n\n[OUTPUT] 3 clear numbered points + 1 real-world example';
-      case 3:
-        return 'You are a tech journalist. Write a concise 200-word overview of Generative AI for high school students, using a smartphone assistant analogy.';
-      case 4:
-        return "Classify the sentiment of this review into [Positive, Neutral, Negative]: 'The app is okay, but loading takes a bit too long.'";
-      case 5:
-        return 'You are a Technical Writer. Explain what an API is to a non-technical project manager. Use a restaurant waiter analogy and keep it under 100 words in 3 bullet points.';
-      case 6:
-        return 'Act as an Executive Workplace Communications Coach. Draft a polite and professional email to my engineering manager requesting 3 days of personal leave from Oct 12 to 14. Mention that my pending PRs will be handed over to a teammate.';
-      case 7:
-        return "You are a Fact-Checking Assistant. Answer questions using ONLY the text below. If not in the text, say 'I cannot find that in the documentation.'\n\nTEXT: CrackWithAI offers courses in Full Stack Web Development and Prompt Engineering.\n\nQUESTION: Does CrackWithAI teach Quantum Machine Learning?";
-      case 8:
-        return `Act as an AI Customer Support Specialist for CrackWithAI.
-Respond warmly and professionally to customer queries.
-Use ONLY the provided policy information:
-- Subscriptions can be canceled anytime from Settings > Billing.
-- Refunds are eligible within 7 days of purchase.
-
-If the request lacks required details, ask for clarification.
-Return your response in 3 structured sections:
-1. Warm Greeting & Summary
-2. Detailed Policy Steps
-3. Helpful Next Steps`;
-      default:
-        return 'Write a clear structured prompt for the AI assistant.';
-    }
-  }, []);
-
   useEffect(() => {
-    setPromptText(getDefaultPromptForStage(currentStageId));
+    const initialText = currentStage.engineered_prompt || currentStage.starterCode || '';
+    setPromptText(initialText);
     setEvaluation(null);
     setShowErrorCard(false);
     setSubmissionFeedback(null);
+    setCopied(false);
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-  }, [currentStageId, getDefaultPromptForStage]);
+  }, [currentStageId, currentStage]);
+
+  const handleCopyPrompt = () => {
+    if (currentStage?.engineered_prompt) {
+      Clipboard.setString(currentStage.engineered_prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleInsertSnippet = (snippet: string) => {
     setPromptText(prev => {
@@ -108,7 +79,7 @@ Return your response in 3 structured sections:
 
   const handleCheckPrompt = async () => {
     if (!promptText.trim()) {
-      setSubmissionFeedback({ type: 'error', message: 'Please write your prompt before testing.' });
+      setSubmissionFeedback({ type: 'error', message: 'Please write or edit your prompt before testing.' });
       return;
     }
     setTesting(true);
@@ -144,7 +115,7 @@ Return your response in 3 structured sections:
         return;
       }
 
-      // Save progress
+      // Save progress locally
       const storageKey = `@crackwithai_prompt_progress_${user?._id || 'guest'}`;
       const stored = await storage.getItem(storageKey);
       let completedList: number[] = [1];
@@ -158,7 +129,7 @@ Return your response in 3 structured sections:
       }
 
       const updated = Array.from(new Set([...completedList, currentStageId]));
-      const nextId = Math.min(8, currentStageId + 1);
+      const nextId = Math.min(12, currentStageId + 1);
       await storage.setItem(storageKey, JSON.stringify({
         completedStageIds: updated,
         activeStageId: nextId,
@@ -170,12 +141,12 @@ Return your response in 3 structured sections:
 
       setSubmissionFeedback({
         type: 'success',
-        message: `🎉 Stage ${currentStageId} Passed! Score: ${result.score}%. Progress saved.`
+        message: `🎉 Lesson ${currentStageId} Completed! Score: ${result.score}%. Progress saved.`
       });
     } catch (err: any) {
       setSubmissionFeedback({
         type: 'error',
-        message: err?.message || 'Failed to submit stage. Please try again.'
+        message: err?.message || 'Failed to complete lesson. Please try again.'
       });
     } finally {
       setSubmitting(false);
@@ -190,13 +161,26 @@ Return your response in 3 structured sections:
   };
 
   const isFirstStage = currentStageId <= 1;
-  const isLastStage = currentStageId >= 8;
+  const isLastStage = currentStageId >= 12;
+
+  const badgeBg =
+    currentStage.difficulty === 'Beginner'
+      ? '#DCFCE7'
+      : currentStage.difficulty === 'Intermediate'
+      ? '#DBEAFE'
+      : '#EDE9FE';
+  const badgeTextColor =
+    currentStage.difficulty === 'Beginner'
+      ? '#059669'
+      : currentStage.difficulty === 'Intermediate'
+      ? '#1D4ED8'
+      : '#6D28D9';
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      {/* Classic Top Header Bar */}
+      {/* Top Header Bar */}
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -207,15 +191,17 @@ Return your response in 3 structured sections:
         </TouchableOpacity>
 
         <View style={styles.topBarCenter}>
-          <Text style={styles.topBarEyebrow}>STAGE {currentStageId} OF 8</Text>
+          <Text style={styles.topBarEyebrow}>LESSON {currentStageId} OF 12</Text>
           <Text style={styles.topBarTitle} numberOfLines={1}>
             {currentStage.title}
           </Text>
         </View>
 
         <View style={styles.topBarRight}>
-          <View style={styles.stageTagPill}>
-            <Text style={styles.stageTagPillText}>{currentStage.badge}</Text>
+          <View style={[styles.stageTagPill, { backgroundColor: badgeBg }]}>
+            <Text style={[styles.stageTagPillText, { color: badgeTextColor }]}>
+              {currentStage.difficulty}
+            </Text>
           </View>
         </View>
       </View>
@@ -226,92 +212,77 @@ Return your response in 3 structured sections:
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stage Overview Banner Card */}
+        {/* Lesson Overview Banner Card */}
         <View style={styles.heroCard}>
           <View style={styles.heroHeaderRow}>
             <View style={styles.heroTagBadge}>
-              <Text style={styles.heroTagBadgeText}>{currentStage.tag}</Text>
+              <Text style={styles.heroTagBadgeText}>{currentStage.category}</Text>
             </View>
+            <Text style={styles.heroBadgeNum}>{currentStage.badge}</Text>
           </View>
           <Text style={styles.heroTitle}>{currentStage.title}</Text>
-          <Text style={styles.heroSubtitle}>{currentStage.subtitle}</Text>
-          <Text style={styles.heroDesc}>{currentStage.description}</Text>
+          <Text style={styles.heroConceptText}>Concept: {currentStage.concept}</Text>
+          <Text style={styles.heroDesc}>{currentStage.explanation}</Text>
         </View>
 
-        {/* Stage 1: Comparison */}
-        {currentStageId === 1 && (
-          <View style={styles.cardContainer}>
-            <Text style={styles.sectionHeading}>Prompt Comparison</Text>
-            <View style={styles.compBoxBad}>
-              <Text style={styles.compTagBad}>❌ Vague Prompt</Text>
-              <Text style={styles.compPromptText}>"Tell me about JavaScript."</Text>
-            </View>
-            <View style={styles.compBoxGood}>
-              <Text style={styles.compTagGood}>✅ Precise Prompt</Text>
-              <Text style={styles.compPromptText}>
-                "You are a JavaScript teacher. Explain JavaScript to a beginner using 5 simple points and one real-world example."
-              </Text>
-            </View>
+        {/* 1. User's Raw Idea (Muted Gray Container) */}
+        <View style={styles.rawIdeaContainer}>
+          <View style={styles.rawIdeaHeaderRow}>
+            <Icon name="user" size={15} color="#475569" />
+            <Text style={styles.rawIdeaHeaderTitle}>USER'S RAW IDEA</Text>
           </View>
-        )}
+          <Text style={styles.rawIdeaText}>"{currentStage.user_raw_idea}"</Text>
+        </View>
 
-        {/* Stage 2: Prompt Builder */}
-        {currentStageId === 2 && (
-          <PromptBuilderWidget
-            onBuildAndTest={(assembled) => {
-              setPromptText(assembled);
-            }}
-          />
-        )}
+        {/* 2. Engineered Perfect Prompt (Distinct Highlighted Code Card) */}
+        <View style={styles.engineeredPromptCard}>
+          <View style={styles.engineeredHeaderRow}>
+            <Icon name="sparkles" size={15} color="#38BDF8" />
+            <Text style={styles.engineeredHeaderTitle}>ENGINEERED PERFECT PROMPT</Text>
+          </View>
+          <Text style={styles.engineeredPromptText}>{currentStage.engineered_prompt}</Text>
+        </View>
 
-        {/* Stage 3: Avoid Mistakes */}
-        {currentStageId === 3 && (
-          <PromptMistakesWidget
-            onTryMistakeFix={(fixed) => {
-              setPromptText(fixed);
-            }}
-          />
-        )}
+        {/* 3. Large Thumb-Friendly Copy Prompt Button */}
+        <TouchableOpacity
+          style={[styles.copyBtn, copied && styles.copyBtnSuccess]}
+          activeOpacity={0.85}
+          onPress={handleCopyPrompt}
+        >
+          <Icon name={copied ? 'check' : 'copy'} size={18} color="#FFFFFF" />
+          <Text style={styles.copyBtnText}>
+            {copied ? 'Copied to Clipboard! ✓' : 'Copy Prompt to Clipboard'}
+          </Text>
+        </TouchableOpacity>
 
-        {/* Stage 4: Prompting Techniques */}
-        {currentStageId === 4 && (
-          <PromptTechniquesWidget
-            onTestTechnique={(techPrompt) => {
-              setPromptText(techPrompt);
-            }}
-          />
-        )}
+        {/* 4. Why It Works Highlight Box */}
+        <View style={styles.whyItWorksCard}>
+          <View style={styles.whyHeaderRow}>
+            <Icon name="award" size={16} color="#D97706" />
+            <Text style={styles.whyHeaderTitle}>WHY IT WORKS</Text>
+          </View>
+          <Text style={styles.whyText}>{currentStage.why_it_works}</Text>
+        </View>
 
-        {/* Stage 6: Real-World Scenarios */}
-        {currentStageId === 6 && (
-          <PromptScenariosWidget
-            onSelectScenario={(scen) => {
-              setPromptText(scen.starterPrompt);
-            }}
-          />
-        )}
-
-        {/* Stage 8: Capstone Challenge */}
-        {currentStageId === 8 && (
-          <PromptFinalChallengeWidget
-            onStartCapstone={(capPrompt) => {
-              setPromptText(capPrompt);
-            }}
-          />
-        )}
-
-        {/* Practice Workspace Card */}
+        {/* 5. Interactive Practice Workspace */}
         <View style={styles.workspaceCard}>
           <View style={styles.workspaceHeaderRow}>
             <View style={styles.workspaceTitleRow}>
               <Icon name="terminal" size={18} color="#5653FE" />
-              <Text style={styles.workspaceTitle}>Practice Workspace</Text>
+              <Text style={styles.workspaceTitle}>Practice & AI Evaluation</Text>
             </View>
-            <TouchableOpacity onPress={() => setPromptText('')} style={styles.resetBtn}>
+            <TouchableOpacity
+              onPress={() => setPromptText(currentStage.engineered_prompt)}
+              style={styles.resetBtn}
+            >
               <Icon name="refresh-cw" size={13} color="#64748B" />
-              <Text style={styles.resetBtnText}>Clear</Text>
+              <Text style={styles.resetBtnText}>Reset Prompt</Text>
             </TouchableOpacity>
           </View>
+
+          <Text style={styles.workspaceSub}>
+            Edit or experiment with the prompt below, then check quality or mark lesson complete.
+          </Text>
 
           {/* Quick Snippet Toolbar */}
           <View style={styles.snippetToolbarWrap}>
@@ -335,7 +306,7 @@ Return your response in 3 structured sections:
               multiline
               value={promptText}
               onChangeText={setPromptText}
-              placeholder="Write your prompt here... e.g. [ROLE] Act as a Senior UX Engineer..."
+              placeholder="Write your prompt here..."
               placeholderTextColor="#94A3B8"
               autoCapitalize="none"
               autoCorrect={false}
@@ -362,15 +333,6 @@ Return your response in 3 structured sections:
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.refBtn}
-              activeOpacity={0.8}
-              onPress={() => setShowReferenceModal(true)}
-            >
-              <Icon name="file-text" size={15} color="#334155" />
-              <Text style={styles.refBtnText}>Reference</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
               style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
               activeOpacity={0.85}
               disabled={submitting}
@@ -381,7 +343,7 @@ Return your response in 3 structured sections:
               ) : (
                 <>
                   <Icon name="check" size={15} color="#FFFFFF" />
-                  <Text style={styles.submitBtnText}>Submit</Text>
+                  <Text style={styles.submitBtnText}>Mark Complete</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -397,7 +359,7 @@ Return your response in 3 structured sections:
                   color={evaluation.isPassed ? '#059669' : '#DC2626'}
                 />
                 <Text style={[styles.evalTitle, { color: evaluation.isPassed ? '#059669' : '#DC2626' }]}>
-                  {evaluation.isPassed ? `Score: ${evaluation.score}/100 — Passed!` : `Needs Improvement (${evaluation.score}/100)`}
+                  {evaluation.isPassed ? `Score: ${evaluation.score}/100 — Excellent!` : `Score: ${evaluation.score}/100 — Needs Tuning`}
                 </Text>
               </View>
 
@@ -451,16 +413,16 @@ Return your response in 3 structured sections:
               onPress={() => setCurrentStageId(prev => Math.max(1, prev - 1))}
             >
               <Icon name="arrow-left" size={15} color="#64748B" />
-              <Text style={styles.navSiblingText}>Previous Stage</Text>
+              <Text style={styles.navSiblingText}>Previous Lesson</Text>
             </TouchableOpacity>
           ) : <View style={{ flex: 1 }} />}
 
           {!isLastStage ? (
             <TouchableOpacity
               style={styles.navNextBtn}
-              onPress={() => setCurrentStageId(prev => Math.min(8, prev + 1))}
+              onPress={() => setCurrentStageId(prev => Math.min(12, prev + 1))}
             >
-              <Text style={styles.navNextText}>Next Stage</Text>
+              <Text style={styles.navNextText}>Next Lesson</Text>
               <Icon name="arrow-right" size={15} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
@@ -493,14 +455,12 @@ Return your response in 3 structured sections:
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
               <Text style={styles.modalSub}>Reference Prompt:</Text>
               <View style={styles.codeSnippetBox}>
-                <Text style={styles.codeText}>{getDefaultPromptForStage(currentStageId)}</Text>
+                <Text style={styles.codeText}>{currentStage.engineered_prompt}</Text>
               </View>
 
-              <Text style={styles.modalSub}>Expected AI Response Format:</Text>
+              <Text style={styles.modalSub}>Expected Output:</Text>
               <View style={[styles.codeSnippetBox, { backgroundColor: '#F8FAFC' }]}>
-                <Text style={styles.codeText}>
-                  AI generates a structured, role-aligned, and boundary-constrained response.
-                </Text>
+                <Text style={styles.codeText}>{currentStage.practiceTask?.expectedOutput}</Text>
               </View>
             </ScrollView>
             <TouchableOpacity
@@ -553,19 +513,16 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   topBarRight: {
-    width: 36,
     alignItems: 'flex-end',
   },
   stageTagPill: {
-    backgroundColor: '#EEEDFF',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   stageTagPillText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#5653FE',
   },
   container: {
     flex: 1,
@@ -583,6 +540,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heroHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
   heroTagBadge: {
@@ -597,69 +557,148 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#5653FE',
   },
+  heroBadgeNum: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#94A3B8',
+  },
   heroTitle: {
     fontSize: 22,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 4,
   },
-  heroSubtitle: {
+  heroConceptText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#5653FE',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   heroDesc: {
     fontSize: 13,
     color: '#475569',
     lineHeight: 19,
   },
-  cardContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+
+  /* 1. User Raw Idea Card */
+  rawIdeaContainer: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#CBD5E1',
+    borderWidth: 1.5,
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 16,
+    marginBottom: 14,
   },
-  sectionHeading: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
+  rawIdeaHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  rawIdeaHeaderTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#475569',
+    letterSpacing: 0.8,
+  },
+  rawIdeaText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1E293B',
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+
+  /* 2. Engineered Prompt Card */
+  engineeredPromptCard: {
+    backgroundColor: '#0F172A',
+    borderColor: '#1E293B',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 18,
     marginBottom: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  compBoxBad: {
-    backgroundColor: '#FFF1F2',
-    borderColor: '#FECDD3',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
+  engineeredHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 10,
   },
-  compTagBad: {
+  engineeredHeaderTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#E11D48',
-    marginBottom: 4,
+    color: '#38BDF8',
+    letterSpacing: 1,
   },
-  compBoxGood: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#A7F3D0',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
+  engineeredPromptText: {
+    fontSize: 13.5,
+    fontWeight: '500',
+    color: '#F8FAFC',
+    lineHeight: 21,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
-  compTagGood: {
+
+  /* 3. Large Thumb-Friendly Copy Prompt Button */
+  copyBtn: {
+    backgroundColor: '#5653FE',
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 16,
+    shadowColor: '#5653FE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  copyBtnSuccess: {
+    backgroundColor: '#059669',
+  },
+  copyBtnText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+
+  /* 4. Why It Works Card */
+  whyItWorksCard: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FCD34D',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 18,
+  },
+  whyHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  whyHeaderTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#059669',
-    marginBottom: 4,
+    color: '#D97706',
+    letterSpacing: 0.8,
   },
-  compPromptText: {
-    fontSize: 13,
-    color: '#1E293B',
-    lineHeight: 18,
+  whyText: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#78350F',
+    lineHeight: 20,
   },
+
+  /* 5. Workspace Card */
   workspaceCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
@@ -672,7 +711,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   workspaceTitleRow: {
     flexDirection: 'row',
@@ -683,6 +722,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#0F172A',
+  },
+  workspaceSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 12,
+    lineHeight: 17,
   },
   resetBtn: {
     flexDirection: 'row',
@@ -728,7 +773,7 @@ const styles = StyleSheet.create({
   },
   actionButtonsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   checkBtn: {
     flex: 1,
@@ -739,30 +784,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEEDFF',
     borderWidth: 1,
     borderColor: '#C7C5FF',
-    borderRadius: 10,
-    paddingVertical: 12,
+    borderRadius: 12,
+    paddingVertical: 14,
   },
   checkBtnText: {
     fontSize: 13,
     fontWeight: '700',
     color: '#5653FE',
-  },
-  refBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
-    paddingVertical: 12,
-  },
-  refBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
   },
   submitBtn: {
     flex: 1,
@@ -771,8 +799,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     backgroundColor: '#5653FE',
-    borderRadius: 10,
-    paddingVertical: 12,
+    borderRadius: 12,
+    paddingVertical: 14,
   },
   submitBtnText: {
     fontSize: 13,

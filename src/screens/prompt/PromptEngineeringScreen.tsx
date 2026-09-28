@@ -154,7 +154,7 @@ export const PromptEngineeringScreen: React.FC = () => {
         <Text style={styles.eyebrow}>CRACKWITHAI / COURSES</Text>
         <Text style={styles.title}>PROMPT ENGINEERING</Text>
         <Text style={styles.subtitle}>
-          Master AI prompting with 8 guided interactive learning stages.
+          Master practical AI prompting with 12 guided interactive lessons.
         </Text>
 
         {/* Minimal Progress Card */}
@@ -171,7 +171,7 @@ export const PromptEngineeringScreen: React.FC = () => {
           </View>
 
           <Text style={styles.progressSub}>
-            {completedCount} of {totalStages} Stages Completed
+            {completedCount} of {totalStages} Lessons Completed
           </Text>
 
           {isAllCompleted ? (
@@ -190,7 +190,7 @@ export const PromptEngineeringScreen: React.FC = () => {
               onPress={() => handleOpenStage(activeStageId)}
             >
               <Text style={styles.continueBtnText}>
-                {completedCount === 0 ? 'Start Stage 1' : `Continue Stage ${activeStageId}`}
+                {completedCount === 0 ? 'Start Lesson 1' : `Continue Lesson ${activeStageId}`}
               </Text>
               <Icon name="arrow-right" size={16} color="#FFFFFF" />
             </TouchableOpacity>
@@ -200,15 +200,28 @@ export const PromptEngineeringScreen: React.FC = () => {
         {/* Guided Learning Journey Section Header */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionHeadingTitle}>Guided Learning Journey</Text>
-          <Text style={styles.sectionHeadingSub}>8 Interactive Stages · Tap any stage to start</Text>
+          <Text style={styles.sectionHeadingSub}>12 Interactive Lessons · Tap any lesson to start</Text>
         </View>
 
-        {/* 8 Stage Cards Stack */}
+        {/* 12 Stage Cards Stack */}
         <View style={styles.stageCardsStack}>
           {PROMPT_STAGES.map((stg) => {
             const isCompleted = completedStageIds.includes(stg.id);
             const isActive = activeStageId === stg.id;
             const stageNumFormatted = stg.id < 10 ? `0${stg.id}` : `${stg.id}`;
+
+            const badgeBg =
+              stg.difficulty === 'Beginner'
+                ? '#DCFCE7'
+                : stg.difficulty === 'Intermediate'
+                ? '#DBEAFE'
+                : '#EDE9FE';
+            const badgeTextColor =
+              stg.difficulty === 'Beginner'
+                ? '#059669'
+                : stg.difficulty === 'Intermediate'
+                ? '#1D4ED8'
+                : '#6D28D9';
 
             return (
               <TouchableOpacity
@@ -242,8 +255,12 @@ export const PromptEngineeringScreen: React.FC = () => {
                 {/* Stage Info */}
                 <View style={styles.stageInfoBox}>
                   <View style={styles.stageMetaRow}>
-                    <Text style={styles.stageBadgeTag}>{stg.tag.toUpperCase()}</Text>
-                    <Text style={styles.stageBadgeSub}>{stg.badge}</Text>
+                    <View style={[styles.diffBadge, { backgroundColor: badgeBg }]}>
+                      <Text style={[styles.diffBadgeText, { color: badgeTextColor }]}>
+                        {stg.difficulty}
+                      </Text>
+                    </View>
+                    <Text style={styles.stageBadgeTag}>{stg.category}</Text>
                   </View>
                   <Text style={styles.stageTitleText}>{stg.title}</Text>
                   <Text style={styles.stageSubtitleText} numberOfLines={2}>{stg.subtitle}</Text>
@@ -474,10 +491,19 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 3,
   },
+  diffBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  diffBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
   stageBadgeTag: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#5653FE',
+    color: '#64748B',
     letterSpacing: 0.5,
   },
   stageBadgeSub: {
