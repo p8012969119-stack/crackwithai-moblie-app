@@ -18,22 +18,21 @@ import { certificateApi } from '../../api/certificateApi';
 import { Certificate } from '../../types';
 import { Icon } from '../../components/Icon';
 import { CertificateModal } from '../../components/CertificateModal';
-import { PROMPT_STAGES, PromptStage } from './promptCourseData';
+import { PROMPT_STAGES } from './promptCourseData';
 
-const FONT_FAMILY = Platform.OS === 'android' ? undefined : 'System';
+const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
+const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
 const MODULE_CARDS = [
   {
     id: 1,
     title: 'Module 1 — Beginner Foundations',
-    shortDesc: 'Master Personas, Style Constraints, Target Audience Adaptation & Markdown Tables.',
+    shortDesc: 'Master Personas, Style Constraints, Audience Adaptation & Markdown Tables.',
     level: 'Beginner',
     lessonCount: 4,
     stageIds: [1, 2, 3, 4],
-    accentColor: '#059669',
-    cardBg: '#ECFDF5',
-    borderColor: '#6EE7B7',
-    badgeBg: '#D1FAE5',
+    cardBg: '#FFB870', // Bright Apricot Orange (matching Fullstack HTML card)
+    accentColor: '#D97706',
     icon: 'code'
   },
   {
@@ -43,23 +42,19 @@ const MODULE_CARDS = [
     level: 'Intermediate',
     lessonCount: 4,
     stageIds: [5, 6, 7, 8],
+    cardBg: '#74C0FC', // Vibrant Sky Blue (matching Fullstack CSS card)
     accentColor: '#2563EB',
-    cardBg: '#EFF6FF',
-    borderColor: '#93C5FD',
-    badgeBg: '#DBEAFE',
     icon: 'terminal'
   },
   {
     id: 3,
     title: 'Module 3 — Advanced Engineering',
-    shortDesc: 'Master Chain-of-Thought Reasoning, Defensive Guardrails, Meta-Prompting & Secure Code.',
+    shortDesc: 'Master Chain-of-Thought Reasoning, Defensive Guardrails & Secure Code.',
     level: 'Advanced',
     lessonCount: 4,
     stageIds: [9, 10, 11, 12],
+    cardBg: '#C490FF', // Vibrant Lavender Purple (matching Fullstack Capstone card)
     accentColor: '#7C3AED',
-    cardBg: '#F5F3FF',
-    borderColor: '#C4B5FD',
-    badgeBg: '#EDE9FE',
     icon: 'shield'
   }
 ];
@@ -90,7 +85,6 @@ export const PromptEngineeringScreen: React.FC = () => {
         }
       }
 
-      // Sync backend progress if available
       try {
         const backendProgress = await fullstackApi.getProgress('prompt-engineering');
         if (backendProgress?.completedLessonIds?.length) {
@@ -116,7 +110,6 @@ export const PromptEngineeringScreen: React.FC = () => {
 
   const completedCount = completedStageIds.length;
   const totalStages = PROMPT_STAGES.length;
-  const percentage = Math.round((completedCount / totalStages) * 100);
   const isAllCompleted = completedCount >= totalStages;
 
   const handleOpenStage = (stageId: number) => {
@@ -182,7 +175,7 @@ export const PromptEngineeringScreen: React.FC = () => {
               setRefreshing(true);
               loadProgress();
             }}
-            colors={['#5653FE']}
+            colors={['#111827']}
           />
         }
       >
@@ -205,109 +198,59 @@ export const PromptEngineeringScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {/* VIEW 1: SELECT A MODULE */}
+        {/* VIEW 1: ONLY BRIGHT FULLSTACK-STYLE MODULE CARDS */}
         {selectedModuleId === null ? (
-          <View style={styles.viewBlock}>
-            {/* Page Title */}
-            <Text style={styles.eyebrow}>CRACKWITHAI / COURSES</Text>
-            <Text style={styles.title}>PROMPT ENGINEERING</Text>
-            <Text style={styles.subtitle}>
-              Select a module below to view its 4 interactive lessons & start reading and practicing.
-            </Text>
+          <View style={styles.modulesStack}>
+            {MODULE_CARDS.map((mod) => {
+              const completedInModule = mod.stageIds.filter((id) =>
+                completedStageIds.includes(id)
+              ).length;
 
-            {/* Minimal Progress Card */}
-            <View style={styles.progressCard}>
-              <View style={styles.progressHeaderRow}>
-                <Text style={styles.progressTitle}>
-                  {isAllCompleted ? 'Course Completed 🎉' : 'Overall Course Progress'}
-                </Text>
-                <Text style={styles.progressPercent}>{percentage}%</Text>
-              </View>
-
-              <View style={styles.progressBarTrack}>
-                <View style={[styles.progressBarFill, { width: `${Math.max(6, percentage)}%` }]} />
-              </View>
-
-              <Text style={styles.progressSub}>
-                {completedCount} of {totalStages} Lessons Completed
-              </Text>
-
-              {isAllCompleted ? (
+              return (
                 <TouchableOpacity
-                  style={styles.certBtn}
-                  activeOpacity={0.85}
-                  onPress={handleViewCertificate}
+                  key={`module-card-${mod.id}`}
+                  style={[
+                    styles.fullstackCourseCard,
+                    { backgroundColor: mod.cardBg }
+                  ]}
+                  activeOpacity={0.88}
+                  onPress={() => setSelectedModuleId(mod.id)}
                 >
-                  <Icon name="award" size={16} color="#FFFFFF" />
-                  <Text style={styles.certBtnText}>View Official Certificate</Text>
+                  <View style={styles.cardHeaderRow}>
+                    <View style={styles.iconCircleBg}>
+                      <Icon name={mod.icon as any} size={28} color="#0F172A" />
+                    </View>
+
+                    <View style={styles.cardHeaderCenter}>
+                      <Text style={styles.courseName}>{mod.title}</Text>
+                      <Text style={styles.courseSubtitle}>{mod.shortDesc}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.cardBottomRow}>
+                    <View style={styles.ctaButton}>
+                      <Text style={styles.ctaButtonText}>Start</Text>
+                      <Icon name="arrow-right" size={15} color="#FFFFFF" />
+                    </View>
+
+                    <Text style={styles.progressCounterText}>
+                      {completedInModule}/{mod.lessonCount} Lessons
+                    </Text>
+                  </View>
                 </TouchableOpacity>
-              ) : null}
-            </View>
+              );
+            })}
 
-            {/* Section Header */}
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionHeadingTitle}>Course Modules</Text>
-              <Text style={styles.sectionHeadingSub}>Tap any module to view its lessons</Text>
-            </View>
-
-            {/* 3 Colorful Module Cards */}
-            <View style={styles.modulesStack}>
-              {MODULE_CARDS.map((mod) => {
-                const completedInModule = mod.stageIds.filter((id) =>
-                  completedStageIds.includes(id)
-                ).length;
-                const modPercent = Math.round((completedInModule / mod.lessonCount) * 100);
-
-                return (
-                  <TouchableOpacity
-                    key={`module-card-${mod.id}`}
-                    style={[
-                      styles.heroModuleCard,
-                      { backgroundColor: mod.cardBg, borderColor: mod.borderColor }
-                    ]}
-                    activeOpacity={0.88}
-                    onPress={() => setSelectedModuleId(mod.id)}
-                  >
-                    {/* Top Level Pill & Icon */}
-                    <View style={styles.modCardTopRow}>
-                      <View style={[styles.modLevelPill, { backgroundColor: mod.badgeBg }]}>
-                        <Text style={[styles.modLevelText, { color: mod.accentColor }]}>
-                          MODULE {mod.id} · {mod.level.toUpperCase()}
-                        </Text>
-                      </View>
-                      <View style={[styles.modIconCircle, { backgroundColor: mod.badgeBg }]}>
-                        <Icon name={mod.icon as any} size={18} color={mod.accentColor} />
-                      </View>
-                    </View>
-
-                    {/* Title & Short Description */}
-                    <Text style={styles.modCardTitle}>{mod.title}</Text>
-                    <Text style={styles.modCardDesc}>{mod.shortDesc}</Text>
-
-                    {/* Progress Bar & CTA */}
-                    <View style={styles.modCardBottomRow}>
-                      <View style={styles.modProgressInfo}>
-                        <View style={styles.modProgressTrack}>
-                          <View
-                            style={[
-                              styles.modProgressFill,
-                              { width: `${Math.max(8, modPercent)}%`, backgroundColor: mod.accentColor }
-                            ]}
-                          />
-                        </View>
-                        <Text style={styles.modProgressText}>
-                          {completedInModule} of {mod.lessonCount} Lessons Completed
-                        </Text>
-                      </View>
-
-                      <View style={[styles.modCtaBtn, { backgroundColor: mod.accentColor }]}>
-                        <Text style={styles.modCtaText}>Explore Lessons ➔</Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {isAllCompleted && (
+              <TouchableOpacity
+                style={styles.certBtn}
+                activeOpacity={0.85}
+                onPress={handleViewCertificate}
+              >
+                <Icon name="award" size={18} color="#FFFFFF" />
+                <Text style={styles.certBtnText}>View Official Certificate 🎉</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           /* VIEW 2: LESSONS LIST FOR SELECTED MODULE */
@@ -317,11 +260,12 @@ export const PromptEngineeringScreen: React.FC = () => {
               <View
                 style={[
                   styles.moduleBannerHeaderCard,
-                  { backgroundColor: selectedModule.cardBg, borderColor: selectedModule.borderColor }
+                  { backgroundColor: selectedModule.cardBg }
                 ]}
               >
-                <View style={[styles.modLevelPill, { backgroundColor: selectedModule.badgeBg, alignSelf: 'flex-start' }]}>
-                  <Text style={[styles.modLevelText, { color: selectedModule.accentColor }]}>
+                <View style={styles.bannerHeaderTop}>
+                  <Icon name={selectedModule.icon as any} size={26} color="#0F172A" />
+                  <Text style={styles.modBannerLevel}>
                     MODULE {selectedModule.id} · {selectedModule.level.toUpperCase()}
                   </Text>
                 </View>
@@ -338,7 +282,7 @@ export const PromptEngineeringScreen: React.FC = () => {
               </Text>
             </View>
 
-            {/* 4 Colorful Lesson Cards for this Module */}
+            {/* 4 Lessons Cards for this Module */}
             <View style={styles.lessonsStack}>
               {moduleLessons.map((stg) => {
                 const isCompleted = completedStageIds.includes(stg.id);
@@ -350,44 +294,40 @@ export const PromptEngineeringScreen: React.FC = () => {
                     key={`lesson-card-${stg.id}`}
                     style={[
                       styles.colorLessonCard,
-                      { backgroundColor: selectedModule?.cardBg, borderColor: selectedModule?.borderColor },
-                      isActive && { borderColor: selectedModule?.accentColor, borderWidth: 2 }
+                      { backgroundColor: '#FFFFFF', borderColor: '#E2E8F0' },
+                      isActive && { borderColor: '#111827', borderWidth: 2 }
                     ]}
                     activeOpacity={0.88}
                     onPress={() => handleOpenStage(stg.id)}
                   >
-                    {/* Left Color Accent Bar */}
-                    <View style={[styles.cardLeftBar, { backgroundColor: selectedModule?.accentColor }]} />
+                    <View style={[styles.cardLeftBar, { backgroundColor: selectedModule?.cardBg || '#111827' }]} />
 
                     <View style={styles.cardInnerContent}>
-                      {/* Top Row: Number & Category */}
                       <View style={styles.cardTopRow}>
-                        <View style={[styles.numBadgePill, { backgroundColor: selectedModule?.badgeBg }]}>
-                          <Text style={[styles.numBadgeText, { color: selectedModule?.accentColor }]}>
+                        <View style={styles.numBadgePill}>
+                          <Text style={styles.numBadgeText}>
                             LESSON {stageNumFormatted}
                           </Text>
                         </View>
 
-                        <View style={[styles.diffBadge, { backgroundColor: selectedModule?.badgeBg }]}>
-                          <Text style={[styles.diffBadgeText, { color: selectedModule?.accentColor }]}>
+                        <View style={styles.diffBadge}>
+                          <Text style={styles.diffBadgeText}>
                             {stg.category}
                           </Text>
                         </View>
                       </View>
 
-                      {/* Title & Subtitle */}
                       <Text style={styles.stageTitleText}>{stg.title}</Text>
                       <Text style={styles.stageSubtitleText} numberOfLines={2}>
                         {stg.subtitle}
                       </Text>
 
-                      {/* Bottom Footer Action */}
-                      <View style={styles.cardBottomRow}>
+                      <View style={styles.lessonCardBottomRow}>
                         <View
                           style={[
                             styles.statusPill,
                             isCompleted && { backgroundColor: '#10B981' },
-                            isActive && !isCompleted && { backgroundColor: selectedModule?.accentColor }
+                            isActive && !isCompleted && { backgroundColor: '#111827' }
                           ]}
                         >
                           <Text
@@ -399,7 +339,7 @@ export const PromptEngineeringScreen: React.FC = () => {
                             {isCompleted ? 'Completed ✓' : isActive ? 'In Progress ⚡' : 'Read & Practice ▶'}
                           </Text>
                         </View>
-                        <Icon name="chevron-right" size={18} color={selectedModule?.accentColor} />
+                        <Icon name="chevron-right" size={18} color="#0F172A" />
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -436,220 +376,174 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   backBtn: {
-    paddingVertical: 8,
-    marginBottom: 8,
+    paddingVertical: 10,
+    marginBottom: 12,
   },
   backBtnText: {
-    fontSize: 14,
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#5653FE',
+    color: '#111827',
   },
-  viewBlock: {
-    gap: 12,
-  },
-  eyebrow: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#5653FE',
-    letterSpacing: 1.2,
-    marginBottom: 2,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#475569',
+  modulesStack: {
+    gap: 18,
     marginTop: 4,
-    marginBottom: 16,
-    lineHeight: 20,
   },
-  progressCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#5653FE',
-    padding: 18,
-    marginBottom: 12,
-    shadowColor: '#5653FE',
+  fullstackCourseCard: {
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 10,
-    elevation: 3,
+    elevation: 4,
   },
-  progressHeaderRow: {
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 18,
+  },
+  iconCircleBg: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardHeaderCenter: {
+    flex: 1,
+  },
+  courseName: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  courseSubtitle: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+    lineHeight: 18,
+  },
+  cardBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
   },
-  progressTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  progressPercent: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#5653FE',
-  },
-  progressBarTrack: {
-    height: 8,
-    backgroundColor: '#EEEDFF',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#5653FE',
-    borderRadius: 4,
-  },
-  progressSub: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  certBtn: {
-    marginTop: 12,
-    backgroundColor: '#059669',
-    borderRadius: 12,
-    paddingVertical: 12,
+  ctaButton: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    backgroundColor: '#111827',
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    borderRadius: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  ctaButtonText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  progressCounterText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+    opacity: 0.8,
+  },
+
+  /* Certificate Button */
+  certBtn: {
+    marginTop: 10,
+    backgroundColor: '#059669',
+    borderRadius: 18,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   certBtnText: {
-    fontSize: 13,
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
   },
+
+  /* View 2 Styles */
+  viewBlock: {
+    gap: 12,
+  },
+  moduleBannerHeaderCard: {
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  bannerHeaderTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  modBannerLevel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: 0.8,
+  },
+  modBannerTitle: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 21,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  modBannerDesc: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E293B',
+    lineHeight: 19,
+  },
   sectionHeaderRow: {
-    marginTop: 8,
-    marginBottom: 6,
+    marginTop: 4,
+    marginBottom: 4,
   },
   sectionHeadingTitle: {
+    fontFamily: FONT_FAMILY,
     fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
   },
   sectionHeadingSub: {
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 12.5,
     color: '#64748B',
     marginTop: 2,
   },
-
-  /* 3 Hero Module Cards */
-  modulesStack: {
-    gap: 16,
-    marginTop: 4,
-  },
-  heroModuleCard: {
-    borderRadius: 20,
-    borderWidth: 1.5,
-    padding: 18,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  modCardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  modLevelPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  modLevelText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  modIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modCardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  modCardDesc: {
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 19,
-    marginBottom: 16,
-  },
-  modCardBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  modProgressInfo: {
-    flex: 1,
-  },
-  modProgressTrack: {
-    height: 6,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  modProgressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  modProgressText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  modCtaBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  modCtaText: {
-    fontSize: 12.5,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-
-  /* Module Banner Header in View 2 */
-  moduleBannerHeaderCard: {
-    borderRadius: 18,
-    borderWidth: 1.5,
-    padding: 16,
-    marginBottom: 8,
-  },
-  modBannerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  modBannerDesc: {
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 19,
-  },
-
-  /* Lessons List Cards */
   lessonsStack: {
     gap: 12,
     marginTop: 4,
@@ -679,6 +573,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   numBadgePill: {
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 8,
@@ -686,9 +581,11 @@ const styles = StyleSheet.create({
   numBadgeText: {
     fontSize: 11,
     fontWeight: '800',
+    color: '#0F172A',
     letterSpacing: 0.5,
   },
   diffBadge: {
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -696,19 +593,22 @@ const styles = StyleSheet.create({
   diffBadgeText: {
     fontSize: 10,
     fontWeight: '800',
+    color: '#475569',
   },
   stageTitleText: {
+    fontFamily: FONT_FAMILY,
     fontSize: 15,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 2,
   },
   stageSubtitleText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 12.5,
     color: '#64748B',
     lineHeight: 17,
   },
-  cardBottomRow: {
+  lessonCardBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -727,5 +627,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     color: '#64748B',
-  }
+  },
 });
