@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
   StatusBar,
   Platform
@@ -23,13 +22,55 @@ import { PROMPT_STAGES, PromptStage } from './promptCourseData';
 
 const FONT_FAMILY = Platform.OS === 'android' ? undefined : 'System';
 
+const MODULE_CARDS = [
+  {
+    id: 1,
+    title: 'Module 1 — Beginner Foundations',
+    shortDesc: 'Master Personas, Style Constraints, Target Audience Adaptation & Markdown Tables.',
+    level: 'Beginner',
+    lessonCount: 4,
+    stageIds: [1, 2, 3, 4],
+    accentColor: '#059669',
+    cardBg: '#ECFDF5',
+    borderColor: '#6EE7B7',
+    badgeBg: '#D1FAE5',
+    icon: 'code'
+  },
+  {
+    id: 2,
+    title: 'Module 2 — Intermediate Prompting',
+    shortDesc: 'Master Few-Shot Examples, Content Summarization, Tone Modulation & Brainstorming.',
+    level: 'Intermediate',
+    lessonCount: 4,
+    stageIds: [5, 6, 7, 8],
+    accentColor: '#2563EB',
+    cardBg: '#EFF6FF',
+    borderColor: '#93C5FD',
+    badgeBg: '#DBEAFE',
+    icon: 'terminal'
+  },
+  {
+    id: 3,
+    title: 'Module 3 — Advanced Engineering',
+    shortDesc: 'Master Chain-of-Thought Reasoning, Defensive Guardrails, Meta-Prompting & Secure Code.',
+    level: 'Advanced',
+    lessonCount: 4,
+    stageIds: [9, 10, 11, 12],
+    accentColor: '#7C3AED',
+    cardBg: '#F5F3FF',
+    borderColor: '#C4B5FD',
+    badgeBg: '#EDE9FE',
+    icon: 'shield'
+  }
+];
+
 export const PromptEngineeringScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
 
   const [completedStageIds, setCompletedStageIds] = useState<number[]>([1]);
   const [activeStageId, setActiveStageId] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [certificateModalVisible, setCertificateModalVisible] = useState<boolean>(false);
   const [earnedCertificate, setEarnedCertificate] = useState<Certificate | null>(null);
@@ -53,13 +94,12 @@ export const PromptEngineeringScreen: React.FC = () => {
       try {
         const backendProgress = await fullstackApi.getProgress('prompt-engineering');
         if (backendProgress?.completedLessonIds?.length) {
-          const count = Math.min(8, Math.max(1, Math.ceil((backendProgress.completedLessonIds.length / 25) * 8)));
+          const count = Math.min(12, Math.max(1, Math.ceil((backendProgress.completedLessonIds.length / 12) * 12)));
           const stageList = Array.from({ length: count }, (_, i) => i + 1);
           setCompletedStageIds((prev) => Array.from(new Set([...prev, ...stageList])));
         }
       } catch {}
     } catch {} finally {
-      setLoading(false);
       setRefreshing(false);
     }
   }, [storageKey]);
@@ -122,6 +162,11 @@ export const PromptEngineeringScreen: React.FC = () => {
     setCertificateModalVisible(true);
   };
 
+  const selectedModule = MODULE_CARDS.find((m) => m.id === selectedModuleId);
+  const moduleLessons = selectedModule
+    ? PROMPT_STAGES.filter((s) => selectedModule.stageIds.includes(s.id))
+    : [];
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -141,174 +186,228 @@ export const PromptEngineeringScreen: React.FC = () => {
           />
         }
       >
-        {/* Back Button */}
-        <TouchableOpacity
-          accessibilityRole="button"
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
-          <Text style={styles.backBtnText}>‹ Back to dashboard</Text>
-        </TouchableOpacity>
+        {/* Back Navigation Header */}
+        {selectedModuleId === null ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+          >
+            <Text style={styles.backBtnText}>‹ Back to dashboard</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => setSelectedModuleId(null)}
+            style={styles.backBtn}
+          >
+            <Text style={styles.backBtnText}>‹ Back to all modules</Text>
+          </TouchableOpacity>
+        )}
 
-        {/* Page Header */}
-        <Text style={styles.eyebrow}>CRACKWITHAI / COURSES</Text>
-        <Text style={styles.title}>PROMPT ENGINEERING</Text>
-        <Text style={styles.subtitle}>
-          Master practical AI prompting with 12 guided interactive lessons.
-        </Text>
-
-        {/* Minimal Progress Card */}
-        <View style={styles.progressCard}>
-          <View style={styles.progressHeaderRow}>
-            <Text style={styles.progressTitle}>
-              {isAllCompleted ? 'Course Completed 🎉' : 'Guided Learning Journey'}
+        {/* VIEW 1: SELECT A MODULE */}
+        {selectedModuleId === null ? (
+          <View style={styles.viewBlock}>
+            {/* Page Title */}
+            <Text style={styles.eyebrow}>CRACKWITHAI / COURSES</Text>
+            <Text style={styles.title}>PROMPT ENGINEERING</Text>
+            <Text style={styles.subtitle}>
+              Select a module below to view its 4 interactive lessons & start reading and practicing.
             </Text>
-            <Text style={styles.progressPercent}>{percentage}%</Text>
-          </View>
 
-          <View style={styles.progressBarTrack}>
-            <View style={[styles.progressBarFill, { width: `${Math.max(6, percentage)}%` }]} />
-          </View>
-
-          <Text style={styles.progressSub}>
-            {completedCount} of {totalStages} Lessons Completed
-          </Text>
-
-          {isAllCompleted ? (
-            <TouchableOpacity
-              style={styles.certBtn}
-              activeOpacity={0.85}
-              onPress={handleViewCertificate}
-            >
-              <Icon name="award" size={16} color="#FFFFFF" />
-              <Text style={styles.certBtnText}>View Official Certificate</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.continueBtn}
-              activeOpacity={0.85}
-              onPress={() => handleOpenStage(activeStageId)}
-            >
-              <Text style={styles.continueBtnText}>
-                {completedCount === 0 ? 'Start Lesson 1' : `Continue Lesson ${activeStageId}`}
-              </Text>
-              <Icon name="arrow-right" size={16} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Guided Learning Journey Section Header */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionHeadingTitle}>12-Lesson Guided Roadmap</Text>
-          <Text style={styles.sectionHeadingSub}>Select any lesson to learn techniques & test in live practice space</Text>
-        </View>
-
-        {/* 12 Stage Cards Stack grouped by Modules */}
-        <View style={styles.stageCardsStack}>
-          {[
-            {
-              moduleTitle: 'MODULE 1 — BEGINNER FOUNDATIONS',
-              moduleSub: 'Lessons 1 to 4 · Personas, Constraints, Audience & Tables',
-              themeColor: '#059669',
-              badgeBg: '#DCFCE7',
-              cardBg: '#F0FDF4',
-              borderColor: '#A7F3D0',
-              lessons: PROMPT_STAGES.filter((s) => s.difficulty === 'Beginner')
-            },
-            {
-              moduleTitle: 'MODULE 2 — INTERMEDIATE PROMPTING',
-              moduleSub: 'Lessons 5 to 8 · Few-Shot Examples, Summarization, Tone & Brainstorming',
-              themeColor: '#1D4ED8',
-              badgeBg: '#DBEAFE',
-              cardBg: '#EFF6FF',
-              borderColor: '#BFDBFE',
-              lessons: PROMPT_STAGES.filter((s) => s.difficulty === 'Intermediate')
-            },
-            {
-              moduleTitle: 'MODULE 3 — ADVANCED ENGINEERING',
-              moduleSub: 'Lessons 9 to 12 · Chain-of-Thought, Guardrails, Meta-Prompts & Code',
-              themeColor: '#6D28D9',
-              badgeBg: '#EDE9FE',
-              cardBg: '#F5F3FF',
-              borderColor: '#DDD6FE',
-              lessons: PROMPT_STAGES.filter((s) => s.difficulty === 'Advanced')
-            }
-          ].map((moduleGroup, modIdx) => (
-            <View key={`module-group-${modIdx}`} style={styles.moduleBlock}>
-              {/* Module Banner Header */}
-              <View style={[styles.moduleHeaderBanner, { borderLeftColor: moduleGroup.themeColor }]}>
-                <Text style={[styles.moduleHeaderTitle, { color: moduleGroup.themeColor }]}>
-                  {moduleGroup.moduleTitle}
+            {/* Minimal Progress Card */}
+            <View style={styles.progressCard}>
+              <View style={styles.progressHeaderRow}>
+                <Text style={styles.progressTitle}>
+                  {isAllCompleted ? 'Course Completed 🎉' : 'Overall Course Progress'}
                 </Text>
-                <Text style={styles.moduleHeaderSub}>{moduleGroup.moduleSub}</Text>
+                <Text style={styles.progressPercent}>{percentage}%</Text>
               </View>
 
-              {/* Lessons List */}
-              {moduleGroup.lessons.map((stg) => {
-                const isCompleted = completedStageIds.includes(stg.id);
-                const isActive = activeStageId === stg.id;
-                const stageNumFormatted = stg.id < 10 ? `0${stg.id}` : `${stg.id}`;
+              <View style={styles.progressBarTrack}>
+                <View style={[styles.progressBarFill, { width: `${Math.max(6, percentage)}%` }]} />
+              </View>
+
+              <Text style={styles.progressSub}>
+                {completedCount} of {totalStages} Lessons Completed
+              </Text>
+
+              {isAllCompleted ? (
+                <TouchableOpacity
+                  style={styles.certBtn}
+                  activeOpacity={0.85}
+                  onPress={handleViewCertificate}
+                >
+                  <Icon name="award" size={16} color="#FFFFFF" />
+                  <Text style={styles.certBtnText}>View Official Certificate</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            {/* Section Header */}
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeadingTitle}>Course Modules</Text>
+              <Text style={styles.sectionHeadingSub}>Tap any module to view its lessons</Text>
+            </View>
+
+            {/* 3 Colorful Module Cards */}
+            <View style={styles.modulesStack}>
+              {MODULE_CARDS.map((mod) => {
+                const completedInModule = mod.stageIds.filter((id) =>
+                  completedStageIds.includes(id)
+                ).length;
+                const modPercent = Math.round((completedInModule / mod.lessonCount) * 100);
 
                 return (
                   <TouchableOpacity
-                    key={`stage-${stg.id}`}
+                    key={`module-card-${mod.id}`}
                     style={[
-                      styles.colorStageCard,
-                      { backgroundColor: moduleGroup.cardBg, borderColor: moduleGroup.borderColor },
-                      isActive && { borderColor: moduleGroup.themeColor, borderWidth: 2 },
-                      isCompleted && { opacity: 0.95 }
+                      styles.heroModuleCard,
+                      { backgroundColor: mod.cardBg, borderColor: mod.borderColor }
                     ]}
                     activeOpacity={0.88}
-                    onPress={() => handleOpenStage(stg.id)}
+                    onPress={() => setSelectedModuleId(mod.id)}
                   >
-                    {/* Left Color Accent Bar */}
-                    <View style={[styles.cardLeftBar, { backgroundColor: moduleGroup.themeColor }]} />
+                    {/* Top Level Pill & Icon */}
+                    <View style={styles.modCardTopRow}>
+                      <View style={[styles.modLevelPill, { backgroundColor: mod.badgeBg }]}>
+                        <Text style={[styles.modLevelText, { color: mod.accentColor }]}>
+                          MODULE {mod.id} · {mod.level.toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={[styles.modIconCircle, { backgroundColor: mod.badgeBg }]}>
+                        <Icon name={mod.icon as any} size={18} color={mod.accentColor} />
+                      </View>
+                    </View>
 
-                    <View style={styles.cardInnerContent}>
-                      {/* Top Row: Number & Status */}
-                      <View style={styles.cardTopRow}>
-                        <View style={[styles.numBadgePill, { backgroundColor: moduleGroup.badgeBg }]}>
-                          <Text style={[styles.numBadgeText, { color: moduleGroup.themeColor }]}>
-                            LESSON {stageNumFormatted}
-                          </Text>
-                        </View>
+                    {/* Title & Short Description */}
+                    <Text style={styles.modCardTitle}>{mod.title}</Text>
+                    <Text style={styles.modCardDesc}>{mod.shortDesc}</Text>
 
-                        <View style={styles.stageMetaRow}>
-                          <View style={[styles.diffBadge, { backgroundColor: moduleGroup.badgeBg }]}>
-                            <Text style={[styles.diffBadgeText, { color: moduleGroup.themeColor }]}>
-                              {stg.category}
-                            </Text>
-                          </View>
+                    {/* Progress Bar & CTA */}
+                    <View style={styles.modCardBottomRow}>
+                      <View style={styles.modProgressInfo}>
+                        <View style={styles.modProgressTrack}>
+                          <View
+                            style={[
+                              styles.modProgressFill,
+                              { width: `${Math.max(8, modPercent)}%`, backgroundColor: mod.accentColor }
+                            ]}
+                          />
                         </View>
+                        <Text style={styles.modProgressText}>
+                          {completedInModule} of {mod.lessonCount} Lessons Completed
+                        </Text>
                       </View>
 
-                      {/* Title & Subtitle */}
-                      <Text style={styles.stageTitleText}>{stg.title}</Text>
-                      <Text style={styles.stageSubtitleText} numberOfLines={2}>{stg.subtitle}</Text>
-
-                      {/* Bottom Footer Action */}
-                      <View style={styles.cardBottomRow}>
-                        <View style={[
-                          styles.statusPill,
-                          isCompleted && { backgroundColor: '#10B981' },
-                          isActive && !isCompleted && { backgroundColor: moduleGroup.themeColor }
-                        ]}>
-                          <Text style={[
-                            styles.statusPillText,
-                            (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' }
-                          ]}>
-                            {isCompleted ? 'Completed ✓' : isActive ? 'In Progress ⚡' : 'Start Lesson ▶'}
-                          </Text>
-                        </View>
-                        <Icon name="chevron-right" size={18} color={moduleGroup.themeColor} />
+                      <View style={[styles.modCtaBtn, { backgroundColor: mod.accentColor }]}>
+                        <Text style={styles.modCtaText}>Explore Lessons ➔</Text>
                       </View>
                     </View>
                   </TouchableOpacity>
                 );
               })}
             </View>
-          ))}
-        </View>
+          </View>
+        ) : (
+          /* VIEW 2: LESSONS LIST FOR SELECTED MODULE */
+          <View style={styles.viewBlock}>
+            {/* Selected Module Banner Header */}
+            {selectedModule && (
+              <View
+                style={[
+                  styles.moduleBannerHeaderCard,
+                  { backgroundColor: selectedModule.cardBg, borderColor: selectedModule.borderColor }
+                ]}
+              >
+                <View style={[styles.modLevelPill, { backgroundColor: selectedModule.badgeBg, alignSelf: 'flex-start' }]}>
+                  <Text style={[styles.modLevelText, { color: selectedModule.accentColor }]}>
+                    MODULE {selectedModule.id} · {selectedModule.level.toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={styles.modBannerTitle}>{selectedModule.title}</Text>
+                <Text style={styles.modBannerDesc}>{selectedModule.shortDesc}</Text>
+              </View>
+            )}
+
+            {/* Section Header */}
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeadingTitle}>Module Lessons</Text>
+              <Text style={styles.sectionHeadingSub}>
+                Tap any lesson below to read the technique & practice
+              </Text>
+            </View>
+
+            {/* 4 Colorful Lesson Cards for this Module */}
+            <View style={styles.lessonsStack}>
+              {moduleLessons.map((stg) => {
+                const isCompleted = completedStageIds.includes(stg.id);
+                const isActive = activeStageId === stg.id;
+                const stageNumFormatted = stg.id < 10 ? `0${stg.id}` : `${stg.id}`;
+
+                return (
+                  <TouchableOpacity
+                    key={`lesson-card-${stg.id}`}
+                    style={[
+                      styles.colorLessonCard,
+                      { backgroundColor: selectedModule?.cardBg, borderColor: selectedModule?.borderColor },
+                      isActive && { borderColor: selectedModule?.accentColor, borderWidth: 2 }
+                    ]}
+                    activeOpacity={0.88}
+                    onPress={() => handleOpenStage(stg.id)}
+                  >
+                    {/* Left Color Accent Bar */}
+                    <View style={[styles.cardLeftBar, { backgroundColor: selectedModule?.accentColor }]} />
+
+                    <View style={styles.cardInnerContent}>
+                      {/* Top Row: Number & Category */}
+                      <View style={styles.cardTopRow}>
+                        <View style={[styles.numBadgePill, { backgroundColor: selectedModule?.badgeBg }]}>
+                          <Text style={[styles.numBadgeText, { color: selectedModule?.accentColor }]}>
+                            LESSON {stageNumFormatted}
+                          </Text>
+                        </View>
+
+                        <View style={[styles.diffBadge, { backgroundColor: selectedModule?.badgeBg }]}>
+                          <Text style={[styles.diffBadgeText, { color: selectedModule?.accentColor }]}>
+                            {stg.category}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Title & Subtitle */}
+                      <Text style={styles.stageTitleText}>{stg.title}</Text>
+                      <Text style={styles.stageSubtitleText} numberOfLines={2}>
+                        {stg.subtitle}
+                      </Text>
+
+                      {/* Bottom Footer Action */}
+                      <View style={styles.cardBottomRow}>
+                        <View
+                          style={[
+                            styles.statusPill,
+                            isCompleted && { backgroundColor: '#10B981' },
+                            isActive && !isCompleted && { backgroundColor: selectedModule?.accentColor }
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusPillText,
+                              (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' }
+                            ]}
+                          >
+                            {isCompleted ? 'Completed ✓' : isActive ? 'In Progress ⚡' : 'Read & Practice ▶'}
+                          </Text>
+                        </View>
+                        <Icon name="chevron-right" size={18} color={selectedModule?.accentColor} />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       {/* Certificate Modal */}
@@ -345,6 +444,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#5653FE',
   },
+  viewBlock: {
+    gap: 12,
+  },
   eyebrow: {
     fontSize: 11,
     fontWeight: '800',
@@ -362,7 +464,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#475569',
     marginTop: 4,
-    marginBottom: 20,
+    marginBottom: 16,
     lineHeight: 20,
   },
   progressCard: {
@@ -370,8 +472,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: '#5653FE',
-    padding: 20,
-    marginBottom: 24,
+    padding: 18,
+    marginBottom: 12,
     shadowColor: '#5653FE',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -385,7 +487,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   progressTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: '#0F172A',
   },
@@ -399,7 +501,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEEDFF',
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   progressBarFill: {
     height: '100%',
@@ -407,85 +509,152 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   progressSub: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
-    marginBottom: 14,
-  },
-  continueBtn: {
-    backgroundColor: '#5653FE',
-    borderRadius: 9999,
-    paddingVertical: 13,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  continueBtnText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#FFFFFF',
   },
   certBtn: {
+    marginTop: 12,
     backgroundColor: '#059669',
-    borderRadius: 9999,
-    paddingVertical: 13,
-    paddingHorizontal: 20,
+    borderRadius: 12,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   certBtnText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
     color: '#FFFFFF',
   },
   sectionHeaderRow: {
-    marginBottom: 14,
+    marginTop: 8,
+    marginBottom: 6,
   },
   sectionHeadingTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
   },
   sectionHeadingSub: {
-    fontSize: 13,
+    fontSize: 12.5,
     color: '#64748B',
     marginTop: 2,
   },
-  stageCardsStack: {
-    gap: 20,
+
+  /* 3 Hero Module Cards */
+  modulesStack: {
+    gap: 16,
+    marginTop: 4,
   },
-  moduleBlock: {
-    gap: 12,
-  },
-  moduleHeaderBanner: {
-    backgroundColor: '#FFFFFF',
-    borderLeftWidth: 4,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  heroModuleCard: {
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 18,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  moduleHeaderTitle: {
-    fontSize: 13,
+  modCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  modLevelPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  modLevelText: {
+    fontSize: 10.5,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
-  moduleHeaderSub: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-    fontWeight: '500',
+  modIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  colorStageCard: {
+  modCardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  modCardDesc: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 19,
+    marginBottom: 16,
+  },
+  modCardBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  modProgressInfo: {
+    flex: 1,
+  },
+  modProgressTrack: {
+    height: 6,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  modProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  modProgressText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  modCtaBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  modCtaText: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+
+  /* Module Banner Header in View 2 */
+  moduleBannerHeaderCard: {
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 16,
+    marginBottom: 8,
+  },
+  modBannerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  modBannerDesc: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 19,
+  },
+
+  /* Lessons List Cards */
+  lessonsStack: {
+    gap: 12,
+    marginTop: 4,
+  },
+  colorLessonCard: {
     borderRadius: 16,
     borderWidth: 1.5,
     overflow: 'hidden',
@@ -519,56 +688,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  cardBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.04)',
-  },
-  stageCardActive: {
-    borderColor: '#5653FE',
-    borderWidth: 1.5,
-    backgroundColor: '#FAF9FF',
-  },
-  stageCardCompleted: {
-    borderColor: '#CBD5E1',
-  },
-  numCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  numCircleActive: {
-    backgroundColor: '#EEEDFF',
-  },
-  numCircleCompleted: {
-    backgroundColor: '#10B981',
-  },
-  numCircleText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#64748B',
-  },
-  numCircleTextActive: {
-    color: '#5653FE',
-  },
-  stageInfoBox: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  stageMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 3,
-  },
   diffBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -577,17 +696,6 @@ const styles = StyleSheet.create({
   diffBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-  },
-  stageBadgeTag: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#64748B',
-    letterSpacing: 0.5,
-  },
-  stageBadgeSub: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#94A3B8',
   },
   stageTitleText: {
     fontSize: 15,
@@ -600,32 +708,24 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 17,
   },
-  stageRightCol: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    gap: 6,
+  cardBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.04)',
   },
   statusPill: {
     backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  statusPillActive: {
-    backgroundColor: '#EEEDFF',
-  },
-  statusPillCompleted: {
-    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   statusPillText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#64748B',
-  },
-  statusPillTextActive: {
-    color: '#5653FE',
-  },
-  statusPillTextCompleted: {
-    color: '#047857',
   }
 });
