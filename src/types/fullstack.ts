@@ -65,6 +65,7 @@ export interface HtmlModule {
   order: number;
   description: string;
   duration?: number;
+  courseId?: string;
   lessons: HtmlLesson[];
 }
 
@@ -78,7 +79,7 @@ export interface HtmlCourse {
   category: string;
   level: string;
   difficulty?: string;
-  duration: number;
+  duration: number | string;
   totalLessonMinutes?: number;
   totalPracticeMinutes?: number;
   totalEstimatedMinutes?: number;

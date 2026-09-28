@@ -21,8 +21,10 @@ import { getFallbackLessonById, getCourseForTech } from '../../data/fullstackHtm
 import {
   validateHtml,
   verifyPracticeTask,
+  verifyPromptTask,
   HtmlValidationResult,
-  PracticeVerificationResult
+  PracticeVerificationResult,
+  PromptEvaluationResult
 } from '../../utils/htmlValidator';
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
@@ -49,6 +51,16 @@ const QUICK_ELEMENTS = [
   { label: '<form>', snippet: '<form>\n  <input type="text" placeholder="Name" />\n  <button type="submit">Submit</button>\n</form>' },
   { label: '<input>', snippet: '<input type="text" placeholder="Enter text" />' },
   { label: '<table>', snippet: '<table border="1">\n  <tr>\n    <th>Name</th>\n    <th>Role</th>\n  </tr>\n  <tr>\n    <td>Alex</td>\n    <td>Developer</td>\n  </tr>\n</table>' }
+];
+
+// Quick Prompt Tags for Prompt Engineering toolbar
+const QUICK_PROMPT_ELEMENTS = [
+  { label: '[Role]', snippet: '[ROLE] Act as a Senior AI & Software Specialist.\n' },
+  { label: '[Task]', snippet: '[TASK] Clearly define your goal or transformation.\n' },
+  { label: '[Context]', snippet: '[CONTEXT] Target audience and background info.\n' },
+  { label: '[Constraint]', snippet: '[CONSTRAINT] Concise response. Bullet points only.\n' },
+  { label: '[Format: JSON]', snippet: '[FORMAT] Return response formatted as JSON object.' },
+  { label: '[Format: Table]', snippet: '[FORMAT] Return response as Markdown table.' }
 ];
 
 /**
@@ -135,6 +147,17 @@ const getTechTheme = (tech: string) => {
         pillText: '#065F46',
         accentBg: '#A7F3D0',
         cardBorder: '#6EE7B7'
+      };
+    case 'prompt':
+    case 'prompt-engineering':
+      return {
+        primary: '#7C3AED',
+        primaryDark: '#6D28D9',
+        bg: '#F8FAFC',
+        pillBg: '#F3E8FF',
+        pillText: '#6D28D9',
+        accentBg: '#DDD6FE',
+        cardBorder: '#C4B5FD'
       };
     case 'html':
     default:
@@ -239,6 +262,7 @@ export const HtmlLessonScreen: React.FC = () => {
   // Validation and Error Checking States
   const [validationResult, setValidationResult] = useState<HtmlValidationResult | null>(null);
   const [taskResult, setTaskResult] = useState<PracticeVerificationResult | null>(null);
+  const [promptEvalResult, setPromptEvalResult] = useState<PromptEvaluationResult | null>(null);
   const [showErrorCard, setShowErrorCard] = useState<boolean>(false);
   const [submissionFeedback, setSubmissionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -294,13 +318,21 @@ export const HtmlLessonScreen: React.FC = () => {
     setUserCode('');
     setValidationResult(null);
     setTaskResult(null);
+    setPromptEvalResult(null);
     setShowErrorCard(false);
     setSubmissionFeedback(null);
     setShowLivePreview(false);
   };
 
-  // Check Code for Errors & Mistakes
+  // Check Code / Prompt for Errors & Quality
   const handleCheckCode = () => {
+    if (activeTech === 'prompt-engineering' || activeTech === 'prompt') {
+      const promptEval = verifyPromptTask(userCode, lesson?.practiceTask);
+      setPromptEvalResult(promptEval);
+      setShowErrorCard(true);
+      return;
+    }
+
     const syntaxCheck = validateHtml(userCode);
     setValidationResult(syntaxCheck);
 
@@ -314,6 +346,12 @@ export const HtmlLessonScreen: React.FC = () => {
 
   // Handle typing with Auto-Closing HTML Tags
   const handleCodeChange = (text: string) => {
+    if (activeTech === 'prompt-engineering' || activeTech === 'prompt') {
+      setUserCode(text);
+      if (submissionFeedback) setSubmissionFeedback(null);
+      return;
+    }
+
     const { updatedText, cursorOffset } = autoCloseHtmlTag(text, userCode);
     setUserCode(updatedText);
 
@@ -327,7 +365,7 @@ export const HtmlLessonScreen: React.FC = () => {
     if (submissionFeedback) setSubmissionFeedback(null);
   };
 
-  // Quick HTML element tag insertion
+  // Quick tag or prompt snippet insertion
   const handleInsertTag = (tagSnippet: string) => {
     setUserCode(prev => {
       const trimmed = prev.trimEnd();
@@ -344,6 +382,43 @@ export const HtmlLessonScreen: React.FC = () => {
     setSubmissionFeedback(null);
 
     try {
+      if (activeTech === 'prompt-engineering' || activeTech === 'prompt') {
+        const trimmed = (userCode || '').trim();
+        if (!trimmed) {
+          setSubmissionFeedback({
+            type: 'error',
+            message: 'Please write your prompt in the editor before submitting.'
+          });
+          setSubmitting(false);
+          return;
+        }
+
+        const promptEval = verifyPromptTask(userCode, lesson.practiceTask);
+        setPromptEvalResult(promptEval);
+
+        if (!promptEval.allPassed && promptEval.score < 60) {
+          setShowErrorCard(true);
+          setSubmissionFeedback({
+            type: 'error',
+            message: promptEval.feedback
+          });
+          setSubmitting(false);
+          return;
+        }
+
+        const lessonResolvedId = lesson._id || lesson.id || lesson.slug || currentId;
+        await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode).catch(() => null);
+
+        setIsCompleted(true);
+        setShowErrorCard(true);
+        setSubmissionFeedback({
+          type: 'success',
+          message: `✓ Excellent Prompt! Score: ${promptEval.score}%. Progress saved successfully.`
+        });
+        setSubmitting(false);
+        return;
+      }
+
       // 1. Run Structural Syntax Check
       const syntaxCheck = validateHtml(userCode);
       setValidationResult(syntaxCheck);
@@ -564,10 +639,10 @@ export const HtmlLessonScreen: React.FC = () => {
             </TouchableOpacity>
           ) : null}
 
-          {/* QUICK HTML TAGS TOOLBAR */}
+          {/* QUICK TOOLBAR (HTML OR PROMPT SNIPPETS) */}
           <View style={styles.tagToolbarWrap}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tagToolbarScroll}>
-              {QUICK_ELEMENTS.map((elem, idx) => (
+              {(activeTech === 'prompt-engineering' || activeTech === 'prompt' ? QUICK_PROMPT_ELEMENTS : QUICK_ELEMENTS).map((elem, idx) => (
                 <TouchableOpacity
                   key={idx}
                   style={styles.tagButton}
@@ -589,7 +664,7 @@ export const HtmlLessonScreen: React.FC = () => {
                 onChangeText={handleCodeChange}
                 selection={cursorSelection}
                 onSelectionChange={(e) => setCursorSelection(e.nativeEvent.selection)}
-                placeholder="Type your code here..."
+                placeholder={activeTech === 'prompt-engineering' || activeTech === 'prompt' ? "Write your prompt here... e.g. [ROLE] Act as a Senior AI Architect..." : "Type your code here..."}
                 placeholderTextColor="#94A3B8"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -624,72 +699,141 @@ export const HtmlLessonScreen: React.FC = () => {
 
           {/* Error / Checks Inspector Card */}
           {showErrorCard && (
-            <View style={[styles.checkInspectorCard, syntaxErrorsCount > 0 ? styles.checkInspectorError : styles.checkInspectorSuccess]}>
-              <View style={styles.inspectorHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                  <Icon
-                    name={syntaxErrorsCount > 0 ? 'alert-circle' : 'check-circle'}
-                    size={16}
-                    color={syntaxErrorsCount > 0 ? '#DC2626' : '#059669'}
-                  />
-                  <Text style={[styles.inspectorTitle, { color: syntaxErrorsCount > 0 ? '#DC2626' : '#059669' }]}>
-                    {syntaxErrorsCount > 0
-                      ? `${syntaxErrorsCount} Syntax Error(s) Found`
-                      : 'Checks Passed! No syntax errors.'}
-                  </Text>
+            (activeTech === 'prompt-engineering' || activeTech === 'prompt') && promptEvalResult ? (
+              <View style={[styles.checkInspectorCard, promptEvalResult.allPassed ? styles.checkInspectorSuccess : styles.checkInspectorError]}>
+                <View style={styles.inspectorHeaderRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                    <Icon
+                      name={promptEvalResult.allPassed ? 'check-circle' : 'alert-circle'}
+                      size={16}
+                      color={promptEvalResult.allPassed ? '#059669' : '#DC2626'}
+                    />
+                    <Text style={[styles.inspectorTitle, { color: promptEvalResult.allPassed ? '#059669' : '#DC2626' }]}>
+                      {promptEvalResult.allPassed ? `Prompt Quality Score: ${promptEvalResult.score}%` : `Needs Improvement (${promptEvalResult.score}%)`}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setShowErrorCard(false)}>
+                    <Icon name="x-circle" size={16} color="#64748B" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => setShowErrorCard(false)}>
-                  <Icon name="x-circle" size={16} color="#64748B" />
-                </TouchableOpacity>
-              </View>
 
-              {syntaxErrorsCount > 0 && validationResult?.errors && (
-                <View style={styles.errorList}>
-                  {validationResult.errors.map((err, eIdx) => (
-                    <View key={eIdx} style={styles.errorItemBox}>
-                      <Text style={styles.errorProblemText}>
-                        Line {err.line || 1}: {err.problem}
-                      </Text>
-                      {err.suggestion ? (
-                        <Text style={styles.errorSuggestionText}>
-                          Tip: {err.suggestion}
+                {promptEvalResult.checks && promptEvalResult.checks.length > 0 && (
+                  <View style={{ marginTop: 8 }}>
+                    {promptEvalResult.checks.map((chk, idx) => (
+                      <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <Icon name={chk.passed ? 'check' : 'x'} size={12} color={chk.passed ? '#059669' : '#DC2626'} />
+                        <Text style={{ fontSize: 12, color: chk.passed ? '#059669' : '#DC2626', flex: 1 }}>
+                          {chk.description}
                         </Text>
-                      ) : null}
-                    </View>
-                  ))}
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {promptEvalResult.strengths && promptEvalResult.strengths.length > 0 && (
+                  <View style={{ marginTop: 6 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#047857', marginBottom: 2 }}>💪 Strengths:</Text>
+                    {promptEvalResult.strengths.map((str, idx) => (
+                      <Text key={idx} style={{ fontSize: 12, color: '#065F46', marginLeft: 6 }}>• {str}</Text>
+                    ))}
+                  </View>
+                )}
+
+                {promptEvalResult.improvements && promptEvalResult.improvements.length > 0 && (
+                  <View style={{ marginTop: 6 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#B45309', marginBottom: 2 }}>💡 Suggestions:</Text>
+                    {promptEvalResult.improvements.map((imp, idx) => (
+                      <Text key={idx} style={{ fontSize: 12, color: '#92400E', marginLeft: 6 }}>• {imp}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ) : (syntaxErrorsCount > 0) ? (
+              <View style={[styles.checkInspectorCard, styles.checkInspectorError]}>
+                <View style={styles.inspectorHeaderRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                    <Icon name="alert-circle" size={16} color="#DC2626" />
+                    <Text style={[styles.inspectorTitle, { color: '#DC2626' }]}>
+                      {`${syntaxErrorsCount} Syntax Error(s) Found`}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setShowErrorCard(false)}>
+                    <Icon name="x-circle" size={16} color="#64748B" />
+                  </TouchableOpacity>
                 </View>
-              )}
-            </View>
+
+                {validationResult?.errors && (
+                  <View style={styles.errorList}>
+                    {validationResult.errors.map((err, eIdx) => (
+                      <View key={eIdx} style={styles.errorItemBox}>
+                        <Text style={styles.errorProblemText}>
+                          Line {err.line || 1}: {err.problem}
+                        </Text>
+                        {err.suggestion ? (
+                          <Text style={styles.errorSuggestionText}>
+                            Tip: {err.suggestion}
+                          </Text>
+                        ) : null}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ) : null
           )}
 
           {/* ACTION CONTROL BUTTONS */}
           <View style={styles.actionButtonsRow}>
-            <TouchableOpacity
-              style={[styles.checkCodeBtn, { backgroundColor: theme.pillBg, borderColor: theme.accentBg }]}
-              activeOpacity={0.8}
-              onPress={handleCheckCode}
-            >
-              <Icon name="search" size={15} color={theme.primary} />
-              <Text style={[styles.checkCodeBtnText, { color: theme.primary }]}>Check Code</Text>
-            </TouchableOpacity>
+            {activeTech === 'prompt-engineering' || activeTech === 'prompt' ? (
+              <>
+                <TouchableOpacity
+                  style={[styles.checkCodeBtn, { backgroundColor: theme.pillBg, borderColor: theme.accentBg }]}
+                  activeOpacity={0.8}
+                  onPress={handleCheckCode}
+                >
+                  <Icon name="search" size={15} color={theme.primary} />
+                  <Text style={[styles.checkCodeBtnText, { color: theme.primary }]}>Check Prompt</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.checkCodeBtn, { backgroundColor: '#F1F5F9', borderColor: '#CBD5E1' }]}
+                  activeOpacity={0.8}
+                  onPress={() => setShowReferenceModal(true)}
+                >
+                  <Icon name="file-text" size={15} color="#334155" />
+                  <Text style={[styles.checkCodeBtnText, { color: '#334155' }]}>Reference</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={[styles.checkCodeBtn, { backgroundColor: theme.pillBg, borderColor: theme.accentBg }]}
+                  activeOpacity={0.8}
+                  onPress={handleCheckCode}
+                >
+                  <Icon name="search" size={15} color={theme.primary} />
+                  <Text style={[styles.checkCodeBtnText, { color: theme.primary }]}>Check Code</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.previewToggleBtn}
+                  activeOpacity={0.8}
+                  onPress={() => setShowLivePreview(prev => !prev)}
+                >
+                  <Icon
+                    name={showLivePreview ? 'code' : 'eye'}
+                    size={15}
+                    color="#0F172A"
+                  />
+                  <Text style={styles.previewToggleBtnText}>
+                    {showLivePreview ? 'Editor' : 'Preview'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
 
             <TouchableOpacity
-              style={styles.previewToggleBtn}
-              activeOpacity={0.8}
-              onPress={() => setShowLivePreview(prev => !prev)}
-            >
-              <Icon
-                name={showLivePreview ? 'code' : 'eye'}
-                size={15}
-                color="#0F172A"
-              />
-              <Text style={styles.previewToggleBtnText}>
-                {showLivePreview ? 'Editor' : 'Preview'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
+              style={[styles.submitBtn, { backgroundColor: theme.primary }, submitting && { opacity: 0.7 }]}
               activeOpacity={0.85}
               disabled={submitting}
               onPress={handleSubmitSolution}
@@ -796,42 +940,54 @@ export const HtmlLessonScreen: React.FC = () => {
             {/* Modal Content */}
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
               <View style={styles.exampleHeaderRow}>
-                <Text style={styles.referenceSubheading}>Reference Code Example</Text>
+                <Text style={styles.referenceSubheading}>
+                  {activeTech === 'prompt-engineering' || activeTech === 'prompt' ? 'Reference Prompt Example' : 'Reference Code Example'}
+                </Text>
                 <TouchableOpacity
                   style={[styles.copyBtn, { backgroundColor: theme.pillBg }]}
-                  onPress={() => handleCopy(lesson.codeExample || '')}
+                  onPress={() => handleCopy(lesson?.codeExample || '')}
                 >
                   <Icon name="copy" size={14} color={theme.primary} />
                   <Text style={[styles.copyBtnText, { color: theme.primary }]}>
-                    {copiedCode ? 'Copied!' : 'Copy Code'}
+                    {copiedCode ? 'Copied!' : 'Copy'}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.codeSnippetBox}>
-                <Text style={styles.codeText}>{lesson.codeExample}</Text>
+                <Text style={styles.codeText}>{lesson?.codeExample}</Text>
               </View>
 
-              <Text style={styles.referenceSubheading}>Output Preview</Text>
-              <View style={styles.exampleOutputWrap}>
-                <View style={styles.exampleOutputHeader}>
-                  <View style={styles.browserDotsMini}>
-                    <View style={[styles.dotMini, { backgroundColor: '#EF4444' }]} />
-                    <View style={[styles.dotMini, { backgroundColor: '#F59E0B' }]} />
-                    <View style={[styles.dotMini, { backgroundColor: '#10B981' }]} />
+              <Text style={styles.referenceSubheading}>
+                {activeTech === 'prompt-engineering' || activeTech === 'prompt' ? 'Expected AI Model Output' : 'Output Preview'}
+              </Text>
+              {activeTech === 'prompt-engineering' || activeTech === 'prompt' ? (
+                <View style={[styles.codeSnippetBox, { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0', marginTop: 6 }]}>
+                  <Text style={[styles.codeText, { color: '#0F172A' }]}>
+                    {lesson?.expectedOutput || 'AI model output response example.'}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.exampleOutputWrap}>
+                  <View style={styles.exampleOutputHeader}>
+                    <View style={styles.browserDotsMini}>
+                      <View style={[styles.dotMini, { backgroundColor: '#EF4444' }]} />
+                      <View style={[styles.dotMini, { backgroundColor: '#F59E0B' }]} />
+                      <View style={[styles.dotMini, { backgroundColor: '#10B981' }]} />
+                    </View>
+                    <Text style={styles.exampleOutputLabel}>Live Preview</Text>
                   </View>
-                  <Text style={styles.exampleOutputLabel}>Live Preview</Text>
+                  <View style={styles.exampleWebviewBox}>
+                    <WebView
+                      originWhitelist={['*']}
+                      source={{ html: buildPreviewHtml(lesson?.codeExample || '') }}
+                      style={styles.exampleWebview}
+                      javaScriptEnabled={true}
+                      domStorageEnabled={true}
+                    />
+                  </View>
                 </View>
-                <View style={styles.exampleWebviewBox}>
-                  <WebView
-                    originWhitelist={['*']}
-                    source={{ html: buildPreviewHtml(lesson.codeExample || '') }}
-                    style={styles.exampleWebview}
-                    javaScriptEnabled={true}
-                    domStorageEnabled={true}
-                  />
-                </View>
-              </View>
+              )}
             </ScrollView>
 
             {/* Modal Bottom Action */}

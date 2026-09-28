@@ -390,3 +390,121 @@ export function verifyPracticeTask(
   };
 }
 
+export interface PromptEvaluationResult {
+  score: number;
+  allPassed: boolean;
+  checks: TaskRequirementCheck[];
+  strengths: string[];
+  improvements: string[];
+  feedback: string;
+}
+
+export function verifyPromptTask(
+  promptText: string,
+  task?: { requirements?: string[]; validationRules?: Array<{ valuePattern?: string; message: string }> }
+): PromptEvaluationResult {
+  const trimmed = (promptText || '').trim();
+  if (!trimmed) {
+    return {
+      score: 0,
+      allPassed: false,
+      checks: [{ description: 'Prompt text entered', passed: false }],
+      strengths: [],
+      improvements: ['Write your prompt in the editor before checking.'],
+      feedback: 'The prompt editor is empty.',
+    };
+  }
+
+  const lower = trimmed.toLowerCase();
+  const checks: TaskRequirementCheck[] = [];
+  const strengths: string[] = [];
+  const improvements: string[] = [];
+
+  const hasRole = /role|act as|you are a|persona|as a|expert|specialist/i.test(lower) || lower.includes('[role]');
+  const hasTask = /task|create|build|generate|explain|convert|audit|write|evaluate|summarize|classify/i.test(lower) || lower.includes('[task]');
+  const hasContext = /context|for|background|scenario|audience|use case/i.test(lower) || lower.includes('[context]');
+  const hasConstraint = /constraint|do not|never|only|limit|max|no fluff|bullet/i.test(lower) || lower.includes('[constraint]');
+  const hasFormat = /format|json|table|markdown|list|output|structure/i.test(lower) || lower.includes('[format]');
+
+  if (hasRole) strengths.push('Clear persona or role specified');
+  else improvements.push('Consider defining an explicit AI role (e.g. "Act as a Senior UX Engineer")');
+
+  if (hasTask) strengths.push('Direct task action instruction provided');
+  else improvements.push('Clearly state the main goal or action required');
+
+  if (hasConstraint) strengths.push('Defined clear output boundary constraints');
+  else improvements.push('Add constraints to avoid verbose or unfocused responses');
+
+  if (hasFormat) strengths.push('Specified exact output format or layout');
+  else improvements.push('Specify desired output structure (e.g. JSON, Table, Bullet points)');
+
+  if (task?.validationRules && task.validationRules.length > 0) {
+    for (const rule of task.validationRules) {
+      let passed = false;
+      if (rule.valuePattern) {
+        const pat = new RegExp(rule.valuePattern, 'i');
+        passed = pat.test(promptText);
+      } else {
+        passed = trimmed.length >= 15;
+      }
+      checks.push({
+        description: rule.message,
+        passed,
+      });
+    }
+  } else if (task?.requirements && task.requirements.length > 0) {
+    for (const req of task.requirements) {
+      const lowerReq = req.toLowerCase();
+      let passed = false;
+      if (lowerReq.includes('role') || lowerReq.includes('persona')) {
+        passed = hasRole;
+      } else if (lowerReq.includes('task') || lowerReq.includes('action')) {
+        passed = hasTask;
+      } else if (lowerReq.includes('context')) {
+        passed = hasContext;
+      } else if (lowerReq.includes('constraint') || lowerReq.includes('limit')) {
+        passed = hasConstraint;
+      } else if (lowerReq.includes('format') || lowerReq.includes('json') || lowerReq.includes('table')) {
+        passed = hasFormat;
+      } else {
+        const words = lowerReq.split(/\s+/).filter(w => w.length > 4);
+        passed = words.some(w => lower.includes(w)) || trimmed.length > 20;
+      }
+      checks.push({
+        description: req,
+        passed,
+      });
+    }
+  } else {
+    checks.push({
+      description: 'Provide a structured prompt with instructions',
+      passed: trimmed.length >= 15,
+    });
+  }
+
+  const allPassed = checks.length > 0 ? checks.every(c => c.passed) : trimmed.length >= 15;
+  const passedCount = checks.filter(c => c.passed).length;
+
+  let score = 50;
+  if (trimmed.length > 30) score += 10;
+  if (hasRole) score += 10;
+  if (hasTask) score += 10;
+  if (hasConstraint) score += 10;
+  if (hasFormat) score += 10;
+  score = Math.min(100, score);
+
+  const feedback = allPassed
+    ? `🎉 Excellent Prompt! Quality Score: ${score}%. All task requirements satisfied.`
+    : `${passedCount} of ${checks.length} prompt requirements satisfied. Score: ${score}%.`;
+
+  return {
+    score,
+    allPassed,
+    checks,
+    strengths,
+    improvements,
+    feedback,
+  };
+}
+
+

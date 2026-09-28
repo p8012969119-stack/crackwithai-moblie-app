@@ -42,6 +42,8 @@ const TECH_BRAND_COLORS: Record<string, { bg: string; border: string; text: stri
   restapi: { bg: '#F5F3FF', border: '#DDD6FE', text: '#5B21B6', pillBg: '#EDE9FE', pillText: '#6D28D9', accent: '#7C3AED' },
   auth: { bg: '#FFF1F2', border: '#FECDD3', text: '#9F1239', pillBg: '#FFE4E6', pillText: '#BE123C', accent: '#E11D48' },
   capstone: { bg: '#FAF5FF', border: '#E9D5FF', text: '#6B21A8', pillBg: '#F3E8FF', pillText: '#7E22CE', accent: '#9333EA' },
+  prompt: { bg: '#FAF5FF', border: '#DDD6FE', text: '#5B21B6', pillBg: '#EDE9FE', pillText: '#6D28D9', accent: '#7C3AED' },
+  'prompt-engineering': { bg: '#FAF5FF', border: '#DDD6FE', text: '#5B21B6', pillBg: '#EDE9FE', pillText: '#6D28D9', accent: '#7C3AED' },
 };
 
 const DEFAULT_BRAND_COLOR = { bg: '#FFF4ED', border: '#FFD8C2', text: '#9A3412', pillBg: '#FFEDD5', pillText: '#C2410C', accent: '#EA580C' };
@@ -187,13 +189,17 @@ export const HtmlCourseScreen: React.FC = () => {
             ================================================== */}
         <View style={[styles.courseHeroBanner, { backgroundColor: brandColor.bg, borderColor: brandColor.border }]}>
           <View style={styles.heroTopRow}>
-            {COURSE_LOGOS[tech] && (
+            {COURSE_LOGOS[tech] ? (
               <View style={styles.courseHeroLogoBox}>
                 <Image
                   source={COURSE_LOGOS[tech]}
                   style={styles.courseHeroLogo}
                   resizeMode="contain"
                 />
+              </View>
+            ) : (
+              <View style={[styles.courseHeroLogoBox, { backgroundColor: brandColor.pillBg }]}>
+                <Icon name="sparkles" size={26} color={brandColor.accent} />
               </View>
             )}
             <View style={styles.heroTopContent}>

@@ -3400,6 +3400,609 @@ export const FALLBACK_AUTH_COURSE: HtmlCourse = {
   ]
 };
 
+export const FALLBACK_PROMPT_ENGINEERING_COURSE: HtmlCourse = {
+  _id: 'prompt-engineering-course',
+  id: 'prompt-engineering-course',
+  title: 'Prompt Engineering',
+  slug: 'prompt-engineering',
+  description: 'Learn how to write clear, structured, reliable prompts and use practical prompting techniques to get better results from modern AI systems.',
+  category: 'AI & Machine Learning',
+  level: 'Beginner → Intermediate → Advanced',
+  difficulty: 'Beginner',
+  duration: '5 hours',
+  totalLessons: 25,
+  modulesCount: 5,
+  modules: [
+    {
+      _id: 'mod-prompt-1',
+      id: 'mod-prompt-1',
+      courseId: 'prompt-engineering-course',
+      order: 1,
+      title: 'Module 1 — Prompt Engineering Fundamentals',
+      slug: 'prompt-engineering-fundamentals',
+      description: 'Master core concepts of Generative AI, LLM token attention, prompt definitions, and your first 5-step prompt workflow.',
+      lessons: [
+        {
+          _id: 'prompt-les-1',
+          id: 'prompt-les-1',
+          courseId: 'prompt-engineering-course',
+          order: 1,
+          title: 'Lesson 1 — What is Generative AI?',
+          slug: 'what-is-generative-ai',
+          description: 'Understand what Generative AI and LLMs are, how responses are generated, and how AI differs from keyword search.',
+          learningObjective: 'Differentiate Generative AI synthesis from keyword search and observe how instruction clarity changes AI output.',
+          concept: 'Generative AI refers to artificial intelligence models capable of creating new text, code, images, or audio based on statistical patterns learned from vast training datasets. Unlike traditional search engines that retrieve pre-existing web pages based on keywords, a Large Language Model (LLM) synthesizes brand-new responses word-by-word (token-by-token).\n\nKey Concepts:\n• Generative AI: AI models that generate new content based on probability patterns.\n• Large Language Model (LLM): Deep learning models trained on massive text to process and generate human language.\n• Search vs Generation: Search finds existing sources; LLMs assemble custom answers tailored to your specific prompt.',
+          codeExample: '/* Weak Prompt */\nExplain AI\n\n/* Improved Prompt */\nAct as a Computer Science Professor. Explain Generative AI to a high-school student in 3 bullet points, using a smart library assistant analogy.',
+          expectedOutput: 'Generative AI explanation synthesized with role, target audience, and length constraints.',
+          starterCode: 'Act as a Computer Science Educator. Explain what Generative AI is in 2 simple sentences, comparing it to an intelligent assistant.',
+          practiceTask: {
+            title: 'Generative AI Instruction Checkpoint',
+            description: 'Ask an AI model a simple question and observe how the response improves when given specific context and instructions.',
+            requirements: ['Assign a persona or role', 'Define the target topic (Generative AI or LLMs)', 'Set a specific length or format constraint'],
+            starterCode: 'Act as an AI Educator. Explain what Generative AI is to a beginner in exactly 2 sentences using an analogy of a smart writer.',
+            expectedOutput: 'Clear 2-sentence explanation of Generative AI using an analogy.'
+          }
+        },
+        {
+          _id: 'prompt-les-2',
+          id: 'prompt-les-2',
+          courseId: 'prompt-engineering-course',
+          order: 2,
+          title: 'Lesson 2 — What is a Prompt?',
+          slug: 'what-is-a-prompt',
+          description: 'Learn what a prompt is, why prompts matter, the difference between a question and a prompt, and weak vs effective prompts.',
+          learningObjective: 'Define what a prompt is and convert vague questions into structured, effective prompts.',
+          concept: 'A prompt is the exact input text, instruction, or context provided to an AI model to guide its response. The quality of the prompt directly determines the quality, relevance, and accuracy of the AI output.\n\nQuestion vs Prompt:\n• Question: A simple query asking for facts (e.g. "What is Python?").\n• Prompt: A structured instruction containing a persona, task requirements, background context, constraints, and target output format.',
+          codeExample: '/* Weak */\nHow to learn JavaScript?\n\n/* Effective */\nAct as a Senior Web Developer. Create a step-by-step 4-week study plan for learning modern JavaScript (ES6+), focusing on DOM manipulation and async/await. Format as a bulleted list.',
+          expectedOutput: 'Structured study plan with clear milestones.',
+          starterCode: 'Act as a Career Mentor. Write a prompt that asks AI for advice on learning web development, including role, experience level, and output format.',
+          practiceTask: {
+            title: 'Prompt Refactoring Task',
+            description: 'Convert a vague prompt into a clear, targeted, and specific prompt.',
+            requirements: ['Include a role/persona', 'Specify clear action instructions', 'Define output format and constraints'],
+            starterCode: 'Act as a Senior Developer. Refactor the vague prompt "Explain APIs" into a detailed prompt with target audience, key subtopics, and bullet-point format.',
+            expectedOutput: 'Refactored prompt containing role, audience, subtopics, and format.'
+          }
+        },
+        {
+          _id: 'prompt-les-3',
+          id: 'prompt-les-3',
+          courseId: 'prompt-engineering-course',
+          order: 3,
+          title: 'Lesson 3 — How LLMs Understand Prompts',
+          slug: 'how-llms-understand-prompts',
+          description: 'Explore context, tokens, natural-language patterns, and why wording and placement influence LLM outputs.',
+          learningObjective: 'Understand tokenization and how precise wording steers LLM context attention.',
+          concept: 'LLMs process text by breaking input into smaller statistical chunks called tokens (~4 characters per token). The model calculates token probabilities based on preceding context window tokens.\n\nWhy Wording Matters:\n• Ambiguous phrasing forces the LLM to make statistical assumptions, often producing generic or inaccurate responses.\n• Precise wording removes ambiguity and forces the model to attend to critical requirements.',
+          codeExample: '/* Ambiguous */\nMake it short.\n\n/* Unambiguous & Precise */\nLimit the response strictly to under 50 words in a single bulleted list. Do not include introductory text.',
+          expectedOutput: 'Concise response strictly following word limit and structural rules.',
+          starterCode: 'Act as a Technical Writer. Explain API latency in simple terms. Limit the output to strictly under 40 words in 2 bullet points.',
+          practiceTask: {
+            title: 'Token Precision & Wording Task',
+            description: 'Write three different prompts for the same task and compare how precise wording controls output length and clarity.',
+            requirements: ['Specify the topic clearly', 'Include strict word count or formatting constraints', 'Remove ambiguous language'],
+            starterCode: 'Act as a Network Engineer. Explain network latency to a non-technical manager. Limit the response to exactly 3 bullet points under 50 total words.',
+            expectedOutput: 'Precision prompt enforcing strict word and bullet limits.'
+          }
+        },
+        {
+          _id: 'prompt-les-4',
+          id: 'prompt-les-4',
+          courseId: 'prompt-engineering-course',
+          order: 4,
+          title: 'Lesson 4 — Good Prompt vs Bad Prompt',
+          slug: 'good-prompt-vs-bad-prompt',
+          description: 'Identify ambiguous instructions, missing context, and missing constraints, and transform bad prompts into good ones.',
+          learningObjective: 'Audit bad prompts for missing components and rewrite them with clear requirements.',
+          concept: 'Bad prompts fail because they contain ambiguous instructions, missing context, and missing constraints. Good prompts succeed because they specify an explicit role, detailed step-by-step task, relevant context, negative constraints, and exact output format.',
+          codeExample: '/* BAD */\nWrite code for login.\n\n/* GOOD */\nAct as a Security Engineer. Write an Express.js router middleware for user login. Use bcrypt to verify password hashes and return a JWT token on success. Include error handling for invalid credentials. Return only the JavaScript code.',
+          expectedOutput: 'Production-ready middleware snippet with complete security handling.',
+          starterCode: 'Act as a Code Reviewer. Improve the bad prompt "Write code for login" by adding role, tech stack (React Native), error handling, and formatting rules.',
+          practiceTask: {
+            title: 'Prompt Audit & Refactoring',
+            description: 'Improve five poorly written prompts by supplying missing roles, context, and negative constraints.',
+            requirements: ['Add expert role', 'Supply specific technical context', 'Include negative constraints (e.g. "Do not explain...")'],
+            starterCode: 'Act as an expert AI prompt reviewer. Refactor: "Write a blog post about cybersecurity" into a structured prompt with persona, target audience, 3 main points, and word count limit.',
+            expectedOutput: 'Fully audited and structured master prompt.'
+          }
+        },
+        {
+          _id: 'prompt-les-5',
+          id: 'prompt-les-5',
+          courseId: 'prompt-engineering-course',
+          order: 5,
+          title: 'Lesson 5 — Your First Prompt Workflow',
+          slug: 'your-first-prompt-workflow',
+          description: 'Master the 5-step iterative workflow: Understand → Write → Test → Observe → Improve, and build your AI Study Assistant.',
+          learningObjective: 'Apply the 5-step prompt engineering workflow to build an interactive AI Study Assistant.',
+          concept: 'Prompt engineering is an iterative workflow: Understand → Write → Test → Observe → Improve. Apply this workflow to create a prompt for an interactive AI Study Assistant that quizzes students on flashcard topics.',
+          codeExample: '/* Master AI Study Assistant Prompt */\nAct as an interactive AI Computer Science Tutor.\nTask: Quiz the student on JavaScript Arrays.\nRules:\n1. Ask 1 concept question at a time.\n2. Wait for the student\'s answer before asking the next question.\n3. After each answer, provide feedback and a score out of 10.\n4. Start now by asking Question 1.',
+          expectedOutput: 'Interactive quiz initialization starting with Question 1.',
+          starterCode: 'Act as an interactive AI Study Tutor. Quiz me on HTML tags. Ask 1 question at a time, wait for my response, provide feedback and score out of 10, then proceed.',
+          practiceTask: {
+            title: 'AI Study Assistant Project',
+            description: 'Create a complete prompt for an interactive AI Study Assistant that quizzes students step-by-step.',
+            requirements: ['Role: Interactive AI Tutor', 'Task: Quiz student 1 question at a time', 'Rule: Wait for student answer before proceeding', 'Rule: Provide score and feedback'],
+            starterCode: 'Act as an interactive AI Study Assistant. Your goal is to tutor a student on CSS Flexbox. Ask 1 question at a time, evaluate my answer, give a score out of 10, and wait for my reply before asking the next question.',
+            expectedOutput: 'Interactive study tutor prompt ready for student execution.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'mod-prompt-2',
+      id: 'mod-prompt-2',
+      courseId: 'prompt-engineering-course',
+      order: 2,
+      title: 'Module 2 — Prompt Structure',
+      slug: 'prompt-structure',
+      description: 'Master the 5 core building blocks: Role, Task, Context, Constraints, and Output Format.',
+      lessons: [
+        {
+          _id: 'prompt-les-6',
+          id: 'prompt-les-6',
+          courseId: 'prompt-engineering-course',
+          order: 6,
+          title: 'Lesson 6 — Role',
+          slug: 'role-prompting',
+          description: 'Learn role prompting, persona definition, domain expertise, and tone alignment.',
+          learningObjective: 'Assign specific expert personas to steer AI vocabulary and technical depth.',
+          concept: 'Role prompting instructs the AI to adopt a specific persona, background, or domain perspective (e.g. "Act as a Senior DevOps Engineer"). Roles activate domain concepts in the model neural parameters.',
+          codeExample: 'Act as a Senior Database Administrator with 10 years of MongoDB experience. Explain database indexing strategies to a junior developer.',
+          expectedOutput: 'Deep technical explanation using DBA terminology tailored for junior developers.',
+          starterCode: 'Act as a Tech Lead. Review a code pull request and explain 3 best practices for writing clean React components.',
+          practiceTask: {
+            title: 'Multi-Persona Prompting Task',
+            description: 'Create prompts using Teacher, Developer, and Researcher roles for explaining web accessibility.',
+            requirements: ['Define a clear persona', 'Specify tone and domain depth', 'Set target audience'],
+            starterCode: 'Act as an Accessibility Researcher. Explain web accessibility (WCAG 2.1) to a team of frontend developers in 3 actionable guidelines.',
+            expectedOutput: 'Accessibility guidelines formatted from a researcher persona.'
+          }
+        },
+        {
+          _id: 'prompt-les-7',
+          id: 'prompt-les-7',
+          courseId: 'prompt-engineering-course',
+          order: 7,
+          title: 'Lesson 7 — Task & Instructions',
+          slug: 'task-and-instructions',
+          description: 'Define tasks clearly using imperative action verbs and breakdown complex requirements.',
+          learningObjective: 'Formulate imperative, action-oriented instructions using clear action verbs.',
+          concept: 'The Task is the core command of your prompt. Always use imperative action verbs: Analyze, Refactor, Synthesize, Extract.',
+          codeExample: 'Task:\n1. Analyze the attached customer review.\n2. Extract customer sentiment (Positive/Negative).\n3. List top 2 product complaints.',
+          expectedOutput: 'Extracted sentiment and complaint list.',
+          starterCode: 'Task: Analyze the user request. Extract the main problem statement and generate 3 troubleshooting steps in bullet points.',
+          practiceTask: {
+            title: 'Task Formulation Checkpoint',
+            description: 'Convert a vague task into detailed, step-by-step imperative instructions.',
+            requirements: ['Use clear action verbs (Extract, Summarize, Format)', 'Break instructions into numbered steps', 'Specify target deliverables'],
+            starterCode: 'Task:\n1. Extract all technology names from the text.\n2. Categorize them into Frontend vs Backend.\n3. Format the result as a markdown table.',
+            expectedOutput: 'Imperative 3-step task instruction set.'
+          }
+        },
+        {
+          _id: 'prompt-les-8',
+          id: 'prompt-les-8',
+          courseId: 'prompt-engineering-course',
+          order: 8,
+          title: 'Lesson 8 — Context',
+          slug: 'providing-context',
+          description: 'Provide relevant background data, environment details, and scenario context to prevent assumptions.',
+          learningObjective: 'Supply necessary background context to eliminate AI assumptions.',
+          concept: 'Context provides the background facts, environment details, or user history needed for the AI to make informed decisions without hallucinating.',
+          codeExample: 'Context: We are building a React Native mobile app for iOS and Android using TypeScript without third-party UI libraries.\nTask: Create a custom Button component.',
+          expectedOutput: 'Custom React Native Button using standard StyleSheet.',
+          starterCode: 'Context: We are developing a Node.js REST API with Express and MongoDB.\nTask: Write a controller function to fetch user profile data.',
+          practiceTask: {
+            title: 'Context Integration Task',
+            description: 'Rewrite a prompt by adding useful background context about your tech stack and requirements.',
+            requirements: ['Include environment/stack details', 'Describe target problem scenario', 'Provide clear input text'],
+            starterCode: 'Context: Mobile app targeting offline users on Android.\nTask: Explain how to store local user preferences securely.',
+            expectedOutput: 'Context-enriched prompt for offline Android storage.'
+          }
+        },
+        {
+          _id: 'prompt-les-9',
+          id: 'prompt-les-9',
+          courseId: 'prompt-engineering-course',
+          order: 9,
+          title: 'Lesson 9 — Constraints',
+          slug: 'setting-constraints',
+          description: 'Set length boundaries, tone guardrails, and explicit negative constraints ("Do NOT include...").',
+          learningObjective: 'Establish strict positive and negative constraints to control AI behavior.',
+          concept: 'Constraints set boundaries on what the model MUST and MUST NOT do: Positive constraints, Negative constraints ("Do NOT include preamble"), and Length boundaries.',
+          codeExample: 'Constraints:\n- Do NOT write introductory phrases like "Sure, here is..."\n- Maximum length: 3 bullet points.\n- Audience: Absolute beginner.',
+          expectedOutput: 'Direct bullet points without conversational preamble.',
+          starterCode: 'Write 3 tips for learning JavaScript. Constraints: Do NOT use jargon, maximum 15 words per tip, return only bullet points.',
+          practiceTask: {
+            title: 'Constraint Guardrails Task',
+            description: 'Create a prompt with at least five explicit constraints controlling style, length, and content.',
+            requirements: ['Include 2 positive constraints', 'Include 2 negative constraints', 'Set an explicit length limit'],
+            starterCode: 'Write a product summary. Constraints:\n1. Max 50 words\n2. Bullet points only\n3. No jargon\n4. Do NOT mention competitor names\n5. Include 1 emoji per bullet point',
+            expectedOutput: 'Prompt with 5 clear constraint guardrails.'
+          }
+        },
+        {
+          _id: 'prompt-les-10',
+          id: 'prompt-les-10',
+          courseId: 'prompt-engineering-course',
+          order: 10,
+          title: 'Lesson 10 — Output Format',
+          slug: 'output-format-specifications',
+          description: 'Mandate exact response schemas including bullet points, markdown tables, and JSON schemas.',
+          learningObjective: 'Specify exact output formats including markdown tables, lists, and structured JSON.',
+          concept: 'Specifying output format forces the AI to structure responses for programmatic parsing (Markdown table, bulleted list, or JSON object).',
+          codeExample: 'Format Output As JSON:\n{\n  "summary": "string",\n  "keyPoints": ["string"],\n  "sentiment": "positive | neutral | negative"\n}',
+          expectedOutput: 'Strict JSON response matching provided keys.',
+          starterCode: 'Extract key details from this text and return ONLY a valid JSON object with keys: title, keyTakeaway, readingTime.',
+          practiceTask: {
+            title: 'Multi-Format Output Task',
+            description: 'Ask AI to process text and return the same information in three structured formats (bullets, table, JSON).',
+            requirements: ['Request specific data extraction', 'Specify exact JSON schema or table headers', 'Prohibit extra preamble text'],
+            starterCode: 'Summarize the article into a JSON object containing keys: headline, summaryBullets, recommendation. Return ONLY valid JSON.',
+            expectedOutput: 'Prompt requiring strict JSON output schema.'
+          }
+        },
+        {
+          _id: 'prompt-les-11',
+          id: 'prompt-les-11',
+          courseId: 'prompt-engineering-course',
+          order: 11,
+          title: 'Lesson 11 — Complete Prompt Structure',
+          slug: 'complete-prompt-structure',
+          description: 'Combine Role + Task + Context + Constraints + Output Format into a master production prompt.',
+          learningObjective: 'Combine all 5 core prompt components into a unified professional master prompt.',
+          concept: 'The Master Prompt Formula combines [ROLE] + [TASK] + [CONTEXT] + [CONSTRAINTS] + [OUTPUT FORMAT] into a production-grade prompt.',
+          codeExample: '[ROLE] Act as a Senior UX Specialist.\n[TASK] Audit the sign-up user flow.\n[CONTEXT] Mobile app for busy professionals.\n[CONSTRAINTS] Bullet points only. Max 100 words.\n[OUTPUT FORMAT] Markdown table: Step | Issue | Suggested Fix',
+          expectedOutput: 'Complete structured UX audit table.',
+          starterCode: 'Combine Role, Task, Context, Constraints, and Output Format into one complete prompt for reviewing code performance.',
+          practiceTask: {
+            title: 'Master Prompt Blueprint Project',
+            description: 'Create one complete professional prompt using all five components (Role, Task, Context, Constraints, Format).',
+            requirements: ['Include Role', 'Include Task', 'Include Context', 'Include Constraints', 'Include Output Format'],
+            starterCode: 'Role: Act as a Senior Security Engineer.\nTask: Audit a Node.js API endpoint.\nContext: E-commerce app handling payment data.\nConstraints: Bullet points only. No fluff.\nOutput Format: Table with Risk Level | Vulnerability | Remediation.',
+            expectedOutput: 'Production-ready master prompt using all 5 structural components.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'mod-prompt-3',
+      id: 'mod-prompt-3',
+      courseId: 'prompt-engineering-course',
+      order: 3,
+      title: 'Module 3 — Prompting Techniques',
+      slug: 'prompting-techniques',
+      description: 'Master Zero-Shot, Few-Shot, Role Prompting, Step-by-Step Chain of Thought, and Reusable Templates.',
+      lessons: [
+        {
+          _id: 'prompt-les-12',
+          id: 'prompt-les-12',
+          courseId: 'prompt-engineering-course',
+          order: 12,
+          title: 'Lesson 12 — Zero-Shot Prompting',
+          slug: 'zero-shot-prompting',
+          description: 'Learn zero-shot prompting, when to use it, and simple classification or summarization examples.',
+          learningObjective: 'Execute zero-shot prompts for direct classification and text summarization.',
+          concept: 'Zero-shot prompting asks the model to perform a task without demonstration examples, relying on pre-trained knowledge.',
+          codeExample: 'Classify sentiment as Positive, Negative, or Neutral:\nFeedback: "The app crashes every time I upload a photo."',
+          expectedOutput: 'Negative',
+          starterCode: 'Classify the sentiment of this text into [Positive, Negative, Neutral]: "I love how fast the app loads!"',
+          practiceTask: {
+            title: 'Zero-Shot Classification Task',
+            description: 'Create a zero-shot classification or summarization prompt.',
+            requirements: ['Specify classification labels', 'Provide input text', 'Ask for single-word or concise label output'],
+            starterCode: 'Classify the technical difficulty of this topic into [Beginner, Intermediate, Advanced]: "Building a custom Garbage Collector in C++."',
+            expectedOutput: 'Zero-shot classification prompt.'
+          }
+        },
+        {
+          _id: 'prompt-les-13',
+          id: 'prompt-les-13',
+          courseId: 'prompt-engineering-course',
+          order: 13,
+          title: 'Lesson 13 — One-Shot & Few-Shot Prompting',
+          slug: 'one-shot-and-few-shot-prompting',
+          description: 'Master example-based prompting by demonstrating input-output patterns before asking for the final result.',
+          learningObjective: 'Provide input-output demonstration pairs to steer complex formatting and classification.',
+          concept: 'Few-shot prompting provides demonstration examples in the prompt to teach the AI a specific pattern or output format.',
+          codeExample: 'Convert product names to slugs:\nInput: "Full Stack Course" -> Output: full-stack-course\nInput: "React Native App" -> Output: react-native-app\n\nInput: "Prompt Engineering Mastery" ->',
+          expectedOutput: 'prompt-engineering-mastery',
+          starterCode: 'Convert customer feedback into JSON:\n\nInput: "Great product!" -> {"rating": 5}\nInput: "Broke immediately" -> {"rating": 1}\n\nInput: "It works okay" ->',
+          practiceTask: {
+            title: 'Few-Shot Example Demonstration Task',
+            description: 'Build a few-shot prompt with 3 clear input/output examples demonstrating a target transformation.',
+            requirements: ['Include at least 2 demonstration examples', 'Use consistent Input -> Output pattern', 'Provide target input at the end'],
+            starterCode: 'Convert feedback to JSON:\nInput: "Great!" -> {"rating": 5}\nInput: "Bad!" -> {"rating": 1}\nInput: "Okay" ->',
+            expectedOutput: 'Few-shot prompt demonstrating JSON conversion.'
+          }
+        },
+        {
+          _id: 'prompt-les-14',
+          id: 'prompt-les-14',
+          courseId: 'prompt-engineering-course',
+          order: 14,
+          title: 'Lesson 14 — Role Prompting',
+          slug: 'advanced-role-prompting',
+          description: 'Compare perspectives across different professional personas for audience-tailored communication.',
+          learningObjective: 'Prompt AI to analyze and communicate the same problem from multiple expert roles.',
+          concept: 'Role prompting generates multi-perspective analysis by asking different expert roles to evaluate a problem.',
+          codeExample: 'Explain serverless computing from 3 perspectives:\n1. Software Engineer (code & scaling)\n2. CFO (cost & billing)\n3. Security Lead (data protection)',
+          expectedOutput: 'Three distinct perspectives on serverless architecture.',
+          starterCode: 'Explain database indexing from the perspective of: 1. Developer 2. DBA 3. Financial Manager.',
+          practiceTask: {
+            title: 'Multi-Perspective Persona Task',
+            description: 'Ask AI to explain a technical topic from three distinct professional perspectives.',
+            requirements: ['Identify 3 distinct roles', 'Specify key focus area for each role', 'Compare outputs in bullet points'],
+            starterCode: 'Explain adopting AI tools in a company from the perspective of: 1. CTO 2. HR Manager 3. Engineer.',
+            expectedOutput: 'Prompt requesting 3 role perspectives.'
+          }
+        },
+        {
+          _id: 'prompt-les-15',
+          id: 'prompt-les-15',
+          courseId: 'prompt-engineering-course',
+          order: 15,
+          title: 'Lesson 15 — Step-by-Step Prompting',
+          slug: 'step-by-step-prompting',
+          description: 'Use Chain-of-Thought ("Think step by step") to break complex reasoning into sequential stages.',
+          learningObjective: 'Guide AI reasoning using Chain-of-Thought instructions for complex logic.',
+          concept: 'Chain-of-Thought (CoT) prompting instructs the model to break complex tasks into step-by-step reasoning before outputting the final answer.',
+          codeExample: 'Task: Solve this logic puzzle. Think step by step.\nStep 1: Identify given facts.\nStep 2: Eliminate invalid possibilities.\nStep 3: State conclusion.',
+          expectedOutput: 'Step-by-step logical reasoning leading to correct answer.',
+          starterCode: 'Refactor this function. Think step by step: 1. Identify bottlenecks 2. Write optimized code 3. Verify edge cases.',
+          practiceTask: {
+            title: 'Chain-of-Thought Reasoning Task',
+            description: 'Break a complex task into sequential steps using explicit step-by-step instructions.',
+            requirements: ['Include "Think step by step"', 'List sequential reasoning steps', 'Require explicit final conclusion'],
+            starterCode: 'Calculate project estimate. Think step by step: 1. Frontend hours 2. Backend hours 3. Add 20% buffer 4. State total.',
+            expectedOutput: 'Step-by-step chain of thought prompt.'
+          }
+        },
+        {
+          _id: 'prompt-les-16',
+          id: 'prompt-les-16',
+          courseId: 'prompt-engineering-course',
+          order: 16,
+          title: 'Lesson 16 — Prompt Templates',
+          slug: 'prompt-templates',
+          description: 'Design reusable, dynamic prompt templates using variable placeholders like [TOPIC] and [AUDIENCE].',
+          learningObjective: 'Create dynamic reusable prompt templates with variable placeholders.',
+          concept: 'A prompt template is a standardized prompt with variable placeholders (e.g. [TOPIC], [AUDIENCE], [FORMAT]) for repeatable outputs.',
+          codeExample: 'Template:\nAct as a [ROLE]. Explain [TOPIC] to a [AUDIENCE] in [NUMBER] bullet points. Use a [TONE] tone.',
+          expectedOutput: 'Reusable prompt template with dynamic variable slots.',
+          starterCode: 'Create a reusable prompt template for reviewing code: "Review the following [LANGUAGE] code snippet for [FOCUS_AREA]..."',
+          practiceTask: {
+            title: 'Reusable Template Creation Task',
+            description: 'Create three reusable prompt templates with clear variable placeholders.',
+            requirements: ['Use bracketed variables like [VARIABLE]', 'Define at least 3 variable slots', 'Provide instructions for template usage'],
+            starterCode: 'Template: Act as a [ROLE]. Generate a [CONTENT_TYPE] about [TOPIC] for [TARGET_AUDIENCE]. Include [CONSTRAINTS].',
+            expectedOutput: 'Parameterizable reusable prompt template.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'mod-prompt-4',
+      id: 'mod-prompt-4',
+      courseId: 'prompt-engineering-course',
+      order: 4,
+      title: 'Module 4 — Advanced Prompt Engineering',
+      slug: 'advanced-prompt-engineering',
+      description: 'Master iterative refinement, complex task decomposition, context window management, grounding, and structured JSON outputs.',
+      lessons: [
+        {
+          _id: 'prompt-les-17',
+          id: 'prompt-les-17',
+          courseId: 'prompt-engineering-course',
+          order: 17,
+          title: 'Lesson 17 — Iterative Prompting',
+          slug: 'iterative-prompting',
+          description: 'Apply systematic refinement: Prompt → Output → Review → Improve → Test to perfect output accuracy.',
+          learningObjective: 'Refine prompts systematically across multiple test iterations to reach target accuracy.',
+          concept: 'Iterative prompting evaluates output weaknesses, adds targeted constraints, and re-tests until outputs are 100% reliable.',
+          codeExample: 'Iteration 1: "Summarize article."\nIteration 2: "Summarize article in 3 bullets."\nIteration 3: "Summarize article in 3 bullets including numerical metrics. Do not include intro text."',
+          expectedOutput: 'Systematically refined master prompt.',
+          starterCode: 'Write a prompt, critique its first output, and refine it to add missing negative constraints.',
+          practiceTask: {
+            title: 'Prompt Iteration Project',
+            description: 'Improve the same prompt through three documented iterations based on feedback.',
+            requirements: ['Document Version 1, 2, and 3', 'Explain what was improved in each step', 'Final version must include strict constraints'],
+            starterCode: 'Version 1: Summarize feedback.\nVersion 2: Summarize feedback in 3 bullets.\nVersion 3: Summarize feedback in 3 bullets focusing only on bug reports.',
+            expectedOutput: 'Documented 3-stage iterative prompt improvement.'
+          }
+        },
+        {
+          _id: 'prompt-les-18',
+          id: 'prompt-les-18',
+          courseId: 'prompt-engineering-course',
+          order: 18,
+          title: 'Lesson 18 — Handling Complex Tasks',
+          slug: 'handling-complex-tasks',
+          description: 'Decompose massive multi-part projects into modular sub-prompts and sub-tasks.',
+          learningObjective: 'Decompose complex real-world tasks into sequential sub-prompt workflows.',
+          concept: 'Task Decomposition breaks large projects into manageable sub-tasks executed sequentially across sub-prompts.',
+          codeExample: 'Sub-Prompt 1: Generate database schema.\nSub-Prompt 2: Write API controllers based on Schema 1.\nSub-Prompt 3: Generate unit tests for Controllers 2.',
+          expectedOutput: 'Decomposed multi-prompt pipeline.',
+          starterCode: 'Break down the creation of a mobile app landing page into 3 sub-prompt stages: Copywriting -> Design Specs -> React Code.',
+          practiceTask: {
+            title: 'Task Decomposition Task',
+            description: 'Break a complex real-world task into smaller sequential prompting steps.',
+            requirements: ['Define overall project goal', 'Divide into at least 3 sequential sub-prompts', 'Show how output of Step 1 feeds Step 2'],
+            starterCode: 'Step 1: Extract customer complaints.\nStep 2: Generate technical bug tickets from Step 1.\nStep 3: Draft customer email updates from Step 2.',
+            expectedOutput: 'Multi-stage sub-prompt task breakdown.'
+          }
+        },
+        {
+          _id: 'prompt-les-19',
+          id: 'prompt-les-19',
+          courseId: 'prompt-engineering-course',
+          order: 19,
+          title: 'Lesson 19 — Context Management',
+          slug: 'context-management',
+          description: 'Manage token context limits, summarize long chat transcripts, and preserve critical instructions.',
+          learningObjective: 'Manage long conversations and summarize context without losing core constraints.',
+          concept: 'Context Management periodically summarizes conversation state and injects explicit memory blocks to fit token limits.',
+          codeExample: 'Context Summary:\n- User: Alex (React Native Dev)\n- Project: CrackWithAI App\n- Current Task: Prompt Engineering Course\n- Established Rules: Must return clean TypeScript code.',
+          expectedOutput: 'Concise context summary block preserving essential state.',
+          starterCode: 'Compress a long customer conversation into a concise 4-bullet context summary for an AI support agent.',
+          practiceTask: {
+            title: 'Context Compression Task',
+            description: 'Convert a long conversation into a concise, high-value context summary block.',
+            requirements: ['Identify core facts', 'Eliminate conversational noise', 'Format as clean memory block'],
+            starterCode: 'Summarize discussion into key context:\n- User Goal: Add Prompt Engineering course\n- Total Lessons: 25\n- Tech Stack: React Native + Node.js',
+            expectedOutput: 'Compact context summary block.'
+          }
+        },
+        {
+          _id: 'prompt-les-20',
+          id: 'prompt-les-20',
+          courseId: 'prompt-engineering-course',
+          order: 20,
+          title: 'Lesson 20 — Grounding & Hallucination Handling',
+          slug: 'grounding-and-hallucination-handling',
+          description: 'Prevent AI hallucinations by enforcing grounding rules ("Answer ONLY from provided reference text").',
+          learningObjective: 'Write grounded prompts that restrict AI answers strictly to provided reference documents.',
+          concept: 'Grounding forces the model to base responses strictly on provided reference text, prohibiting external speculation.',
+          codeExample: 'Grounding Rule:\nAnswer the question using ONLY the provided text below. If the answer is not contained in the text, respond with "I cannot answer based on the provided information."',
+          expectedOutput: 'Strictly grounded answer or explicit fallback message.',
+          starterCode: 'Reference Text: [Company Refund Policy: Refunds allowed within 14 days]. Question: Can I get a refund after 30 days? Rule: Answer ONLY from reference text.',
+          practiceTask: {
+            title: 'Grounded Prompting Task',
+            description: 'Give AI reference text and instruct it to answer ONLY from that text with strict fallback guardrails.',
+            requirements: ['Provide explicit reference text', 'Include "Answer ONLY from provided text"', 'Set mandatory fallback rule if information is missing'],
+            starterCode: 'Reference: [Shipping takes 3-5 business days.] Question: Do you ship internationally? Rule: Answer strictly from reference text or say "Information not provided."',
+            expectedOutput: 'Grounded prompt with hallucination guardrails.'
+          }
+        },
+        {
+          _id: 'prompt-les-21',
+          id: 'prompt-les-21',
+          courseId: 'prompt-engineering-course',
+          order: 21,
+          title: 'Lesson 21 — Structured Outputs',
+          slug: 'structured-outputs-json',
+          description: 'Extract data into validated JSON schemas without conversational preamble.',
+          learningObjective: 'Extract structured information and force AI to output strict JSON schemas.',
+          concept: 'Structured prompting enforces exact key names, data types, and clean raw JSON delivery for programmatic parsing.',
+          codeExample: 'Extract customer data and return ONLY raw JSON:\n{\n  "name": "string",\n  "issueType": "billing | technical | shipping",\n  "urgent": true\n}',
+          expectedOutput: 'Raw JSON string parseable by JSON.parse()',
+          starterCode: 'Extract info from email: "My order #1234 is delayed." Return strictly JSON: {"orderId": "string", "issue": "string"}.',
+          practiceTask: {
+            title: 'Structured JSON Extraction Task',
+            description: 'Extract information from a customer email and return it as a structured JSON object.',
+            requirements: ['Define exact JSON keys and types', 'Prohibit conversational preamble text', 'Verify JSON syntax validity'],
+            starterCode: 'Extract data from: "Cancel my account user@test.com immediately." Return ONLY JSON: {"action": "cancel", "email": "user@test.com"}.',
+            expectedOutput: 'Structured JSON prompt task.'
+          }
+        }
+      ]
+    },
+    {
+      _id: 'mod-prompt-5',
+      id: 'mod-prompt-5',
+      courseId: 'prompt-engineering-course',
+      order: 5,
+      title: 'Module 5 — Real-World Prompt Engineering',
+      slug: 'real-world-prompt-engineering',
+      description: 'Apply prompt engineering to coding assistants, research synthesis, business automation, and the Final Project.',
+      lessons: [
+        {
+          _id: 'prompt-les-22',
+          id: 'prompt-les-22',
+          courseId: 'prompt-engineering-course',
+          order: 22,
+          title: 'Lesson 22 — Coding Prompts',
+          slug: 'coding-prompts',
+          description: 'Craft professional developer prompts specifying language version, framework, edge cases, and unit tests.',
+          learningObjective: 'Create professional technical prompts for code generation, refactoring, and test writing.',
+          concept: 'Coding prompts require technical specificity: exact programming language, framework version, error handling, edge cases, and tests.',
+          codeExample: 'Act as a Senior React Native Developer. Write a custom hook useDebounce(value, delay) in TypeScript with JSDoc comments.',
+          expectedOutput: 'Production-ready TypeScript useDebounce hook.',
+          starterCode: 'Act as a Node.js Developer. Write an Express controller endpoint for fetching user profiles with try/catch error handling.',
+          practiceTask: {
+            title: 'Technical Coding Prompt Task',
+            description: 'Create a professional coding-assistant prompt for generating a REST API endpoint.',
+            requirements: ['Specify programming language & framework', 'Include error handling requirements', 'Require clean code with types'],
+            starterCode: 'Act as a Senior Backend Engineer. Write a Python FastAPI endpoint for user registration with Pydantic model validation.',
+            expectedOutput: 'Professional coding assistant prompt.'
+          }
+        },
+        {
+          _id: 'prompt-les-23',
+          id: 'prompt-les-23',
+          courseId: 'prompt-engineering-course',
+          order: 23,
+          title: 'Lesson 23 — Research & Content Prompts',
+          slug: 'research-and-content-prompts',
+          description: 'Construct prompts for factual research synthesis, competitive analysis, and objective content summaries.',
+          learningObjective: 'Craft prompts for objective research synthesis and evidence-backed content creation.',
+          concept: 'Research prompts structure source materials, demand objective comparisons, and prohibit unverified claims.',
+          codeExample: 'Act as a Market Analyst. Synthesize 3 competitor product descriptions into a markdown comparison table.',
+          expectedOutput: 'Structured competitive analysis table.',
+          starterCode: 'Act as a Technology Researcher. Compare SQL vs NoSQL databases in 3 categories: Data Structure, Scalability, and Use Cases.',
+          practiceTask: {
+            title: 'Research Synthesis Prompt Task',
+            description: 'Create a research assistant prompt requesting comparative market analysis.',
+            requirements: ['Role: Market Researcher', 'Format: Markdown Comparison Table', 'Constraint: Objective, evidence-backed claims'],
+            starterCode: 'Act as an AI Research Analyst. Compare REST API vs GraphQL in a table with columns: Protocol, Flexibility, Performance, Best For.',
+            expectedOutput: 'Research assistant synthesis prompt.'
+          }
+        },
+        {
+          _id: 'prompt-les-24',
+          id: 'prompt-les-24',
+          courseId: 'prompt-engineering-course',
+          order: 24,
+          title: 'Lesson 24 — Business & Productivity Prompts',
+          slug: 'business-and-productivity-prompts',
+          description: 'Automate business workflows including meeting summaries, customer support triage, and executive briefs.',
+          learningObjective: 'Automate business communication, email drafting, and meeting action-item extraction.',
+          concept: 'Business prompts turn raw transcripts into executive summaries and action item lists.',
+          codeExample: 'Act as an Executive Assistant. Turn meeting notes into an Executive Summary and Action Item List with assigned owners.',
+          expectedOutput: 'Clean executive brief and action item table.',
+          starterCode: 'Convert this customer email into a professional, empathetic customer support reply acknowledging the issue and providing next steps.',
+          practiceTask: {
+            title: 'Business Automation Prompt Task',
+            description: 'Convert a customer support email into structured internal ticket information and customer reply.',
+            requirements: ['Extract ticket metadata (Issue, Severity)', 'Draft professional customer response', 'Format clearly with sections'],
+            starterCode: 'Act as a Customer Support Lead. Process customer email: "App crashed during payment." 1. Categorize Severity 2. Draft empathetic reply.',
+            expectedOutput: 'Business productivity prompt for support triage.'
+          }
+        },
+        {
+          _id: 'prompt-les-25',
+          id: 'prompt-les-25',
+          courseId: 'prompt-engineering-course',
+          order: 25,
+          title: 'Lesson 25 — Final Prompt Engineering Project',
+          slug: 'final-prompt-engineering-project',
+          description: 'Build a complete AI Customer Support Assistant prompt system incorporating all 5 modules.',
+          learningObjective: 'Build and deploy a complete production-grade AI Customer Support Assistant master prompt system.',
+          concept: 'Synthesize everything you have learned across all 5 modules into a production-grade AI Customer Support Assistant Master Prompt System: Role, Task, Context, Constraints, Format, Few-Shot Examples, Error Handling, and Reusable Structure.',
+          codeExample: '/* FINAL PROJECT MASTER PROMPT SYSTEM */\n[ROLE] Act as CrackWithAI Lead Support Specialist.\n[TASK] Handle student course inquiries and technical support.\n[CONTEXT] Store Policies: Course access is lifetime. Certificates require 100% completion.\n[CONSTRAINTS] Be polite and encouraging. Answer ONLY from store policies. Never fabricate refund promises.\n[FORMAT] Return JSON: {"ticketId": "string", "issueType": "string", "customerReply": "string"}\n[EXAMPLES]\nInput: "Where is my certificate?" -> Output: {"ticketId": "CERT-01", "issueType": "certificate", "customerReply": "Complete all 25 lessons to unlock your certificate!"}',
+          expectedOutput: 'Complete production-ready AI Customer Support Assistant prompt system.',
+          starterCode: 'Build your Final Project Master Prompt System combining Role, Task, Context, Constraints, Format, Few-Shot Example, and Grounding Rules for an AI Support Assistant.',
+          practiceTask: {
+            title: 'Final Master Prompt System Project',
+            description: 'Build a complete AI Customer Support Assistant prompt system incorporating all 5 module techniques.',
+            requirements: [
+              'Include Role (AI Support Specialist)',
+              'Include Task & Context (Support rules & policies)',
+              'Include Constraints (Negative rules & grounding)',
+              'Include Output Format (JSON or structured markdown)',
+              'Include Few-Shot Example',
+              'Include Fallback Instructions'
+            ],
+            starterCode: '/* FINAL PROJECT MASTER PROMPT */\n[ROLE] Act as CrackWithAI Lead Support Agent.\n[TASK] Process customer inquiry and draft response.\n[CONTEXT] Policies: Lifetime course access. Refund within 14 days.\n[CONSTRAINTS] Answer ONLY from context. No false promises.\n[OUTPUT] Return JSON: {"category": "string", "response": "string"}\n[EXAMPLE] Input: "Can I get refund?" -> {"category": "refund", "response": "Refunds are processed within 14 days of purchase."}',
+            expectedOutput: 'Completed Master Prompt Engineering Final Project.'
+          }
+        }
+      ]
+    }
+  ]
+};
+
 /**
  * Returns the exact tailored course curriculum object for any selected technology.
  */
@@ -3423,6 +4026,10 @@ export function getCourseForTech(techId: string | null): HtmlCourse {
     case 'capstone':
     case 'finalproject':
       return FALLBACK_CAPSTONE_COURSE;
+    case 'prompt':
+    case 'promptengineering':
+    case 'prompt-engineering':
+      return FALLBACK_PROMPT_ENGINEERING_COURSE;
     case 'html':
     default:
       return FALLBACK_HTML_COURSE;
@@ -3440,7 +4047,9 @@ export function getFallbackLessonById(id: string): HtmlLesson | undefined {
     ...FALLBACK_MONGO_COURSE.modules.flatMap(m => m.lessons),
     ...FALLBACK_REST_COURSE.modules.flatMap(m => m.lessons),
     ...FALLBACK_AUTH_COURSE.modules.flatMap(m => m.lessons),
-    ...FALLBACK_CAPSTONE_COURSE.modules.flatMap(m => m.lessons)
+    ...FALLBACK_CAPSTONE_COURSE.modules.flatMap(m => m.lessons),
+    ...FALLBACK_PROMPT_ENGINEERING_COURSE.modules.flatMap(m => m.lessons)
   ];
   return allLessons.find(l => l._id === id || l.id === id || l.slug === id);
 }
+

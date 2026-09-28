@@ -89,12 +89,12 @@ export const FullStackOverviewScreen = () => {
         </TouchableOpacity>
 
         {/* ==================================================
-            CARD 2: PROMPT ENGINEERING (MINIMALIST PREMIUM)
+            CARD 2: PROMPT ENGINEERING (ACTIVE & PLAYABLE)
             ================================================== */}
         <TouchableOpacity
           style={styles.promptCard}
           activeOpacity={0.92}
-          onPress={() => handleComingSoon('Prompt Engineering')}
+          onPress={() => navigation.navigate('HtmlCourse', { tech: 'prompt-engineering' })}
         >
           <View style={[styles.cardLogoBox, { backgroundColor: '#EDE9FE' }]}>
             <Icon name="sparkles" size={26} color="#7C3AED" />
@@ -105,10 +105,10 @@ export const FullStackOverviewScreen = () => {
           <TouchableOpacity
             style={styles.promptBtnPill}
             activeOpacity={0.85}
-            onPress={() => handleComingSoon('Prompt Engineering')}
+            onPress={() => navigation.navigate('HtmlCourse', { tech: 'prompt-engineering' })}
           >
-            <Icon name="clock" size={14} color="#FFFFFF" />
-            <Text style={styles.btnPillText}>Coming Soon</Text>
+            <Text style={styles.btnPillText}>Explore Course</Text>
+            <Icon name="arrow-right" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </TouchableOpacity>
 
