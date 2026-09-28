@@ -36,6 +36,8 @@ import { FullStackCertificateScreen } from '../screens/certificates/FullStackCer
 import { CertificateVerificationScreen } from '../screens/certificates/CertificateVerificationScreen';
 import { PromptEngineeringScreen } from '../screens/prompt/PromptEngineeringScreen';
 import { PromptStageDetailScreen } from '../screens/prompt/PromptStageDetailScreen';
+import { ContextEngineeringScreen } from '../screens/context/ContextEngineeringScreen';
+import { ContextStageDetailScreen } from '../screens/context/ContextStageDetailScreen';
 
 type RootStackParams = ParamListBase;
 const Stack = createNativeStackNavigator<RootStackParams>();
@@ -91,6 +93,8 @@ export const RootNavigator = () => {
           <Stack.Screen name="CertificateVerification" component={CertificateVerificationScreen} />
           <Stack.Screen name="PromptEngineering" component={PromptEngineeringScreen} />
           <Stack.Screen name="PromptStageDetail" component={PromptStageDetailScreen} />
+          <Stack.Screen name="ContextEngineering" component={ContextEngineeringScreen} />
+          <Stack.Screen name="ContextStageDetail" component={ContextStageDetailScreen} />
         </Stack.Group>
       )}
     </Stack.Navigator>

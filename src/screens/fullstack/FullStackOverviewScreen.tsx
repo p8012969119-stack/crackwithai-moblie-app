@@ -118,7 +118,7 @@ export const FullStackOverviewScreen = () => {
         <TouchableOpacity
           style={styles.contextCard}
           activeOpacity={0.92}
-          onPress={() => handleComingSoon('Context Engineering')}
+          onPress={() => navigation.navigate('ContextEngineering')}
         >
           <View style={[styles.cardLogoBox, { backgroundColor: '#E0F2FE' }]}>
             <Icon name="database" size={26} color="#0284C7" />
@@ -129,10 +129,10 @@ export const FullStackOverviewScreen = () => {
           <TouchableOpacity
             style={styles.contextBtnPill}
             activeOpacity={0.85}
-            onPress={() => handleComingSoon('Context Engineering')}
+            onPress={() => navigation.navigate('ContextEngineering')}
           >
-            <Icon name="clock" size={14} color="#FFFFFF" />
-            <Text style={styles.btnPillText}>Coming Soon</Text>
+            <Text style={styles.btnPillText}>Explore Course</Text>
+            <Icon name="arrow-right" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </TouchableOpacity>
 
