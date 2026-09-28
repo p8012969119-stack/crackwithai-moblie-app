@@ -199,93 +199,115 @@ export const PromptEngineeringScreen: React.FC = () => {
 
         {/* Guided Learning Journey Section Header */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionHeadingTitle}>Guided Learning Journey</Text>
-          <Text style={styles.sectionHeadingSub}>12 Interactive Lessons · Tap any lesson to start</Text>
+          <Text style={styles.sectionHeadingTitle}>12-Lesson Guided Roadmap</Text>
+          <Text style={styles.sectionHeadingSub}>Select any lesson to learn techniques & test in live practice space</Text>
         </View>
 
-        {/* 12 Stage Cards Stack */}
+        {/* 12 Stage Cards Stack grouped by Modules */}
         <View style={styles.stageCardsStack}>
-          {PROMPT_STAGES.map((stg) => {
-            const isCompleted = completedStageIds.includes(stg.id);
-            const isActive = activeStageId === stg.id;
-            const stageNumFormatted = stg.id < 10 ? `0${stg.id}` : `${stg.id}`;
+          {[
+            {
+              moduleTitle: 'MODULE 1 — BEGINNER FOUNDATIONS',
+              moduleSub: 'Lessons 1 to 4 · Personas, Constraints, Audience & Tables',
+              themeColor: '#059669',
+              badgeBg: '#DCFCE7',
+              cardBg: '#F0FDF4',
+              borderColor: '#A7F3D0',
+              lessons: PROMPT_STAGES.filter((s) => s.difficulty === 'Beginner')
+            },
+            {
+              moduleTitle: 'MODULE 2 — INTERMEDIATE PROMPTING',
+              moduleSub: 'Lessons 5 to 8 · Few-Shot Examples, Summarization, Tone & Brainstorming',
+              themeColor: '#1D4ED8',
+              badgeBg: '#DBEAFE',
+              cardBg: '#EFF6FF',
+              borderColor: '#BFDBFE',
+              lessons: PROMPT_STAGES.filter((s) => s.difficulty === 'Intermediate')
+            },
+            {
+              moduleTitle: 'MODULE 3 — ADVANCED ENGINEERING',
+              moduleSub: 'Lessons 9 to 12 · Chain-of-Thought, Guardrails, Meta-Prompts & Code',
+              themeColor: '#6D28D9',
+              badgeBg: '#EDE9FE',
+              cardBg: '#F5F3FF',
+              borderColor: '#DDD6FE',
+              lessons: PROMPT_STAGES.filter((s) => s.difficulty === 'Advanced')
+            }
+          ].map((moduleGroup, modIdx) => (
+            <View key={`module-group-${modIdx}`} style={styles.moduleBlock}>
+              {/* Module Banner Header */}
+              <View style={[styles.moduleHeaderBanner, { borderLeftColor: moduleGroup.themeColor }]}>
+                <Text style={[styles.moduleHeaderTitle, { color: moduleGroup.themeColor }]}>
+                  {moduleGroup.moduleTitle}
+                </Text>
+                <Text style={styles.moduleHeaderSub}>{moduleGroup.moduleSub}</Text>
+              </View>
 
-            const badgeBg =
-              stg.difficulty === 'Beginner'
-                ? '#DCFCE7'
-                : stg.difficulty === 'Intermediate'
-                ? '#DBEAFE'
-                : '#EDE9FE';
-            const badgeTextColor =
-              stg.difficulty === 'Beginner'
-                ? '#059669'
-                : stg.difficulty === 'Intermediate'
-                ? '#1D4ED8'
-                : '#6D28D9';
+              {/* Lessons List */}
+              {moduleGroup.lessons.map((stg) => {
+                const isCompleted = completedStageIds.includes(stg.id);
+                const isActive = activeStageId === stg.id;
+                const stageNumFormatted = stg.id < 10 ? `0${stg.id}` : `${stg.id}`;
 
-            return (
-              <TouchableOpacity
-                key={`stage-${stg.id}`}
-                style={[
-                  styles.stageCard,
-                  isActive && styles.stageCardActive,
-                  isCompleted && styles.stageCardCompleted
-                ]}
-                activeOpacity={0.88}
-                onPress={() => handleOpenStage(stg.id)}
-              >
-                {/* Number Circle Badge */}
-                <View style={[
-                  styles.numCircle,
-                  isCompleted && styles.numCircleCompleted,
-                  isActive && !isCompleted && styles.numCircleActive
-                ]}>
-                  {isCompleted ? (
-                    <Icon name="check" size={14} color="#FFFFFF" />
-                  ) : (
-                    <Text style={[
-                      styles.numCircleText,
-                      isActive && styles.numCircleTextActive
-                    ]}>
-                      {stageNumFormatted}
-                    </Text>
-                  )}
-                </View>
+                return (
+                  <TouchableOpacity
+                    key={`stage-${stg.id}`}
+                    style={[
+                      styles.colorStageCard,
+                      { backgroundColor: moduleGroup.cardBg, borderColor: moduleGroup.borderColor },
+                      isActive && { borderColor: moduleGroup.themeColor, borderWidth: 2 },
+                      isCompleted && { opacity: 0.95 }
+                    ]}
+                    activeOpacity={0.88}
+                    onPress={() => handleOpenStage(stg.id)}
+                  >
+                    {/* Left Color Accent Bar */}
+                    <View style={[styles.cardLeftBar, { backgroundColor: moduleGroup.themeColor }]} />
 
-                {/* Stage Info */}
-                <View style={styles.stageInfoBox}>
-                  <View style={styles.stageMetaRow}>
-                    <View style={[styles.diffBadge, { backgroundColor: badgeBg }]}>
-                      <Text style={[styles.diffBadgeText, { color: badgeTextColor }]}>
-                        {stg.difficulty}
-                      </Text>
+                    <View style={styles.cardInnerContent}>
+                      {/* Top Row: Number & Status */}
+                      <View style={styles.cardTopRow}>
+                        <View style={[styles.numBadgePill, { backgroundColor: moduleGroup.badgeBg }]}>
+                          <Text style={[styles.numBadgeText, { color: moduleGroup.themeColor }]}>
+                            LESSON {stageNumFormatted}
+                          </Text>
+                        </View>
+
+                        <View style={styles.stageMetaRow}>
+                          <View style={[styles.diffBadge, { backgroundColor: moduleGroup.badgeBg }]}>
+                            <Text style={[styles.diffBadgeText, { color: moduleGroup.themeColor }]}>
+                              {stg.category}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Title & Subtitle */}
+                      <Text style={styles.stageTitleText}>{stg.title}</Text>
+                      <Text style={styles.stageSubtitleText} numberOfLines={2}>{stg.subtitle}</Text>
+
+                      {/* Bottom Footer Action */}
+                      <View style={styles.cardBottomRow}>
+                        <View style={[
+                          styles.statusPill,
+                          isCompleted && { backgroundColor: '#10B981' },
+                          isActive && !isCompleted && { backgroundColor: moduleGroup.themeColor }
+                        ]}>
+                          <Text style={[
+                            styles.statusPillText,
+                            (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' }
+                          ]}>
+                            {isCompleted ? 'Completed ✓' : isActive ? 'In Progress ⚡' : 'Start Lesson ▶'}
+                          </Text>
+                        </View>
+                        <Icon name="chevron-right" size={18} color={moduleGroup.themeColor} />
+                      </View>
                     </View>
-                    <Text style={styles.stageBadgeTag}>{stg.category}</Text>
-                  </View>
-                  <Text style={styles.stageTitleText}>{stg.title}</Text>
-                  <Text style={styles.stageSubtitleText} numberOfLines={2}>{stg.subtitle}</Text>
-                </View>
-
-                {/* Action Arrow */}
-                <View style={styles.stageRightCol}>
-                  <View style={[
-                    styles.statusPill,
-                    isCompleted && styles.statusPillCompleted,
-                    isActive && !isCompleted && styles.statusPillActive
-                  ]}>
-                    <Text style={[
-                      styles.statusPillText,
-                      isCompleted && styles.statusPillTextCompleted,
-                      isActive && !isCompleted && styles.statusPillTextActive
-                    ]}>
-                      {isCompleted ? 'Done' : isActive ? 'Active' : 'Start'}
-                    </Text>
-                  </View>
-                  <Icon name="chevron-right" size={18} color="#94A3B8" />
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
         </View>
       </ScrollView>
 
@@ -434,21 +456,77 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   stageCardsStack: {
-    gap: 14,
+    gap: 20,
   },
-  stageCard: {
+  moduleBlock: {
+    gap: 12,
+  },
+  moduleHeaderBanner: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderLeftWidth: 4,
+    borderRadius: 12,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  moduleHeaderTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  moduleHeaderSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  colorStageCard: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
+  },
+  cardLeftBar: {
+    width: 6,
+  },
+  cardInnerContent: {
+    flex: 1,
+    padding: 14,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  numBadgePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  numBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  cardBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.04)',
   },
   stageCardActive: {
     borderColor: '#5653FE',

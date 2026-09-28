@@ -38,6 +38,7 @@ export const PromptStageDetailScreen: React.FC = () => {
 
   const stageIdParam = route.params?.stageId || 1;
   const [currentStageId, setCurrentStageId] = useState<number>(Number(stageIdParam));
+  const [activeTab, setActiveTab] = useState<'learn' | 'practice'>('learn');
   const [promptText, setPromptText] = useState<string>('');
   const [testing, setTesting] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -59,6 +60,7 @@ export const PromptStageDetailScreen: React.FC = () => {
     setShowErrorCard(false);
     setSubmissionFeedback(null);
     setCopied(false);
+    setActiveTab('learn');
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   }, [currentStageId, currentStage]);
 
@@ -163,18 +165,12 @@ export const PromptStageDetailScreen: React.FC = () => {
   const isFirstStage = currentStageId <= 1;
   const isLastStage = currentStageId >= 12;
 
-  const badgeBg =
+  const themeColors =
     currentStage.difficulty === 'Beginner'
-      ? '#DCFCE7'
+      ? { headerBg: '#DCFCE7', headerText: '#059669', cardBg: '#F0FDF4', border: '#A7F3D0' }
       : currentStage.difficulty === 'Intermediate'
-      ? '#DBEAFE'
-      : '#EDE9FE';
-  const badgeTextColor =
-    currentStage.difficulty === 'Beginner'
-      ? '#059669'
-      : currentStage.difficulty === 'Intermediate'
-      ? '#1D4ED8'
-      : '#6D28D9';
+      ? { headerBg: '#DBEAFE', headerText: '#1D4ED8', cardBg: '#EFF6FF', border: '#BFDBFE' }
+      : { headerBg: '#EDE9FE', headerText: '#6D28D9', cardBg: '#F5F3FF', border: '#DDD6FE' };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -198,12 +194,37 @@ export const PromptStageDetailScreen: React.FC = () => {
         </View>
 
         <View style={styles.topBarRight}>
-          <View style={[styles.stageTagPill, { backgroundColor: badgeBg }]}>
-            <Text style={[styles.stageTagPillText, { color: badgeTextColor }]}>
+          <View style={[styles.stageTagPill, { backgroundColor: themeColors.headerBg }]}>
+            <Text style={[styles.stageTagPillText, { color: themeColors.headerText }]}>
               {currentStage.difficulty}
             </Text>
           </View>
         </View>
+      </View>
+
+      {/* Mode Segment Switcher (Learn vs Practice) */}
+      <View style={styles.segmentContainer}>
+        <TouchableOpacity
+          style={[styles.segmentBtn, activeTab === 'learn' && styles.segmentBtnActive]}
+          onPress={() => setActiveTab('learn')}
+          activeOpacity={0.8}
+        >
+          <Icon name="book-open" size={15} color={activeTab === 'learn' ? '#5653FE' : '#64748B'} />
+          <Text style={[styles.segmentBtnText, activeTab === 'learn' && styles.segmentBtnTextActive]}>
+            1. Learn Technique
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.segmentBtn, activeTab === 'practice' && styles.segmentBtnActive]}
+          onPress={() => setActiveTab('practice')}
+          activeOpacity={0.8}
+        >
+          <Icon name="terminal" size={15} color={activeTab === 'practice' ? '#5653FE' : '#64748B'} />
+          <Text style={[styles.segmentBtnText, activeTab === 'practice' && styles.segmentBtnTextActive]}>
+            2. Practice & Test
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -212,198 +233,235 @@ export const PromptStageDetailScreen: React.FC = () => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Lesson Overview Banner Card */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroHeaderRow}>
-            <View style={styles.heroTagBadge}>
-              <Text style={styles.heroTagBadgeText}>{currentStage.category}</Text>
+        {/* TAB 1: LEARN & COMPARE */}
+        {activeTab === 'learn' && (
+          <View style={styles.tabContentBlock}>
+            {/* Lesson Overview Banner Card */}
+            <View style={[styles.heroCard, { backgroundColor: themeColors.cardBg, borderColor: themeColors.border }]}>
+              <View style={styles.heroHeaderRow}>
+                <View style={[styles.heroTagBadge, { backgroundColor: themeColors.headerBg }]}>
+                  <Text style={[styles.heroTagBadgeText, { color: themeColors.headerText }]}>
+                    {currentStage.category}
+                  </Text>
+                </View>
+                <Text style={styles.heroBadgeNum}>{currentStage.badge}</Text>
+              </View>
+              <Text style={styles.heroTitle}>{currentStage.title}</Text>
+              <Text style={[styles.heroConceptText, { color: themeColors.headerText }]}>
+                Concept: {currentStage.concept}
+              </Text>
+              <Text style={styles.heroDesc}>{currentStage.explanation}</Text>
             </View>
-            <Text style={styles.heroBadgeNum}>{currentStage.badge}</Text>
-          </View>
-          <Text style={styles.heroTitle}>{currentStage.title}</Text>
-          <Text style={styles.heroConceptText}>Concept: {currentStage.concept}</Text>
-          <Text style={styles.heroDesc}>{currentStage.explanation}</Text>
-        </View>
 
-        {/* 1. User's Raw Idea (Muted Gray Container) */}
-        <View style={styles.rawIdeaContainer}>
-          <View style={styles.rawIdeaHeaderRow}>
-            <Icon name="user" size={15} color="#475569" />
-            <Text style={styles.rawIdeaHeaderTitle}>USER'S RAW IDEA</Text>
-          </View>
-          <Text style={styles.rawIdeaText}>"{currentStage.user_raw_idea}"</Text>
-        </View>
-
-        {/* 2. Engineered Perfect Prompt (Distinct Highlighted Code Card) */}
-        <View style={styles.engineeredPromptCard}>
-          <View style={styles.engineeredHeaderRow}>
-            <Icon name="sparkles" size={15} color="#38BDF8" />
-            <Text style={styles.engineeredHeaderTitle}>ENGINEERED PERFECT PROMPT</Text>
-          </View>
-          <Text style={styles.engineeredPromptText}>{currentStage.engineered_prompt}</Text>
-        </View>
-
-        {/* 3. Large Thumb-Friendly Copy Prompt Button */}
-        <TouchableOpacity
-          style={[styles.copyBtn, copied && styles.copyBtnSuccess]}
-          activeOpacity={0.85}
-          onPress={handleCopyPrompt}
-        >
-          <Icon name={copied ? 'check' : 'copy'} size={18} color="#FFFFFF" />
-          <Text style={styles.copyBtnText}>
-            {copied ? 'Copied to Clipboard! ✓' : 'Copy Prompt to Clipboard'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* 4. Why It Works Highlight Box */}
-        <View style={styles.whyItWorksCard}>
-          <View style={styles.whyHeaderRow}>
-            <Icon name="award" size={16} color="#D97706" />
-            <Text style={styles.whyHeaderTitle}>WHY IT WORKS</Text>
-          </View>
-          <Text style={styles.whyText}>{currentStage.why_it_works}</Text>
-        </View>
-
-        {/* 5. Interactive Practice Workspace */}
-        <View style={styles.workspaceCard}>
-          <View style={styles.workspaceHeaderRow}>
-            <View style={styles.workspaceTitleRow}>
-              <Icon name="terminal" size={18} color="#5653FE" />
-              <Text style={styles.workspaceTitle}>Practice & AI Evaluation</Text>
+            {/* Step 1: User's Raw Idea (Vague Input) */}
+            <View style={styles.stepHeaderRow}>
+              <View style={styles.stepDotBadge}>
+                <Text style={styles.stepDotBadgeText}>1</Text>
+              </View>
+              <Text style={styles.stepSectionTitle}>The Vague Input vs Engineered Prompt</Text>
             </View>
+
+            <View style={styles.rawIdeaContainer}>
+              <View style={styles.rawIdeaHeaderRow}>
+                <Icon name="alert-circle" size={15} color="#E11D48" />
+                <Text style={styles.rawIdeaHeaderTitle}>❌ BEFORE: VAGUE RAW IDEA</Text>
+              </View>
+              <Text style={styles.rawIdeaText}>"{currentStage.user_raw_idea}"</Text>
+            </View>
+
+            {/* Step 2: Engineered Perfect Prompt (Distinct Highlighted Code Card) */}
+            <View style={styles.engineeredPromptCard}>
+              <View style={styles.engineeredHeaderRow}>
+                <Icon name="sparkles" size={15} color="#38BDF8" />
+                <Text style={styles.engineeredHeaderTitle}>⚡ AFTER: ENGINEERED PERFECT PROMPT</Text>
+              </View>
+              <Text style={styles.engineeredPromptText}>{currentStage.engineered_prompt}</Text>
+            </View>
+
+            {/* Step 3: Large Thumb-Friendly Copy Prompt Button */}
             <TouchableOpacity
-              onPress={() => setPromptText(currentStage.engineered_prompt)}
-              style={styles.resetBtn}
-            >
-              <Icon name="refresh-cw" size={13} color="#64748B" />
-              <Text style={styles.resetBtnText}>Reset Prompt</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.workspaceSub}>
-            Edit or experiment with the prompt below, then check quality or mark lesson complete.
-          </Text>
-
-          {/* Quick Snippet Toolbar */}
-          <View style={styles.snippetToolbarWrap}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.snippetScroll}>
-              {QUICK_SNIPPETS.map((item, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.snippetPill}
-                  onPress={() => handleInsertSnippet(item.snippet)}
-                >
-                  <Text style={styles.snippetPillText}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Text Area */}
-          <View style={styles.editorBox}>
-            <TextInput
-              style={styles.textInput}
-              multiline
-              value={promptText}
-              onChangeText={setPromptText}
-              placeholder="Write your prompt here..."
-              placeholderTextColor="#94A3B8"
-              autoCapitalize="none"
-              autoCorrect={false}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Action Control Buttons */}
-          <View style={styles.actionButtonsRow}>
-            <TouchableOpacity
-              style={styles.checkBtn}
-              activeOpacity={0.8}
-              onPress={handleCheckPrompt}
-              disabled={testing}
-            >
-              {testing ? (
-                <ActivityIndicator size="small" color="#5653FE" />
-              ) : (
-                <>
-                  <Icon name="search" size={15} color="#5653FE" />
-                  <Text style={styles.checkBtnText}>Check Prompt</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
+              style={[styles.copyBtn, copied && styles.copyBtnSuccess]}
               activeOpacity={0.85}
-              disabled={submitting}
-              onPress={handleSubmitStage}
+              onPress={handleCopyPrompt}
             >
-              {submitting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Icon name="check" size={15} color="#FFFFFF" />
-                  <Text style={styles.submitBtnText}>Mark Complete</Text>
-                </>
-              )}
+              <Icon name={copied ? 'check' : 'copy'} size={18} color="#FFFFFF" />
+              <Text style={styles.copyBtnText}>
+                {copied ? 'Copied to Clipboard! ✓' : 'Copy Prompt to Clipboard'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Step 4: Why It Works Highlight Box */}
+            <View style={styles.stepHeaderRow}>
+              <View style={[styles.stepDotBadge, { backgroundColor: '#F59E0B' }]}>
+                <Text style={styles.stepDotBadgeText}>2</Text>
+              </View>
+              <Text style={styles.stepSectionTitle}>Why This Technique Works</Text>
+            </View>
+
+            <View style={styles.whyItWorksCard}>
+              <View style={styles.whyHeaderRow}>
+                <Icon name="award" size={16} color="#D97706" />
+                <Text style={styles.whyHeaderTitle}>EXPERT PRINCIPLE</Text>
+              </View>
+              <Text style={styles.whyText}>{currentStage.why_it_works}</Text>
+            </View>
+
+            {/* Switch to Practice CTA */}
+            <TouchableOpacity
+              style={styles.switchPracticeCta}
+              activeOpacity={0.88}
+              onPress={() => setActiveTab('practice')}
+            >
+              <Text style={styles.switchPracticeCtaText}>Ready to Practice? Switch to Live Test Space ➔</Text>
             </TouchableOpacity>
           </View>
+        )}
 
-          {/* Feedback Card */}
-          {showErrorCard && evaluation && (
-            <View style={[styles.evaluationCard, evaluation.isPassed ? styles.evalSuccess : styles.evalWarn]}>
-              <View style={styles.evalHeaderRow}>
-                <Icon
-                  name={evaluation.isPassed ? 'check-circle' : 'alert-circle'}
-                  size={16}
-                  color={evaluation.isPassed ? '#059669' : '#DC2626'}
-                />
-                <Text style={[styles.evalTitle, { color: evaluation.isPassed ? '#059669' : '#DC2626' }]}>
-                  {evaluation.isPassed ? `Score: ${evaluation.score}/100 — Excellent!` : `Score: ${evaluation.score}/100 — Needs Tuning`}
-                </Text>
+        {/* TAB 2: LIVE PRACTICE SPACE */}
+        {activeTab === 'practice' && (
+          <View style={styles.tabContentBlock}>
+            <View style={styles.workspaceCard}>
+              <View style={styles.workspaceHeaderRow}>
+                <View style={styles.workspaceTitleRow}>
+                  <Icon name="terminal" size={18} color="#5653FE" />
+                  <Text style={styles.workspaceTitle}>Live Practice Workspace</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setPromptText(currentStage.engineered_prompt)}
+                  style={styles.resetBtn}
+                >
+                  <Icon name="refresh-cw" size={13} color="#64748B" />
+                  <Text style={styles.resetBtnText}>Reset Prompt</Text>
+                </TouchableOpacity>
               </View>
 
-              {evaluation.whatWentWell?.length > 0 && (
-                <View style={{ marginTop: 8 }}>
-                  <Text style={styles.evalSubheading}>✓ Strengths:</Text>
-                  {evaluation.whatWentWell.map((w, idx) => (
-                    <Text key={idx} style={styles.evalItemGood}>• {w}</Text>
-                  ))}
-                </View>
-              )}
-
-              {evaluation.whatToImprove?.length > 0 && (
-                <View style={{ marginTop: 6 }}>
-                  <Text style={styles.evalSubheadingWarn}>💡 Suggestions:</Text>
-                  {evaluation.whatToImprove.map((imp, idx) => (
-                    <Text key={idx} style={styles.evalItemWarn}>• {imp}</Text>
-                  ))}
-                </View>
-              )}
-
-              {evaluation.tryAdding ? (
-                <TouchableOpacity style={styles.applyImproveBtn} onPress={handleApplyImprovement}>
-                  <Icon name="refresh-cw" size={13} color="#5653FE" />
-                  <Text style={styles.applyImproveBtnText}>Apply Suggested Improvement</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          )}
-
-          {/* Feedback Banner */}
-          {submissionFeedback && (
-            <View style={[styles.bannerBox, submissionFeedback.type === 'success' ? styles.bannerSuccess : styles.bannerError]}>
-              <Icon
-                name={submissionFeedback.type === 'success' ? 'check-circle' : 'alert-circle'}
-                size={16}
-                color={submissionFeedback.type === 'success' ? '#047857' : '#DC2626'}
-              />
-              <Text style={[styles.bannerText, { color: submissionFeedback.type === 'success' ? '#047857' : '#DC2626' }]}>
-                {submissionFeedback.message}
+              <Text style={styles.workspaceSub}>
+                Customize or test the engineered prompt below, then tap Check Prompt for instant AI structure & quality evaluation.
               </Text>
+
+              {/* Quick Snippet Toolbar */}
+              <View style={styles.snippetToolbarWrap}>
+                <Text style={styles.snippetLabel}>Tap to insert snippet blocks:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.snippetScroll}>
+                  {QUICK_SNIPPETS.map((item, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={styles.snippetPill}
+                      onPress={() => handleInsertSnippet(item.snippet)}
+                    >
+                      <Text style={styles.snippetPillText}>{item.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Text Area */}
+              <View style={styles.editorBox}>
+                <TextInput
+                  style={styles.textInput}
+                  multiline
+                  value={promptText}
+                  onChangeText={setPromptText}
+                  placeholder="Write your prompt here..."
+                  placeholderTextColor="#94A3B8"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              {/* Action Control Buttons */}
+              <View style={styles.actionButtonsRow}>
+                <TouchableOpacity
+                  style={styles.checkBtn}
+                  activeOpacity={0.8}
+                  onPress={handleCheckPrompt}
+                  disabled={testing}
+                >
+                  {testing ? (
+                    <ActivityIndicator size="small" color="#5653FE" />
+                  ) : (
+                    <>
+                      <Icon name="search" size={15} color="#5653FE" />
+                      <Text style={styles.checkBtnText}>Run AI Check</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.submitBtn, submitting && { opacity: 0.7 }]}
+                  activeOpacity={0.85}
+                  disabled={submitting}
+                  onPress={handleSubmitStage}
+                >
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Icon name="check" size={15} color="#FFFFFF" />
+                      <Text style={styles.submitBtnText}>Mark Complete</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Feedback Card */}
+              {showErrorCard && evaluation && (
+                <View style={[styles.evaluationCard, evaluation.isPassed ? styles.evalSuccess : styles.evalWarn]}>
+                  <View style={styles.evalHeaderRow}>
+                    <Icon
+                      name={evaluation.isPassed ? 'check-circle' : 'alert-circle'}
+                      size={16}
+                      color={evaluation.isPassed ? '#059669' : '#DC2626'}
+                    />
+                    <Text style={[styles.evalTitle, { color: evaluation.isPassed ? '#059669' : '#DC2626' }]}>
+                      {evaluation.isPassed ? `Score: ${evaluation.score}/100 — Excellent!` : `Score: ${evaluation.score}/100 — Needs Tuning`}
+                    </Text>
+                  </View>
+
+                  {evaluation.whatWentWell?.length > 0 && (
+                    <View style={{ marginTop: 8 }}>
+                      <Text style={styles.evalSubheading}>✓ Strengths:</Text>
+                      {evaluation.whatWentWell.map((w, idx) => (
+                        <Text key={idx} style={styles.evalItemGood}>• {w}</Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {evaluation.whatToImprove?.length > 0 && (
+                    <View style={{ marginTop: 6 }}>
+                      <Text style={styles.evalSubheadingWarn}>💡 Suggestions:</Text>
+                      {evaluation.whatToImprove.map((imp, idx) => (
+                        <Text key={idx} style={styles.evalItemWarn}>• {imp}</Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {evaluation.tryAdding ? (
+                    <TouchableOpacity style={styles.applyImproveBtn} onPress={handleApplyImprovement}>
+                      <Icon name="refresh-cw" size={13} color="#5653FE" />
+                      <Text style={styles.applyImproveBtnText}>Apply Suggested Improvement</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              )}
+
+              {/* Feedback Banner */}
+              {submissionFeedback && (
+                <View style={[styles.bannerBox, submissionFeedback.type === 'success' ? styles.bannerSuccess : styles.bannerError]}>
+                  <Icon
+                    name={submissionFeedback.type === 'success' ? 'check-circle' : 'alert-circle'}
+                    size={16}
+                    color={submissionFeedback.type === 'success' ? '#047857' : '#DC2626'}
+                  />
+                  <Text style={[styles.bannerText, { color: submissionFeedback.type === 'success' ? '#047857' : '#DC2626' }]}>
+                    {submissionFeedback.message}
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* Bottom Navigation Row */}
         <View style={styles.bottomNavRow}>
@@ -430,7 +488,7 @@ export const PromptStageDetailScreen: React.FC = () => {
               style={[styles.navNextBtn, { backgroundColor: '#059669' }]}
               onPress={() => navigation.goBack()}
             >
-              <Text style={styles.navNextText}>Back to Journey</Text>
+              <Text style={styles.navNextText}>Back to Roadmap</Text>
               <Icon name="check" size={15} color="#FFFFFF" />
             </TouchableOpacity>
           )}
@@ -524,6 +582,42 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
+
+  /* Segment Switcher Bar */
+  segmentContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    gap: 10,
+  },
+  segmentBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+  },
+  segmentBtnActive: {
+    backgroundColor: '#EEEDFF',
+    borderWidth: 1,
+    borderColor: '#C7C5FF',
+  },
+  segmentBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  segmentBtnTextActive: {
+    color: '#5653FE',
+    fontWeight: '800',
+  },
+
   container: {
     flex: 1,
   },
@@ -531,13 +625,14 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 50,
   },
+  tabContentBlock: {
+    gap: 14,
+  },
   heroCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 16,
+    borderWidth: 1.5,
+    marginBottom: 4,
   },
   heroHeaderRow: {
     flexDirection: 'row',
@@ -547,7 +642,6 @@ const styles = StyleSheet.create({
   },
   heroTagBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EEEDFF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -555,12 +649,11 @@ const styles = StyleSheet.create({
   heroTagBadgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#5653FE',
   },
   heroBadgeNum: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#64748B',
   },
   heroTitle: {
     fontSize: 22,
@@ -571,7 +664,6 @@ const styles = StyleSheet.create({
   heroConceptText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#5653FE',
     marginBottom: 8,
   },
   heroDesc: {
@@ -580,14 +672,41 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
+  /* Step Header Row */
+  stepHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  stepDotBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#5653FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepDotBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  stepSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.2,
+  },
+
   /* 1. User Raw Idea Card */
   rawIdeaContainer: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: '#FFF1F2',
+    borderColor: '#FECDD3',
     borderWidth: 1.5,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 14,
   },
   rawIdeaHeaderRow: {
     flexDirection: 'row',
@@ -598,13 +717,13 @@ const styles = StyleSheet.create({
   rawIdeaHeaderTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#475569',
+    color: '#E11D48',
     letterSpacing: 0.8,
   },
   rawIdeaText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#9F1239',
     fontStyle: 'italic',
     lineHeight: 20,
   },
@@ -616,7 +735,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 16,
     padding: 18,
-    marginBottom: 12,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -653,7 +771,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    marginBottom: 16,
     shadowColor: '#5653FE',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -677,7 +794,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 18,
   },
   whyHeaderRow: {
     flexDirection: 'row',
@@ -698,6 +814,22 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
+  /* Switch Practice CTA */
+  switchPracticeCta: {
+    backgroundColor: '#EEEDFF',
+    borderWidth: 1.5,
+    borderColor: '#5653FE',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  switchPracticeCtaText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#5653FE',
+  },
+
   /* 5. Workspace Card */
   workspaceCard: {
     backgroundColor: '#FFFFFF',
@@ -705,7 +837,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1.5,
     borderColor: '#5653FE',
-    marginBottom: 16,
   },
   workspaceHeaderRow: {
     flexDirection: 'row',
@@ -742,6 +873,12 @@ const styles = StyleSheet.create({
   snippetToolbarWrap: {
     marginBottom: 10,
   },
+  snippetLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+    marginBottom: 6,
+  },
   snippetScroll: {
     gap: 8,
   },
@@ -762,7 +899,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1',
     padding: 12,
-    minHeight: 120,
+    minHeight: 130,
     marginBottom: 14,
   },
   textInput: {
@@ -890,7 +1027,7 @@ const styles = StyleSheet.create({
   bottomNavRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 8,
+    marginTop: 18,
   },
   navSiblingBtn: {
     flex: 1,
