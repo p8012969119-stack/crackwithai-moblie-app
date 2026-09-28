@@ -35,6 +35,7 @@ import { HtmlPlaygroundScreen } from '../screens/fullstack/HtmlPlaygroundScreen'
 import { FullStackCertificateScreen } from '../screens/certificates/FullStackCertificateScreen';
 import { CertificateVerificationScreen } from '../screens/certificates/CertificateVerificationScreen';
 import { PromptEngineeringScreen } from '../screens/prompt/PromptEngineeringScreen';
+import { PromptStageDetailScreen } from '../screens/prompt/PromptStageDetailScreen';
 
 type RootStackParams = ParamListBase;
 const Stack = createNativeStackNavigator<RootStackParams>();
@@ -89,6 +90,7 @@ export const RootNavigator = () => {
           <Stack.Screen name="FullStackCertificate" component={FullStackCertificateScreen} />
           <Stack.Screen name="CertificateVerification" component={CertificateVerificationScreen} />
           <Stack.Screen name="PromptEngineering" component={PromptEngineeringScreen} />
+          <Stack.Screen name="PromptStageDetail" component={PromptStageDetailScreen} />
         </Stack.Group>
       )}
     </Stack.Navigator>
