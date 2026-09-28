@@ -94,7 +94,7 @@ export const FullStackOverviewScreen = () => {
         <TouchableOpacity
           style={styles.promptCard}
           activeOpacity={0.92}
-          onPress={() => navigation.navigate('HtmlCourse', { tech: 'prompt-engineering' })}
+          onPress={() => navigation.navigate('PromptEngineering')}
         >
           <View style={[styles.cardLogoBox, { backgroundColor: '#EDE9FE' }]}>
             <Icon name="sparkles" size={26} color="#7C3AED" />
@@ -105,7 +105,7 @@ export const FullStackOverviewScreen = () => {
           <TouchableOpacity
             style={styles.promptBtnPill}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('HtmlCourse', { tech: 'prompt-engineering' })}
+            onPress={() => navigation.navigate('PromptEngineering')}
           >
             <Text style={styles.btnPillText}>Explore Course</Text>
             <Icon name="arrow-right" size={16} color="#FFFFFF" />

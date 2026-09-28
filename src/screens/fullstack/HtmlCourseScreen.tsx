@@ -18,6 +18,7 @@ import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress } from '../../typ
 import { getCourseForTech, FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
+import { PromptEngineeringScreen } from '../prompt/PromptEngineeringScreen';
 
 const COURSE_LOGOS: Record<string, any> = {
   html: require('../../assets/courses/html.png'),
@@ -57,6 +58,10 @@ export const HtmlCourseScreen: React.FC = () => {
   
   // Dynamic technology parameter, defaults strictly to 'html'
   const tech = (route.params?.tech || route.params?.courseSlug || 'html').toLowerCase();
+
+  if (tech === 'prompt-engineering' || tech === 'prompt' || tech === 'promptengineering') {
+    return <PromptEngineeringScreen />;
+  }
   const activeTrack = useMemo(() => {
     return FULLSTACK_TRACKS.find(t => t.id === tech) || FULLSTACK_TRACKS[0];
   }, [tech]);
