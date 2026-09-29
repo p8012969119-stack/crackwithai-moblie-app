@@ -30,12 +30,49 @@ export const WorkshopMessage = ({text}: {text: string}) => <View style={styles.b
     })}</View>;
   });
 })}</View>;
+
 const styles = StyleSheet.create({
-  blocks: {gap: 12}, paragraph: {gap: 5}, body: {fontSize: 16, lineHeight: 25, color: '#2E2939'},
-  heading: {fontSize: 18, lineHeight: 26, fontWeight: '700'}, bold: {fontWeight: '700'}, italic: {fontStyle: 'italic'},
-  quote: {borderLeftWidth: 2, borderLeftColor: '#C8B9E4', paddingLeft: 12, color: '#665577'}, rule: {height: 1, backgroundColor: '#E9E3F0', marginVertical: 5},
-  code: {backgroundColor: '#F1EFF5', padding: 14, borderRadius: 13, gap: 10}, language: {fontSize: 11, lineHeight: 16, color: '#776E87', fontWeight: '600'},
-  codeText: {fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 12, lineHeight: 19, color: '#312A41'},
-  inlineCode: {fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', backgroundColor: '#F1EFF5', fontSize: 14},
-  table: {gap: 10}, tableRow: {paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#E9E3F0', gap: 9}, tableCell: {gap: 3},
+  blocks: {gap: 12},
+  paragraph: {gap: 5},
+  body: {fontSize: 15, lineHeight: 23, color: '#0F172A'},
+  heading: {fontSize: 17, lineHeight: 24, fontWeight: '700'},
+  bold: {fontWeight: '700'},
+  italic: {fontStyle: 'italic'},
+  quote: {borderLeftWidth: 3, borderLeftColor: '#5653FE', paddingLeft: 12, color: '#475569'},
+  rule: {height: 1, backgroundColor: '#E2E8F0', marginVertical: 5},
+  code: {
+    backgroundColor: '#090D16',
+    padding: 14,
+    borderRadius: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    marginVertical: 4
+  },
+  language: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#94A3B8',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase'
+  },
+  codeText: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#4ADE80'
+  },
+  inlineCode: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    backgroundColor: '#F1F5F9',
+    color: '#5653FE',
+    fontSize: 13.5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6
+  },
+  table: {gap: 10},
+  tableRow: {paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', gap: 9},
+  tableCell: {gap: 3},
 });
