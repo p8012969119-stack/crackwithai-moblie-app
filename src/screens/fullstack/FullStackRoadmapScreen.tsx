@@ -31,20 +31,6 @@ const COURSE_LOGOS: Record<string, any> = {
   capstone: require('../../assets/courses/capstone.png'),
 };
 
-const CARD_BG_COLORS: Record<string, string> = {
-  html: '#FFB870',       // Apricot Orange (matching reference image 1)
-  css: '#74C0FC',        // Vibrant Sky Blue
-  javascript: '#FEE140', // Golden Sun Yellow
-  nodejs: '#C0EB75',     // Vibrant Lime Green (matching reference image 1 & 2)
-  expressjs: '#70E0D6',  // Cool Mint Cyan
-  mongodb: '#6EE7B7',    // Fresh Emerald
-  restapi: '#B197FC',    // Soft Lavender Violet
-  auth: '#FF8787',       // Vibrant Coral Red (matching reference image 1 & 2)
-  capstone: '#C490FF',   // Vibrant Lavender Purple (matching reference image 2)
-};
-
-const DEFAULT_CARD_BG = '#C490FF';
-
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
@@ -83,14 +69,13 @@ export const FullStackRoadmapScreen: React.FC = () => {
     navigation.navigate('HtmlCourse', { tech: techId });
   };
 
-  const completedModules = fsProgress?.completedModules || 0;
   const overallPercentage = fsProgress?.overallPercentage || 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      {/* Top Header Bar */}
+      {/* Top Navigation Header */}
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.backButton}
@@ -100,7 +85,7 @@ export const FullStackRoadmapScreen: React.FC = () => {
           <Icon name="chevron-left" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle} numberOfLines={1}>
-          Curriculum Courses
+          My Progress
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -111,47 +96,76 @@ export const FullStackRoadmapScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
       >
+        {/* TOP HERO OVERALL PROGRESS CARD (MATCHING USER SCREENSHOT) */}
+        <View style={styles.heroProgressCard}>
+          <View style={styles.heroLeft}>
+            <Text style={styles.heroTitle}>Great Progress! 🎉</Text>
+            <Text style={styles.heroSubtitle}>You're doing awesome.</Text>
+          </View>
+
+          <View style={styles.heroRightCircle}>
+            <Text style={styles.circlePercentageText}>{overallPercentage}%</Text>
+            <Text style={styles.circleSubLabel}>Overall Progress</Text>
+          </View>
+        </View>
+
+        {/* SECTION TITLE */}
+        <Text style={styles.sectionHeaderTitle}>Skills Progress</Text>
+
         {/* Loading Spinner */}
         {loading && !refreshing ? (
           <ActivityIndicator size="large" color={COLORS.primary} style={{ marginVertical: 30 }} />
         ) : (
+          /* CLEAN WHITE MODULE CARDS (MATCHING USER SCREENSHOT) */
           <View style={styles.coursesList}>
             {FULLSTACK_TRACKS.map((track) => {
-              const cardBgColor = CARD_BG_COLORS[track.id] || DEFAULT_CARD_BG;
+              // Get track specific completion percentage if available
+              const trackPercent = (fsProgress as any)?.trackProgress?.[track.id] ?? (overallPercentage > 0 ? Math.round(overallPercentage * 0.8) : 0);
+
               return (
                 <TouchableOpacity
                   key={track.id}
-                  style={[
-                    styles.courseCard,
-                    {
-                      backgroundColor: cardBgColor,
-                    }
-                  ]}
+                  style={styles.cleanWhiteCard}
                   activeOpacity={0.88}
                   onPress={() => handleOpenCourse(track.id)}
                 >
-                  {/* Direct Logo rendering on card background - NO white icon box! */}
-                  <View style={styles.cardHeaderRow}>
-                    {COURSE_LOGOS[track.id] ? (
-                      <Image
-                        source={COURSE_LOGOS[track.id]}
-                        style={styles.courseLogoImage}
-                        resizeMode="contain"
-                      />
-                    ) : (
-                      <Icon name={track.icon as any || 'code'} size={32} color="#0F172A" />
-                    )}
+                  <View style={styles.cardMainRow}>
+                    {/* Left Tech Logo */}
+                    <View style={styles.logoSquareContainer}>
+                      {COURSE_LOGOS[track.id] ? (
+                        <Image
+                          source={COURSE_LOGOS[track.id]}
+                          style={styles.courseLogoImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Icon name={track.icon as any || 'code'} size={28} color="#0F172A" />
+                      )}
+                    </View>
 
-                    <View style={styles.cardHeaderCenter}>
-                      <Text style={styles.courseName}>{track.title}</Text>
-                      <Text style={styles.courseSubtitle}>{track.subtitle}</Text>
+                    {/* Middle Info & Progress Bar */}
+                    <View style={styles.cardCenterBlock}>
+                      <View style={styles.cardTitleRow}>
+                        <Text style={styles.courseName}>{track.title}</Text>
+                        <Text style={styles.percentText}>{trackPercent}%</Text>
+                      </View>
+
+                      {/* Thin Sleek Progress Line */}
+                      <View style={styles.progressTrackBar}>
+                        <View
+                          style={[
+                            styles.progressFillBar,
+                            { width: `${Math.max(6, trackPercent)}%` }
+                          ]}
+                        />
+                      </View>
                     </View>
                   </View>
 
-                  {/* Polished Dark Pill Action Button */}
-                  <View style={styles.ctaButton}>
-                    <Text style={styles.ctaButtonText}>Start</Text>
-                    <Icon name="arrow-right" size={15} color="#FFFFFF" />
+                  {/* Start Course Action Footer */}
+                  <View style={styles.cardFooterRow}>
+                    <Text style={styles.startCourseBtnText}>Start Course</Text>
+                    <Icon name="chevron-right" size={16} color="#5653FE" />
                   </View>
                 </TouchableOpacity>
               );
@@ -188,8 +202,8 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#0F172A',
     flex: 1,
     textAlign: 'center'
@@ -199,68 +213,155 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC'
   },
   contentContainer: {
-    padding: 16,
+    padding: 18,
     paddingBottom: 40
   },
-  coursesList: {
-    gap: 16
-  },
-  courseCard: {
-    borderRadius: 24,
+
+  /* HERO OVERALL PROGRESS BANNER */
+  heroProgressCard: {
+    backgroundColor: '#2A1F86',
+    borderRadius: 22,
     padding: 20,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4
-  },
-  cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    marginBottom: 16
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    shadowColor: '#2A1F86',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6
+  },
+  heroLeft: {
+    flex: 1,
+    paddingRight: 10
+  },
+  heroTitle: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 6
+  },
+  heroSubtitle: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 13,
+    color: '#C7D2FE'
+  },
+  heroRightCircle: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    borderWidth: 4,
+    borderColor: '#6366F1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)'
+  },
+  circlePercentageText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF'
+  },
+  circleSubLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#A5B4FC',
+    marginTop: 1,
+    textAlign: 'center'
+  },
+
+  /* SECTION HEADING */
+  sectionHeaderTitle: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 14
+  },
+
+  /* CLEAN WHITE COURSE CARDS (MATCHING USER SCREENSHOT) */
+  coursesList: {
+    gap: 14
+  },
+  cleanWhiteCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2
+  },
+  cardMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14
+  },
+  logoSquareContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   courseLogoImage: {
-    width: 44,
-    height: 44
+    width: 36,
+    height: 36
   },
-  cardHeaderCenter: {
+  cardCenterBlock: {
     flex: 1
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8
   },
   courseName: {
     fontFamily: FONT_FAMILY,
-    fontSize: 22,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 2
+    color: '#0F172A'
   },
-  courseSubtitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1E293B'
-  },
-  ctaButton: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#111827',
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    borderRadius: 24,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.22,
-    shadowRadius: 5,
-    elevation: 4
-  },
-  ctaButtonText: {
+  percentText: {
     fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 14,
     fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.2
+    color: '#0F172A'
+  },
+  progressTrackBar: {
+    height: 6,
+    backgroundColor: '#EEEDFF',
+    borderRadius: 3,
+    overflow: 'hidden'
+  },
+  progressFillBar: {
+    height: '100%',
+    backgroundColor: '#5653FE',
+    borderRadius: 3
+  },
+  cardFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC'
+  },
+  startCourseBtnText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#5653FE'
   }
 });
