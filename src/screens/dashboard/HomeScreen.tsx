@@ -249,9 +249,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#F7DF1E' }]}>
-                  <Text style={styles.jsBadgeText}>JS</Text>
-                </View>
+                <Image
+                  source={require('../../assets/tool-logos/javascript.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -275,9 +277,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'css' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#0284C7' }]}>
-                  <Text style={styles.cssBadgeText}>CSS3</Text>
-                </View>
+                <Image
+                  source={require('../../assets/tool-logos/css.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -301,10 +305,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#166534' }]}>
-                  <Text style={styles.nodeSymbolIcon}>⬢</Text>
-                  <Text style={styles.nodeBadgeSubText}>node</Text>
-                </View>
+                <Image
+                  source={require('../../assets/tool-logos/node.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -328,9 +333,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#EA580C' }]}>
-                  <Text style={styles.htmlBadgeText}>HTML5</Text>
-                </View>
+                <Image
+                  source={require('../../assets/tool-logos/html.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -354,9 +361,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#059669' }]}>
-                  <Text style={styles.mongoLeafIcon}>🍃</Text>
-                </View>
+                <Image
+                  source={require('../../assets/tool-logos/mongodb.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -406,9 +415,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AICodeGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#4F46E5' }]}>
-                  <Text style={styles.codeIconSymbol}>{'</>'}</Text>
-                </View>
+                <Image
+                  source={require('../../assets/tool-logos/copilot.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -432,9 +443,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIImageGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#DB2777' }]}>
-                  <Text style={styles.toolEmojiSymbol}>🎨</Text>
-                </View>
+                <Image
+                  source={require('../../assets/images/models/gemini.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -458,9 +471,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIEmailWriter')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#D97706' }]}>
-                  <Text style={styles.toolEmojiSymbol}>✉️</Text>
-                </View>
+                <Image
+                  source={require('../../assets/images/models/groq.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -484,9 +499,11 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIVoiceGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.brandLogoBox, { backgroundColor: '#0D9488' }]}>
-                  <Text style={styles.toolEmojiSymbol}>🎙️</Text>
-                </View>
+                <Image
+                  source={require('../../assets/images/models/mistral.png')}
+                  style={styles.officialBrandLogoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -764,21 +781,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   cardHeaderArea: {
-    height: 68,
+    height: 60,
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  brandLogoBox: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+  officialBrandLogoImage: {
+    width: 48,
+    height: 48,
   },
   jsBadgeText: {
     fontSize: 34,
