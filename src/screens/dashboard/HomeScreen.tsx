@@ -27,7 +27,8 @@ import { Icon } from '../../components/Icon';
 import { LaptopTechIllustration } from '../../components/LaptopTechIllustration';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SANS_SERIF_FONT = Platform.OS === 'android' ? 'sans-serif' : undefined;
+// Standard Roboto font overrides any custom handwritten system fonts on Android devices
+const SANS_SERIF_FONT = Platform.OS === 'android' ? 'Roboto' : undefined;
 const BANNER_HEIGHT = (SCREEN_WIDTH - 40) * (538 / 1024);
 
 export const HomeScreen = ({ navigation }: any) => {
@@ -114,7 +115,7 @@ export const HomeScreen = ({ navigation }: any) => {
     );
   }
 
-  const rawName = user?.fullName || user?.name || 'Arjun';
+  const rawName = user?.fullName || user?.name || 'Prakash';
   const firstName = rawName.split(' ')[0];
 
   const progressPercent = typeof fullstackProgress?.overallPercentage === 'number'
@@ -150,11 +151,12 @@ export const HomeScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          {/* AI STUDY ASSISTANT HERO BANNER IMAGE */}
+          {/* AI STUDY ASSISTANT HERO BANNER - Seamless clean banner image card without extra outer layout */}
           <TouchableOpacity
             style={styles.heroBannerCard}
-            activeOpacity={0.9}
+            activeOpacity={0.85}
             onPress={() => navigation.navigate('AITab')}
+            accessibilityLabel="Chat with AI"
           >
             <Image
               source={require('../../assets/dashboard/ai_hero_banner.png')}
@@ -315,6 +317,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     letterSpacing: -0.4,
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
   greetingSubtitle: {
     fontSize: 14,
@@ -322,6 +325,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginTop: 3,
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
   notificationBellCircle: {
     width: 44,
@@ -337,7 +341,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  /* AI STUDY ASSISTANT HERO BANNER IMAGE */
+  /* AI STUDY ASSISTANT HERO BANNER - Clean Banner Card without double white border */
   heroBannerCard: {
     width: '100%',
     borderRadius: 22,
@@ -347,7 +351,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 12,
     elevation: 5,
-    backgroundColor: '#0B0836',
     overflow: 'hidden',
   },
   heroBannerImage: {
@@ -369,12 +372,14 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     letterSpacing: -0.3,
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
   viewAllText: {
     fontSize: 14,
     fontWeight: '700',
     color: '#5653FE',
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
 
   /* CONTINUE LEARNING CARD */
@@ -406,6 +411,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     letterSpacing: -0.2,
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
   progressRow: {
     flexDirection: 'row',
@@ -430,6 +436,7 @@ const styles = StyleSheet.create({
     color: '#475569',
     marginLeft: 10,
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
   continueRightCol: {
     alignItems: 'center',
@@ -471,6 +478,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#000000',
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
   reactIconBox: {
     backgroundColor: '#F0F9FF',
@@ -498,12 +506,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     letterSpacing: -0.2,
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
   courseLessonCountText: {
     fontSize: 12,
     fontWeight: '500',
     color: '#64748B',
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
 
   /* FULL-WIDTH EXPLORE ALL COURSES BUTTON */
@@ -526,5 +536,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.2,
     fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
   },
 });
