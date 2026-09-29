@@ -29,7 +29,6 @@ import { LaptopTechIllustration } from '../../components/LaptopTechIllustration'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SANS_SERIF_FONT = Platform.OS === 'android' ? 'Roboto' : undefined;
-const BANNER_HEIGHT = (SCREEN_WIDTH - 40) * (538 / 1024);
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
@@ -227,7 +226,7 @@ export const HomeScreen = ({ navigation }: any) => {
             </View>
           </TouchableOpacity>
 
-          {/* EXPLORE COURSES SECTION (PROPORTIONAL LARGER CARDS) */}
+          {/* EXPLORE COURSES SECTION */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Explore Courses</Text>
             <TouchableOpacity
@@ -334,7 +333,16 @@ export const HomeScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </ScrollView>
 
-          {/* AI TOOLS SECTION (MATCHING CARD LENGTH & NEAT DESIGN) */}
+          {/* FULL-WIDTH EXPLORE ALL COURSES CTA BUTTON */}
+          <TouchableOpacity
+            style={styles.exploreAllBtn}
+            activeOpacity={0.88}
+            onPress={() => navigation.navigate('FullStackRoadmap')}
+          >
+            <Text style={styles.exploreAllBtnText}>Explore All Courses  ➔</Text>
+          </TouchableOpacity>
+
+          {/* AI TOOLS SECTION */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Explore AI Tools</Text>
             <TouchableOpacity
@@ -357,7 +365,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AICodeGenerator')}
             >
               <View style={[styles.courseIconBox, styles.toolIconCode]}>
-                <Icon name="code" size={22} color="#4F46E5" />
+                <Icon name="code" size={24} color="#4F46E5" />
               </View>
               <Text style={styles.courseTitleText} numberOfLines={2}>
                 AI Code{'\n'}Generator
@@ -375,7 +383,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIImageGenerator')}
             >
               <View style={[styles.courseIconBox, styles.toolIconImage]}>
-                <Icon name="image" size={22} color="#DB2777" />
+                <Icon name="image" size={24} color="#DB2777" />
               </View>
               <Text style={styles.courseTitleText} numberOfLines={2}>
                 AI Image{'\n'}Generator
@@ -393,7 +401,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIEmailWriter')}
             >
               <View style={[styles.courseIconBox, styles.toolIconEmail]}>
-                <Icon name="mail" size={22} color="#D97706" />
+                <Icon name="mail" size={24} color="#D97706" />
               </View>
               <Text style={styles.courseTitleText} numberOfLines={2}>
                 AI Email{'\n'}Writer
@@ -411,7 +419,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIVoiceGenerator')}
             >
               <View style={[styles.courseIconBox, styles.toolIconVoice]}>
-                <Icon name="mic" size={22} color="#059669" />
+                <Icon name="mic" size={24} color="#059669" />
               </View>
               <Text style={styles.courseTitleText} numberOfLines={2}>
                 AI Voice{'\n'}Generator
@@ -423,13 +431,13 @@ export const HomeScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </ScrollView>
 
-          {/* FULL-WIDTH EXPLORE ALL COURSES CTA BUTTON */}
+          {/* FULL-WIDTH EXPLORE ALL AI TOOLS CTA BUTTON */}
           <TouchableOpacity
-            style={styles.exploreAllBtn}
+            style={[styles.exploreAllBtn, styles.exploreAllToolsBtn]}
             activeOpacity={0.88}
-            onPress={() => navigation.navigate('FullStackRoadmap')}
+            onPress={() => navigation.navigate('ToolsTab')}
           >
-            <Text style={styles.exploreAllBtnText}>Explore All Courses  ➔</Text>
+            <Text style={styles.exploreAllBtnText}>Explore All AI Tools  ➔</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -466,7 +474,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 26,
   },
   greetingTextCol: {
     flex: 1,
@@ -521,7 +529,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 26,
+    marginBottom: 28,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.22,
@@ -606,12 +614,12 @@ const styles = StyleSheet.create({
   /* CONTINUE LEARNING CARD */
   continueCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 26,
+    marginBottom: 28,
     borderWidth: 1,
     borderColor: '#F1F5F9',
     shadowColor: '#0F172A',
@@ -664,17 +672,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  /* EXPLORE COURSES & AI TOOLS HORIZONTAL CARDS (LARGER, NEAT & PROPORTIONAL) */
+  /* EXPLORE COURSES & AI TOOLS HORIZONTAL CARDS */
   coursesHorizontalRow: {
     paddingRight: 10,
     gap: 14,
-    marginBottom: 26,
+    marginBottom: 20,
   },
   largeCourseCard: {
-    width: 145,
-    minHeight: 180,
+    width: 152,
+    minHeight: 188,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 16,
     borderWidth: 1,
     borderColor: '#F1F5F9',
@@ -686,9 +694,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   courseIconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+    width: 50,
+    height: 50,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -697,7 +705,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7DF1E',
   },
   jsLogoText: {
-    fontSize: 19,
+    fontSize: 22,
     fontWeight: '900',
     color: '#000000',
     fontFamily: SANS_SERIF_FONT,
@@ -709,7 +717,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0F2FE',
   },
   reactAtomSymbol: {
-    fontSize: 26,
+    fontSize: 28,
     color: '#00D8FF',
   },
   nodeIconBox: {
@@ -718,7 +726,7 @@ const styles = StyleSheet.create({
     borderColor: '#DCFCE7',
   },
   nodeLogoSymbol: {
-    fontSize: 24,
+    fontSize: 26,
     color: '#339933',
   },
   htmlIconBox: {
@@ -727,7 +735,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFEDD5',
   },
   htmlLogoSymbol: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '900',
     color: '#E34F26',
   },
@@ -737,7 +745,7 @@ const styles = StyleSheet.create({
     borderColor: '#DCFCE7',
   },
   mongoLogoSymbol: {
-    fontSize: 22,
+    fontSize: 24,
   },
 
   /* Tool Icon Styling */
@@ -808,7 +816,7 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
   },
 
-  /* FULL-WIDTH EXPLORE ALL COURSES BUTTON */
+  /* FULL-WIDTH CTA BUTTONS */
   exploreAllBtn: {
     backgroundColor: '#5653FE',
     borderRadius: 16,
@@ -820,7 +828,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 4,
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  exploreAllToolsBtn: {
+    backgroundColor: '#433EFE',
   },
   exploreAllBtnText: {
     color: '#FFFFFF',
