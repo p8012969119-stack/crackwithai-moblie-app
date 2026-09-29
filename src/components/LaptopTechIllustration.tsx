@@ -1,61 +1,61 @@
 import React from 'react';
 import { View, StyleSheet, Text, Platform } from 'react-native';
 
-export const LaptopTechIllustration: React.FC<{ size?: number }> = ({ size = 96 }) => {
-  const scale = size / 96;
+export const LaptopTechIllustration: React.FC<{ size?: number }> = ({ size = 105 }) => {
+  const scale = size / 105;
 
   return (
-    <View style={[styles.container, { width: size * 1.25, height: size }]}>
-      {/* Floating Badge Chips matching Image 1 */}
-      {/* 1. Node Pill Badge (Green - Top Left) */}
+    <View style={[styles.container, { width: size * 1.3, height: size * 1.05 }]}>
+      {/* Floating Badges matching Image 1 */}
+      {/* 1. Green Node Badge (Top Left) */}
       <View style={[styles.floatingBadge, styles.nodeBadge, { transform: [{ scale: scale * 0.95 }] }]}>
         <Text style={styles.badgeTextGreen}>node</Text>
       </View>
 
-      {/* 2. JS Badge (Yellow - Top Right) */}
+      {/* 2. Yellow JS Badge (Top Right) */}
       <View style={[styles.floatingBadge, styles.jsBadge, { transform: [{ scale: scale * 0.95 }] }]}>
         <Text style={styles.badgeTextYellow}>JS</Text>
       </View>
 
-      {/* 3. React Atom Badge (Cyan - Top Center) */}
-      <View style={[styles.floatingBadge, styles.reactBadge, { transform: [{ scale: scale * 0.9 }] }]}>
-        <Text style={styles.badgeTextCyan}>⚛</Text>
+      {/* 3. White Top Badge (Center Top) */}
+      <View style={[styles.floatingBadge, styles.topCenterBadge, { transform: [{ scale: scale * 0.9 }] }]}>
+        <Text style={styles.badgeTextPurpleIcon}>⬢</Text>
       </View>
 
-      {/* 4. OOS Badge (Lavender/Purple - Middle Right) */}
+      {/* 4. Dark Navy OOS Badge (Middle Right) */}
       <View style={[styles.floatingBadge, styles.oosBadge, { transform: [{ scale: scale * 0.9 }] }]}>
-        <Text style={styles.badgeTextPurple}>OOS</Text>
+        <Text style={styles.badgeTextWhiteOOS}>OOS</Text>
       </View>
 
-      {/* 5. Code symbol badge (~0, - Bottom Right) */}
+      {/* 5. Light Gray ~0, Badge (Bottom Right) */}
       <View style={[styles.floatingBadge, styles.codeBadge, { transform: [{ scale: scale * 0.85 }] }]}>
-        <Text style={styles.badgeTextSlate}>~0,</Text>
+        <Text style={styles.badgeTextDarkCode}>~0,</Text>
       </View>
 
-      {/* Main 3D Angled Laptop Visual */}
+      {/* 3D Angled Laptop Component */}
       <View style={[styles.laptopContainer, { transform: [{ scale }] }]}>
-        {/* Screen Outer Frame */}
+        {/* Screen Outer Lid */}
         <View style={styles.screenFrame}>
           {/* Inner Display Screen */}
           <View style={styles.display}>
-            {/* Code Lines inside laptop display */}
+            {/* Code Lines inside display */}
             <View style={styles.codeRow}>
-              <View style={[styles.codeLine, { width: '38%', backgroundColor: '#F43F5E' }]} />
-              <View style={[styles.codeLine, { width: '28%', backgroundColor: '#38BDF8' }]} />
+              <View style={[styles.codeLine, { width: '40%', backgroundColor: '#F43F5E' }]} />
+              <View style={[styles.codeLine, { width: '30%', backgroundColor: '#38BDF8' }]} />
             </View>
             <View style={styles.codeRow}>
-              <View style={[styles.codeLine, { width: '72%', backgroundColor: '#A78BFA' }]} />
+              <View style={[styles.codeLine, { width: '75%', backgroundColor: '#A78BFA' }]} />
             </View>
             <View style={styles.codeRow}>
-              <View style={[styles.codeLine, { width: '48%', backgroundColor: '#FBBF24' }]} />
+              <View style={[styles.codeLine, { width: '50%', backgroundColor: '#FBBF24' }]} />
             </View>
             <View style={styles.codeRow}>
-              <View style={[styles.codeLine, { width: '64%', backgroundColor: '#34D399' }]} />
+              <View style={[styles.codeLine, { width: '65%', backgroundColor: '#34D399' }]} />
             </View>
           </View>
         </View>
 
-        {/* Laptop Base Keyboard & Trackpad */}
+        {/* 3D Keyboard Base */}
         <View style={styles.keyboardBase}>
           <View style={styles.trackpad} />
         </View>
@@ -73,82 +73,86 @@ const styles = StyleSheet.create({
   },
   floatingBadge: {
     position: 'absolute',
-    borderRadius: 12,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
     zIndex: 6,
   },
   nodeBadge: {
     top: 2,
     left: 2,
     backgroundColor: '#F0FDF4',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#86EFAC',
   },
   badgeTextGreen: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '800',
-    color: '#166534',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    color: '#15803D',
+    includeFontPadding: false,
+    fontFamily: Platform.OS === 'android' ? 'sans-serif' : undefined,
   },
   jsBadge: {
     top: 4,
     right: 4,
     backgroundColor: '#FEFCE8',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#FDE047',
   },
   badgeTextYellow: {
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: '800',
-    color: '#854D0E',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    color: '#A16207',
+    includeFontPadding: false,
+    fontFamily: Platform.OS === 'android' ? 'sans-serif' : undefined,
   },
-  reactBadge: {
+  topCenterBadge: {
     top: -4,
-    left: 42,
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-  },
-  badgeTextCyan: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#0284C7',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-  },
-  oosBadge: {
-    bottom: 22,
-    right: -2,
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
-  badgeTextPurple: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#3730A3',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-  },
-  codeBadge: {
-    bottom: 6,
-    right: 18,
-    backgroundColor: '#F8FAFC',
+    left: 48,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  badgeTextSlate: {
-    fontSize: 9,
+  badgeTextPurpleIcon: {
+    fontSize: 11,
+    color: '#6366F1',
+    fontWeight: '800',
+    includeFontPadding: false,
+  },
+  oosBadge: {
+    bottom: 24,
+    right: -2,
+    backgroundColor: '#1E1459',
+    borderWidth: 1,
+    borderColor: '#312E81',
+  },
+  badgeTextWhiteOOS: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    includeFontPadding: false,
+    fontFamily: Platform.OS === 'android' ? 'sans-serif' : undefined,
+  },
+  codeBadge: {
+    bottom: 4,
+    right: 18,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  badgeTextDarkCode: {
+    fontSize: 9.5,
     fontWeight: '700',
-    color: '#475569',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    color: '#334155',
+    includeFontPadding: false,
+    fontFamily: Platform.OS === 'android' ? 'sans-serif' : undefined,
   },
   laptopContainer: {
     alignItems: 'center',
@@ -156,24 +160,24 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   screenFrame: {
-    width: 82,
-    height: 52,
-    borderRadius: 8,
-    backgroundColor: '#1E1B4B',
-    padding: 4,
+    width: 86,
+    height: 56,
+    borderRadius: 10,
+    backgroundColor: '#1E1459',
+    padding: 5,
     borderWidth: 2,
     borderColor: '#312E81',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.16,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   display: {
     flex: 1,
     backgroundColor: '#0F172A',
-    borderRadius: 4,
-    padding: 5,
-    gap: 3.5,
+    borderRadius: 6,
+    padding: 6,
+    gap: 4,
     justifyContent: 'center',
   },
   codeRow: {
@@ -185,10 +189,10 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
   },
   keyboardBase: {
-    width: 94,
-    height: 11,
-    borderBottomLeftRadius: 9,
-    borderBottomRightRadius: 9,
+    width: 98,
+    height: 12,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
     borderTopLeftRadius: 2,
     borderTopRightRadius: 2,
     backgroundColor: '#CBD5E1',
@@ -199,16 +203,16 @@ const styles = StyleSheet.create({
     marginTop: -1,
   },
   trackpad: {
-    width: 18,
+    width: 20,
     height: 3,
     backgroundColor: '#94A3B8',
     borderRadius: 1.5,
   },
   laptopShadow: {
-    width: 88,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: 'rgba(15, 23, 42, 0.12)',
+    width: 92,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(15, 23, 42, 0.14)',
     marginTop: 2,
   },
 });
