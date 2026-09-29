@@ -249,12 +249,8 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#FDBA74' }]}>
-                  <Image
-                    source={require('../../assets/courses/javascript.png')}
-                    style={styles.cardLogoImage}
-                    resizeMode="contain"
-                  />
+                <View style={[styles.archBackdrop, { backgroundColor: '#F7DF1E', shadowColor: '#EAB308' }]}>
+                  <Text style={styles.jsBadgeText}>JS</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
@@ -280,7 +276,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('FullStackRoadmap')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#BEF264' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#0F172A', shadowColor: '#0F172A' }]}>
                   <Text style={styles.reactAtomIcon}>⚛</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
@@ -307,12 +303,9 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#7DD3FC' }]}>
-                  <Image
-                    source={require('../../assets/courses/nodejs.png')}
-                    style={styles.cardLogoImage}
-                    resizeMode="contain"
-                  />
+                <View style={[styles.archBackdrop, { backgroundColor: '#022C22', shadowColor: '#022C22' }]}>
+                  <Text style={styles.nodeSymbolIcon}>⬢</Text>
+                  <Text style={styles.nodeBadgeSubText}>node</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
@@ -338,12 +331,8 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#D8B4FE' }]}>
-                  <Image
-                    source={require('../../assets/courses/html.png')}
-                    style={styles.cardLogoImage}
-                    resizeMode="contain"
-                  />
+                <View style={[styles.archBackdrop, { backgroundColor: '#C2410C', shadowColor: '#C2410C' }]}>
+                  <Text style={styles.htmlBadgeText}>HTML5</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
@@ -369,12 +358,8 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#F472B6' }]}>
-                  <Image
-                    source={require('../../assets/courses/mongodb.png')}
-                    style={styles.cardLogoImage}
-                    resizeMode="contain"
-                  />
+                <View style={[styles.archBackdrop, { backgroundColor: '#064E3B', shadowColor: '#064E3B' }]}>
+                  <Text style={styles.mongoLeafIcon}>🍃</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
@@ -426,12 +411,8 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AICodeGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#D8B4FE' }]}>
-                  <Image
-                    source={require('../../assets/tools/code_generator.png')}
-                    style={styles.cardLogoImage}
-                    resizeMode="contain"
-                  />
+                <View style={[styles.archBackdrop, { backgroundColor: '#3730A3', shadowColor: '#3730A3' }]}>
+                  <Text style={styles.codeIconSymbol}>{'</>'}</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
@@ -457,12 +438,8 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIImageGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#FDBA74' }]}>
-                  <Image
-                    source={require('../../assets/tools/image_generator.png')}
-                    style={styles.cardLogoImage}
-                    resizeMode="contain"
-                  />
+                <View style={[styles.archBackdrop, { backgroundColor: '#9D174D', shadowColor: '#9D174D' }]}>
+                  <Text style={styles.toolEmojiSymbol}>🎨</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
@@ -488,12 +465,8 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIEmailWriter')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#BEF264' }]}>
-                  <Image
-                    source={require('../../assets/tools/email_writer.png')}
-                    style={styles.cardLogoImage}
-                    resizeMode="contain"
-                  />
+                <View style={[styles.archBackdrop, { backgroundColor: '#78350F', shadowColor: '#78350F' }]}>
+                  <Text style={styles.toolEmojiSymbol}>✉️</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
@@ -519,12 +492,8 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AIVoiceGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#7DD3FC' }]}>
-                  <Image
-                    source={require('../../assets/tools/voice_generator.png')}
-                    style={styles.cardLogoImage}
-                    resizeMode="contain"
-                  />
+                <View style={[styles.archBackdrop, { backgroundColor: '#065F46', shadowColor: '#065F46' }]}>
+                  <Text style={styles.toolEmojiSymbol}>🎙️</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
@@ -830,8 +799,51 @@ const styles = StyleSheet.create({
     height: 78,
   },
   reactAtomIcon: {
-    fontSize: 58,
-    color: '#0F172A',
+    fontSize: 54,
+    color: '#38BDF8',
+  },
+  jsBadgeText: {
+    fontSize: 40,
+    fontWeight: '900',
+    color: '#000000',
+    letterSpacing: -1,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  nodeSymbolIcon: {
+    fontSize: 40,
+    color: '#4ADE80',
+    marginBottom: -4,
+  },
+  nodeBadgeSubText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#4ADE80',
+    letterSpacing: 0.5,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  htmlBadgeText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  mongoLeafIcon: {
+    fontSize: 42,
+  },
+  codeIconSymbol: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: '#38BDF8',
+    letterSpacing: -1,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  toolEmojiSymbol: {
+    fontSize: 42,
   },
   archAccentPaper: {
     position: 'absolute',
