@@ -28,6 +28,8 @@ import { LaptopTechIllustration } from '../../components/LaptopTechIllustration'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+const SANS_SERIF_FONT = Platform.OS === 'android' ? 'sans-serif' : undefined;
+
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -114,7 +116,11 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const rawName = user?.fullName || user?.name || 'Arjun';
   const firstName = rawName.split(' ')[0];
-  const progressPercent = fullstackProgress?.overallPercentage ?? 75;
+
+  // Calculate REAL progress percentage from backend data
+  const progressPercent = typeof fullstackProgress?.overallPercentage === 'number'
+    ? Math.min(100, Math.max(0, fullstackProgress.overallPercentage))
+    : 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -185,10 +191,18 @@ export const HomeScreen = ({ navigation }: any) => {
                 Full Stack Development{'\n'}with AI
               </Text>
 
-              {/* Progress Bar & Percentage */}
+              {/* Real Progress Bar & Percentage */}
               <View style={styles.progressRow}>
                 <View style={styles.progressBarTrack}>
-                  <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${progressPercent}%`,
+                        minWidth: progressPercent > 0 ? 8 : 0,
+                      },
+                    ]}
+                  />
                 </View>
                 <Text style={styles.progressPercentText}>{progressPercent}%</Text>
               </View>
@@ -307,14 +321,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.4,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
   greetingSubtitle: {
     fontSize: 14,
     color: '#64748B',
     fontWeight: '400',
     marginTop: 3,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    fontFamily: SANS_SERIF_FONT,
   },
   notificationBellCircle: {
     width: 44,
@@ -356,7 +370,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: -0.3,
     marginBottom: 4,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
   heroSubtitle: {
     fontSize: 13.5,
@@ -364,7 +378,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 16,
     fontWeight: '400',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    fontFamily: SANS_SERIF_FONT,
   },
   heroCtaPill: {
     backgroundColor: '#5653FE',
@@ -378,7 +392,7 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: '700',
     letterSpacing: -0.1,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
   heroRightCol: {
     alignItems: 'center',
@@ -397,13 +411,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
   viewAllText: {
     fontSize: 14,
     fontWeight: '700',
     color: '#5653FE',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
 
   /* CONTINUE LEARNING CARD */
@@ -428,13 +442,13 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   continueCourseTitle: {
-    fontSize: 16,
+    fontSize: 16.5,
     fontWeight: '800',
     color: '#0F172A',
-    lineHeight: 21,
+    lineHeight: 22,
     marginBottom: 16,
     letterSpacing: -0.2,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
   progressRow: {
     flexDirection: 'row',
@@ -442,23 +456,23 @@ const styles = StyleSheet.create({
   },
   progressBarTrack: {
     flex: 1,
-    height: 8,
+    height: 9,
     backgroundColor: '#EEF2FF',
-    borderRadius: 4,
+    borderRadius: 4.5,
     overflow: 'hidden',
     maxWidth: 140,
   },
   progressBarFill: {
     height: '100%',
     backgroundColor: '#5653FE',
-    borderRadius: 4,
+    borderRadius: 4.5,
   },
   progressPercentText: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#475569',
     marginLeft: 10,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
   continueRightCol: {
     alignItems: 'center',
@@ -499,6 +513,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '900',
     color: '#000000',
+    fontFamily: SANS_SERIF_FONT,
   },
   reactIconBox: {
     backgroundColor: '#F0F9FF',
@@ -525,13 +540,13 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     marginBottom: 6,
     letterSpacing: -0.2,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
   courseLessonCountText: {
     fontSize: 12,
     fontWeight: '500',
     color: '#64748B',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    fontFamily: SANS_SERIF_FONT,
   },
 
   /* FULL-WIDTH EXPLORE ALL COURSES BUTTON */
@@ -553,6 +568,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.2,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+    fontFamily: SANS_SERIF_FONT,
   },
 });
