@@ -22,12 +22,14 @@ import { FullStackCourseProgress } from '../../types/fullstack';
 import { LoadingView } from '../../components/LoadingView';
 import { ErrorState } from '../../components/ErrorState';
 import { FirstTimeLanguageModal } from '../../components/FirstTimeLanguageModal';
+import { QuickMenuModal } from '../../components/QuickMenuModal';
 import { storage } from '../../services/storage';
 import { Icon } from '../../components/Icon';
 import { LaptopTechIllustration } from '../../components/LaptopTechIllustration';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SANS_SERIF_FONT = Platform.OS === 'android' ? 'sans-serif' : undefined;
+const SANS_SERIF_FONT = Platform.OS === 'android' ? 'Roboto' : undefined;
+const BANNER_HEIGHT = (SCREEN_WIDTH - 40) * (538 / 1024);
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
@@ -38,6 +40,7 @@ export const HomeScreen = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showFirstTimeLangModal, setShowFirstTimeLangModal] = useState<boolean>(false);
+  const [showQuickMenu, setShowQuickMenu] = useState<boolean>(false);
 
   useEffect(() => {
     const checkOneTimeLanguage = async () => {
@@ -131,30 +134,32 @@ export const HomeScreen = ({ navigation }: any) => {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#5653FE" />}
           showsVerticalScrollIndicator={false}
         >
-          {/* HEADER ROW */}
+          {/* HEADER ROW WITH SPACING & 3-LINE HAMBURGER MENU BUTTON */}
           <View style={styles.headerRow}>
             <View style={styles.greetingTextCol}>
               <Text style={styles.greetingTitle}>Hi, {firstName} 👋</Text>
               <Text style={styles.greetingSubtitle}>Ready to learn something new today?</Text>
             </View>
 
-            {/* Notification Bell Circle Button */}
+            {/* 3-Line Hamburger Menu Button */}
             <TouchableOpacity
-              style={styles.notificationBellCircle}
+              style={styles.hamburgerMenuCircle}
               activeOpacity={0.8}
-              onPress={() => navigation.navigate('Bookmarks')}
-              accessibilityLabel="Notifications"
+              onPress={() => setShowQuickMenu(true)}
+              accessibilityLabel="Quick Menu"
             >
-              <Icon name="bell" size={19} color="#FFFFFF" />
+              <View style={styles.hamburgerLine} />
+              <View style={styles.hamburgerLine} />
+              <View style={styles.hamburgerLine} />
             </TouchableOpacity>
           </View>
 
-          {/* AI STUDY ASSISTANT HERO CARD - Perfect Dark Navy Card with Real Touch Button & 3D Avatar */}
+          {/* AI STUDY ASSISTANT HERO CARD */}
           <View style={styles.heroCardContainer}>
             <View style={styles.heroLeftCol}>
               <Text style={styles.heroTitle}>AI Study Assistant</Text>
               <Text style={styles.heroSubtitle}>Ask anything. Get instant help.</Text>
-              
+
               {/* REAL INTERACTIVE BUTTON FOR USER */}
               <TouchableOpacity
                 style={styles.heroCtaBtn}
@@ -222,7 +227,7 @@ export const HomeScreen = ({ navigation }: any) => {
             </View>
           </TouchableOpacity>
 
-          {/* EXPLORE COURSES SECTION */}
+          {/* EXPLORE COURSES SECTION (PROPORTIONAL LARGER CARDS) */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Explore Courses</Text>
             <TouchableOpacity
@@ -240,7 +245,7 @@ export const HomeScreen = ({ navigation }: any) => {
           >
             {/* COURSE CARD 1: JavaScript for Beginners */}
             <TouchableOpacity
-              style={styles.courseCard}
+              style={styles.largeCourseCard}
               activeOpacity={0.85}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
             >
@@ -251,11 +256,14 @@ export const HomeScreen = ({ navigation }: any) => {
                 JavaScript{'\n'}for Beginners
               </Text>
               <Text style={styles.courseLessonCountText}>12 Lessons</Text>
+              <View style={styles.courseCtaChip}>
+                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+              </View>
             </TouchableOpacity>
 
             {/* COURSE CARD 2: React.js Zero to Hero */}
             <TouchableOpacity
-              style={styles.courseCard}
+              style={styles.largeCourseCard}
               activeOpacity={0.85}
               onPress={() => navigation.navigate('FullStackRoadmap')}
             >
@@ -266,11 +274,14 @@ export const HomeScreen = ({ navigation }: any) => {
                 React.js{'\n'}Zero to Hero
               </Text>
               <Text style={styles.courseLessonCountText}>18 Lessons</Text>
+              <View style={styles.courseCtaChip}>
+                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+              </View>
             </TouchableOpacity>
 
             {/* COURSE CARD 3: Node.js Essentials */}
             <TouchableOpacity
-              style={styles.courseCard}
+              style={styles.largeCourseCard}
               activeOpacity={0.85}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
             >
@@ -281,6 +292,134 @@ export const HomeScreen = ({ navigation }: any) => {
                 Node.js{'\n'}Essentials
               </Text>
               <Text style={styles.courseLessonCountText}>14 Lessons</Text>
+              <View style={styles.courseCtaChip}>
+                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* COURSE CARD 4: HTML & Web Basics */}
+            <TouchableOpacity
+              style={styles.largeCourseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
+            >
+              <View style={[styles.courseIconBox, styles.htmlIconBox]}>
+                <Text style={styles.htmlLogoSymbol}>HTML5</Text>
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                HTML5 & Web{'\n'}Fundamentals
+              </Text>
+              <Text style={styles.courseLessonCountText}>10 Lessons</Text>
+              <View style={styles.courseCtaChip}>
+                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* COURSE CARD 5: MongoDB & Database */}
+            <TouchableOpacity
+              style={styles.largeCourseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
+            >
+              <View style={[styles.courseIconBox, styles.mongoIconBox]}>
+                <Text style={styles.mongoLogoSymbol}>🍃</Text>
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                MongoDB &{'\n'}Database ODM
+              </Text>
+              <Text style={styles.courseLessonCountText}>16 Lessons</Text>
+              <View style={styles.courseCtaChip}>
+                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* AI TOOLS SECTION (MATCHING CARD LENGTH & NEAT DESIGN) */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Explore AI Tools</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ToolsTab')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.coursesHorizontalRow}
+          >
+            {/* TOOL CARD 1: AI Code Generator */}
+            <TouchableOpacity
+              style={styles.largeCourseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('AICodeGenerator')}
+            >
+              <View style={[styles.courseIconBox, styles.toolIconCode]}>
+                <Icon name="code" size={22} color="#4F46E5" />
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                AI Code{'\n'}Generator
+              </Text>
+              <Text style={styles.courseLessonCountText}>Code & Debug</Text>
+              <View style={[styles.courseCtaChip, styles.toolCtaChip]}>
+                <Text style={styles.toolCtaChipText}>Try Tool ➔</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* TOOL CARD 2: AI Image Generator */}
+            <TouchableOpacity
+              style={styles.largeCourseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('AIImageGenerator')}
+            >
+              <View style={[styles.courseIconBox, styles.toolIconImage]}>
+                <Icon name="image" size={22} color="#DB2777" />
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                AI Image{'\n'}Generator
+              </Text>
+              <Text style={styles.courseLessonCountText}>Create Art</Text>
+              <View style={[styles.courseCtaChip, styles.toolCtaChip]}>
+                <Text style={styles.toolCtaChipText}>Try Tool ➔</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* TOOL CARD 3: AI Email Writer */}
+            <TouchableOpacity
+              style={styles.largeCourseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('AIEmailWriter')}
+            >
+              <View style={[styles.courseIconBox, styles.toolIconEmail]}>
+                <Icon name="mail" size={22} color="#D97706" />
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                AI Email{'\n'}Writer
+              </Text>
+              <Text style={styles.courseLessonCountText}>Draft Emails</Text>
+              <View style={[styles.courseCtaChip, styles.toolCtaChip]}>
+                <Text style={styles.toolCtaChipText}>Try Tool ➔</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* TOOL CARD 4: AI Voice Generator */}
+            <TouchableOpacity
+              style={styles.largeCourseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('AIVoiceGenerator')}
+            >
+              <View style={[styles.courseIconBox, styles.toolIconVoice]}>
+                <Icon name="mic" size={22} color="#059669" />
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                AI Voice{'\n'}Generator
+              </Text>
+              <Text style={styles.courseLessonCountText}>Text Speech</Text>
+              <View style={[styles.courseCtaChip, styles.toolCtaChip]}>
+                <Text style={styles.toolCtaChipText}>Try Tool ➔</Text>
+              </View>
             </TouchableOpacity>
           </ScrollView>
 
@@ -294,6 +433,13 @@ export const HomeScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* QUICK HAMBURGER MENU MODAL */}
+      <QuickMenuModal
+        visible={showQuickMenu}
+        onClose={() => setShowQuickMenu(false)}
+        onNavigate={(screenName) => navigation.navigate(screenName)}
+      />
 
       <FirstTimeLanguageModal
         visible={showFirstTimeLangModal}
@@ -315,18 +461,18 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
   },
 
-  /* HEADER ROW */
+  /* HEADER ROW WITH EXTRA SPACING */
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   greetingTextCol: {
     flex: 1,
   },
   greetingTitle: {
-    fontSize: 25,
+    fontSize: 26,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.4,
@@ -337,25 +483,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     fontWeight: '400',
-    marginTop: 3,
+    marginTop: 4,
     fontFamily: SANS_SERIF_FONT,
     fontStyle: 'normal',
   },
-  notificationBellCircle: {
+
+  /* 3-Line Hamburger Menu Button */
+  hamburgerMenuCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#5653FE',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#5653FE',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  hamburgerLine: {
+    width: 18,
+    height: 2.2,
+    backgroundColor: '#0F172A',
+    borderRadius: 1.1,
   },
 
-  /* AI STUDY ASSISTANT HERO CARD - Clean Dark Navy Card without double white border */
+  /* AI STUDY ASSISTANT HERO CARD */
   heroCardContainer: {
     width: '100%',
     backgroundColor: '#0A0738',
@@ -364,7 +521,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 26,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.22,
@@ -428,10 +585,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 18.5,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -454,7 +611,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 26,
     borderWidth: 1,
     borderColor: '#F1F5F9',
     shadowColor: '#0F172A',
@@ -507,38 +664,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  /* EXPLORE COURSES HORIZONTAL ROW */
+  /* EXPLORE COURSES & AI TOOLS HORIZONTAL CARDS (LARGER, NEAT & PROPORTIONAL) */
   coursesHorizontalRow: {
     paddingRight: 10,
-    gap: 12,
-    marginBottom: 20,
+    gap: 14,
+    marginBottom: 26,
   },
-  courseCard: {
-    width: (SCREEN_WIDTH - 64) / 3 > 105 ? (SCREEN_WIDTH - 64) / 3 : 110,
+  largeCourseCard: {
+    width: 145,
+    minHeight: 180,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#F1F5F9',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+    justifyContent: 'space-between',
   },
   courseIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   jsIconBox: {
     backgroundColor: '#F7DF1E',
   },
   jsLogoText: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '900',
     color: '#000000',
     fontFamily: SANS_SERIF_FONT,
@@ -562,12 +721,53 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#339933',
   },
+  htmlIconBox: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  htmlLogoSymbol: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#E34F26',
+  },
+  mongoIconBox: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  mongoLogoSymbol: {
+    fontSize: 22,
+  },
+
+  /* Tool Icon Styling */
+  toolIconCode: {
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  toolIconImage: {
+    backgroundColor: '#FCE7F3',
+    borderWidth: 1,
+    borderColor: '#FBCFE8',
+  },
+  toolIconEmail: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  toolIconVoice: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+
   courseTitleText: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '800',
     color: '#0F172A',
-    lineHeight: 17,
-    marginBottom: 6,
+    lineHeight: 18,
+    marginBottom: 4,
     letterSpacing: -0.2,
     fontFamily: SANS_SERIF_FONT,
     fontStyle: 'normal',
@@ -576,6 +776,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: '#64748B',
+    marginBottom: 10,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  courseCtaChip: {
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  courseCtaChipText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#5653FE',
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  toolCtaChip: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#C7D2FE',
+  },
+  toolCtaChipText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#4F46E5',
     fontFamily: SANS_SERIF_FONT,
     fontStyle: 'normal',
   },
@@ -584,7 +812,7 @@ const styles = StyleSheet.create({
   exploreAllBtn: {
     backgroundColor: '#5653FE',
     borderRadius: 16,
-    height: 52,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#5653FE',
@@ -592,11 +820,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 4,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   exploreAllBtnText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 15.5,
     fontWeight: '700',
     letterSpacing: -0.2,
     fontFamily: SANS_SERIF_FONT,
