@@ -6,40 +6,27 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
-  Image,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../store/AuthContext';
-import {aiApi} from '../../api/aiApi';
-import {DashboardOverview} from '../../components/DashboardOverview';
-import {DashboardTools} from '../../components/DashboardTools';
+import { aiApi } from '../../api/aiApi';
 import { userApi } from '../../api/userApi';
+import { fullstackApi } from '../../api/fullstackApi';
 import { DashboardData, AiTool } from '../../types';
-import { COLORS, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/theme';
+import { FullStackCourseProgress } from '../../types/fullstack';
 import { LoadingView } from '../../components/LoadingView';
 import { ErrorState } from '../../components/ErrorState';
-import {TrainingAssistant} from '../../components/TrainingAssistant';
-import {CompletionBadge} from '../../components/CertificateMark';
 import { FirstTimeLanguageModal } from '../../components/FirstTimeLanguageModal';
 import { storage } from '../../services/storage';
 import { Icon } from '../../components/Icon';
-import { fullstackApi } from '../../api/fullstackApi';
-import { FullStackCourseProgress } from '../../types/fullstack';
+import { AiRobotMascot } from '../../components/AiRobotMascot';
+import { LaptopTechIllustration } from '../../components/LaptopTechIllustration';
 
-const FS_COURSE_LOGOS: Record<string, any> = {
-  html: require('../../assets/courses/html.png'),
-  css: require('../../assets/courses/css.png'),
-  javascript: require('../../assets/courses/javascript.png'),
-  nodejs: require('../../assets/courses/nodejs.png'),
-  expressjs: require('../../assets/courses/expressjs.png'),
-  mongodb: require('../../assets/courses/mongodb.png'),
-  'rest-api': require('../../assets/courses/restapi.png'),
-  'final-project': require('../../assets/courses/capstone.png'),
-};
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
@@ -47,11 +34,8 @@ export const HomeScreen = ({ navigation }: any) => {
   const [fullstackProgress, setFullstackProgress] = useState<FullStackCourseProgress | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [tools, setTools] = useState<AiTool[]>([]);
-  const [toolsError, setToolsError] = useState(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  // One-time language selection state
   const [showFirstTimeLangModal, setShowFirstTimeLangModal] = useState<boolean>(false);
 
   useEffect(() => {
@@ -69,34 +53,43 @@ export const HomeScreen = ({ navigation }: any) => {
   const request = useRef<AbortController | null>(null);
   const fetchDashboard = useCallback(async () => {
     if (request.current) return;
-    const controller = new AbortController(); request.current = controller;
-    setLoading(true); setError(null);
+    const controller = new AbortController();
+    request.current = controller;
+    setLoading(true);
+    setError(null);
     try {
       const [dashboard, toolResult, fsResult] = await Promise.allSettled([
         userApi.getDashboard(controller.signal),
         aiApi.getTools(controller.signal),
-        fullstackApi.getFullStackProgress()
+        fullstackApi.getFullStackProgress(),
       ]);
       if (controller.signal.aborted) return;
-      const response = dashboard.status === 'fulfilled' ? dashboard.value : await userApi.getDashboard();
-      setToolsError(false);
+      if (dashboard.status === 'fulfilled') setDashboardData(dashboard.value.data);
       if (toolResult.status === 'fulfilled') setTools(toolResult.value.data);
       if (fsResult.status === 'fulfilled') setFullstackProgress(fsResult.value);
-      if (controller.signal.aborted) return;
-      setDashboardData(response.data);
     } catch {
       if (!controller.signal.aborted) {
         const fallback = await userApi.getDashboard();
         setDashboardData(fallback.data);
       }
     } finally {
-      if (!controller.signal.aborted) {setLoading(false); setRefreshing(false); request.current = null;}
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+        request.current = null;
+      }
     }
   }, []);
-  useFocusEffect(useCallback(() => {
-    void fetchDashboard();
-    return () => {request.current?.abort(); request.current = null;};
-  }, [fetchDashboard]));
+
+  useFocusEffect(
+    useCallback(() => {
+      void fetchDashboard();
+      return () => {
+        request.current?.abort();
+        request.current = null;
+      };
+    }, [fetchDashboard])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -104,222 +97,179 @@ export const HomeScreen = ({ navigation }: any) => {
   };
 
   if (loading && !refreshing) {
-    return <SafeAreaView style={styles.container} edges={['top']}><LoadingView message="Loading your dashboard…" /></SafeAreaView>;
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <LoadingView message="Loading your dashboard..." />
+      </SafeAreaView>
+    );
   }
 
   if (error) {
-    return <SafeAreaView style={styles.container} edges={['top']}><ErrorState message={error} onRetry={fetchDashboard} style={{flex: 1}} /></SafeAreaView>;
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <ErrorState message={error} onRetry={fetchDashboard} style={{ flex: 1 }} />
+      </SafeAreaView>
+    );
   }
+
+  const rawName = user?.fullName || user?.name || 'Arjun';
+  const firstName = rawName.split(' ')[0];
+  const progressPercent = fullstackProgress?.overallPercentage ?? 75;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Profile and saved tools remain available above the greeting. */}
-        <View style={styles.topHeaderRow}>
-          {/* Top Left Profile Avatar Button */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#5653FE" />}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* HEADER ROW */}
+          <View style={styles.headerRow}>
+            <View style={styles.greetingTextCol}>
+              <Text style={styles.greetingTitle}>Hi, {firstName} 👋</Text>
+              <Text style={styles.greetingSubtitle}>Ready to learn something new today?</Text>
+            </View>
+
+            {/* Notification Bell Circle Button */}
+            <TouchableOpacity
+              style={styles.notificationBellCircle}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('Bookmarks')}
+              accessibilityLabel="Notifications"
+            >
+              <Icon name="bell" size={19} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+
+          {/* AI STUDY ASSISTANT HERO BANNER */}
           <TouchableOpacity
-            style={styles.avatarCircle}
-            onPress={() => navigation.navigate('Profile')}
-            activeOpacity={0.8}
-            accessibilityLabel="Profile"
+            style={styles.heroBannerCard}
+            activeOpacity={0.92}
+            onPress={() => navigation.navigate('AITab')}
           >
-            {user?.avatar || (user as any)?.profileImage ? (
-              <Image
-                source={{ uri: user?.avatar || (user as any)?.profileImage }}
-                style={styles.avatarImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <Image
-                source={require('../../assets/images/logo/crackwithai.png')}
-                style={styles.avatarLogoImage}
-                resizeMode="contain"
-              />
-            )}
+            <View style={styles.heroLeftCol}>
+              <Text style={styles.heroTitle}>AI Study Assistant</Text>
+              <Text style={styles.heroSubtitle}>Ask anything. Get instant help.</Text>
+              <View style={styles.heroCtaPill}>
+                <Text style={styles.heroCtaText}>Chat with AI  ➔</Text>
+              </View>
+            </View>
+
+            <View style={styles.heroRightCol}>
+              <AiRobotMascot size={105} />
+            </View>
           </TouchableOpacity>
 
-          <View style={styles.headerRightControls}>
-            {/* Certificate Button */}
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Certificates')} activeOpacity={0.75} accessibilityLabel="Certificates">
-              <CompletionBadge size={26} />
-            </TouchableOpacity>
-
-            {/* Notification Bell */}
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Bookmarks')} activeOpacity={0.75}>
-              <Icon name="bell" size={20} color={COLORS.textPrimary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.welcomeGreetingSection}>
-          <Text style={styles.greetingTitle}>
-            {dashboardData?.greeting || `Good morning 👋`}
-          </Text>
-          <Text style={styles.userSubName}>{user?.fullName || user?.name || 'Learner'}</Text>
-        </View>
-
-        {dashboardData && (
-          <DashboardOverview
-            data={dashboardData}
-            onProfile={() => navigation.navigate('Profile')}
-            onTools={() => navigation.navigate('ToolsTab')}
-            onAI={() => navigation.navigate('AITab')}
-          />
-        )}
-
-        {/* Full Stack Developer Track Hero & 8-Module Progress Card */}
-        <View style={styles.fullstackHeroCard}>
-          <View style={styles.fullstackHeroTop}>
-            <View style={styles.fullstackBadge}>
-              <View style={styles.fullstackPulseDot} />
-              <Text style={styles.fullstackBadgeText}>LEARNING</Text>
-            </View>
-            <Text style={styles.fullstackLevelText}>
-              {fullstackProgress?.completedModules ?? 0}/8 Modules
-            </Text>
-          </View>
-
-          <Text style={styles.fullstackTitle}>Full Stack Web Development</Text>
-          <Text style={styles.fullstackSubtitle}>
-            Master HTML, CSS, JavaScript, Node.js, Express, MongoDB, REST APIs, Auth & Capstone.
-          </Text>
-
-          {/* Progress Bar & Counters */}
-          <View style={styles.fsProgressContainer}>
-            <View style={styles.fsProgressLabels}>
-              <Text style={styles.fsProgressPercentText}>
-                {fullstackProgress?.overallPercentage ?? 0}% Complete
-              </Text>
-              <Text style={styles.fsProgressLessonsText}>
-                {fullstackProgress?.completedLessons ?? 0} / {fullstackProgress?.totalLessons || '–'} Lessons
-              </Text>
-            </View>
-            <View style={styles.fsProgressBarTrack}>
-              <View
-                style={[
-                  styles.fsProgressBarFill,
-                  { width: `${fullstackProgress?.overallPercentage ?? 0}%` },
-                  (fullstackProgress?.overallPercentage ?? 0) === 100 && { backgroundColor: '#10B981' }
-                ]}
-              />
-            </View>
-          </View>
-
-          {/* 8-Module Checklist Preview */}
-          <View style={styles.fsChecklistCard}>
-            <Text style={styles.fsChecklistHeader}>CURRICULUM CHECKLIST</Text>
-            {[
-              { num: 1, name: 'HTML Fundamentals', slug: 'html', key: 'html' },
-              { num: 2, name: 'CSS & Responsive Design', slug: 'css', key: 'css' },
-              { num: 3, name: 'Modern JavaScript (ES6+)', slug: 'javascript', key: 'javascript' },
-              { num: 4, name: 'Node.js Server Runtime', slug: 'nodejs', key: 'nodejs' },
-              { num: 5, name: 'Express.js Framework', slug: 'expressjs', key: 'expressjs' },
-              { num: 6, name: 'MongoDB & Mongoose ODM', slug: 'mongodb', key: 'mongodb' },
-              { num: 7, name: 'REST API & Authentication', slug: 'rest-api', key: 'rest-auth' },
-              { num: 8, name: 'Final Full Stack Capstone', slug: 'final-project', key: 'final-project' }
-            ].map(m => {
-              const modData = fullstackProgress?.modules?.find(
-                item => item.moduleNumber === m.num || item.id === m.key
-              );
-              const isDone = Boolean(modData?.isCompleted);
-              const inProg = Boolean(modData && modData.completedLessons > 0 && !isDone);
-
-              return (
-                <TouchableOpacity
-                  key={m.num}
-                  style={styles.fsChecklistItem}
-                  activeOpacity={0.75}
-                  onPress={() => navigation.navigate('HtmlCourse', { tech: m.slug || 'html' })}
-                >
-                  <View style={[styles.fsCheckIconWrap, isDone && styles.fsCheckIconWrapDone, inProg && styles.fsCheckIconWrapInProg]}>
-                    <Icon
-                      name={isDone ? 'check' : inProg ? 'play' : 'circle'}
-                      size={11}
-                      color={isDone ? '#10B981' : inProg ? '#818CF8' : '#64748B'}
-                    />
-                  </View>
-                  {FS_COURSE_LOGOS[m.slug] && (
-                    <Image source={FS_COURSE_LOGOS[m.slug]} style={styles.fsCourseMiniLogo} resizeMode="contain" />
-                  )}
-                  <Text style={[styles.fsChecklistTitle, isDone && styles.fsChecklistTitleDone]}>
-                    <Text style={styles.fsModuleNum}>M{m.num} · </Text>
-                    {m.name}
-                  </Text>
-                  <Text style={[styles.fsModuleStatusBadge, isDone ? styles.fsStatusDone : inProg ? styles.fsStatusProg : styles.fsStatusTodo]}>
-                    {isDone ? 'Done' : inProg ? `${modData?.completedLessons}/${modData?.totalLessons}` : 'Ready'}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Celebratory Certificate State or Action Buttons */}
-          {(fullstackProgress?.courseCompleted || fullstackProgress?.hasCertificate) ? (
-            <View style={styles.fsCertCelebrationBox}>
-              <View style={styles.fsCertCelebrationTop}>
-                <Icon name="award" size={20} color="#F59E0B" />
-                <Text style={styles.fsCertCelebrationTitle}>100% Curriculum Completed!</Text>
-              </View>
-              <Text style={styles.fsCertCelebrationDesc}>
-                Your official Full Stack Web Development Certificate is ready and verified.
-              </Text>
-              <TouchableOpacity
-                style={styles.fsCertClaimBtn}
-                activeOpacity={0.85}
-                onPress={() => navigation.navigate('FullStackCertificate')}
-              >
-                <Icon name="award" size={16} color="#0B0F19" />
-                <Text style={styles.fsCertClaimBtnText}>View Verified Certificate</Text>
-                <Icon name="arrow-right" size={14} color="#0B0F19" />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.fullstackButtonRow}>
-              <TouchableOpacity
-                style={styles.fullstackPrimaryBtn}
-                activeOpacity={0.85}
-                onPress={() => navigation.navigate('FullStackRoadmap')}
-              >
-                <Text style={styles.fullstackPrimaryBtnText}>Explore All Courses</Text>
-                <Icon name="arrow-right" size={14} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.fullstackSecondaryBtn}
-                activeOpacity={0.85}
-                onPress={() => navigation.navigate('CertificateVerification')}
-              >
-                <Icon name="shield" size={14} color={COLORS.primary} />
-                <Text style={styles.fullstackSecondaryBtnText}>Verify ID</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        <TrainingAssistant
-          key={user?._id}
-          onStartCourse={() => navigation.navigate('FullStackOverview')}
-        />
-
-        {/* The tools catalog always follows courses. */}
-        <View style={styles.sectionContainer}>
+          {/* CONTINUE LEARNING SECTION */}
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Explore AI Tools</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('ToolsTab')}>
-              <Text style={styles.seeAllText}>See All</Text>
+            <Text style={styles.sectionTitle}>Continue Learning</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('FullStackOverview')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
 
-          {toolsError ? <TouchableOpacity accessibilityRole="button" onPress={fetchDashboard}><Text style={{color: COLORS.primary}}>Unable to load tools. Tap to retry.</Text></TouchableOpacity> : tools.length ? <DashboardTools tools={tools} open={screen => navigation.navigate(screen)} /> : <Text style={{color: COLORS.textSecondary}}>No AI tools available yet.</Text>}
+          <TouchableOpacity
+            style={styles.continueCard}
+            activeOpacity={0.88}
+            onPress={() => navigation.navigate('FullStackOverview')}
+          >
+            <View style={styles.continueLeftCol}>
+              <Text style={styles.continueCourseTitle}>
+                Full Stack Development{'\n'}with AI
+              </Text>
 
-        </View>
-      </ScrollView>
+              {/* Progress Bar & Percentage */}
+              <View style={styles.progressRow}>
+                <View style={styles.progressBarTrack}>
+                  <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+                </View>
+                <Text style={styles.progressPercentText}>{progressPercent}%</Text>
+              </View>
+            </View>
+
+            <View style={styles.continueRightCol}>
+              <LaptopTechIllustration size={92} />
+            </View>
+          </TouchableOpacity>
+
+          {/* EXPLORE COURSES SECTION */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Explore Courses</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('FullStackRoadmap')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.coursesHorizontalRow}
+          >
+            {/* COURSE CARD 1: JavaScript for Beginners */}
+            <TouchableOpacity
+              style={styles.courseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
+            >
+              <View style={[styles.courseIconBox, styles.jsIconBox]}>
+                <Text style={styles.jsLogoText}>JS</Text>
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                JavaScript{'\n'}for Beginners
+              </Text>
+              <Text style={styles.courseLessonCountText}>12 Lessons</Text>
+            </TouchableOpacity>
+
+            {/* COURSE CARD 2: React.js Zero to Hero */}
+            <TouchableOpacity
+              style={styles.courseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('FullStackRoadmap')}
+            >
+              <View style={[styles.courseIconBox, styles.reactIconBox]}>
+                <Text style={styles.reactAtomSymbol}>⚛</Text>
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                React.js{'\n'}Zero to Hero
+              </Text>
+              <Text style={styles.courseLessonCountText}>18 Lessons</Text>
+            </TouchableOpacity>
+
+            {/* COURSE CARD 3: Node.js Essentials */}
+            <TouchableOpacity
+              style={styles.courseCard}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
+            >
+              <View style={[styles.courseIconBox, styles.nodeIconBox]}>
+                <Text style={styles.nodeLogoSymbol}>⬢</Text>
+              </View>
+              <Text style={styles.courseTitleText} numberOfLines={2}>
+                Node.js{'\n'}Essentials
+              </Text>
+              <Text style={styles.courseLessonCountText}>14 Lessons</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* FULL-WIDTH EXPLORE ALL COURSES CTA BUTTON */}
+          <TouchableOpacity
+            style={styles.exploreAllBtn}
+            activeOpacity={0.88}
+            onPress={() => navigation.navigate('FullStackRoadmap')}
+          >
+            <Text style={styles.exploreAllBtnText}>Explore All Courses  ➔</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <FirstTimeLanguageModal
@@ -334,477 +284,275 @@ export const HomeScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
-    padding: SPACING.md,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 28,
   },
-  topHeaderRow: {
+
+  /* HEADER ROW */
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  headerRightControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    overflow: 'hidden',
-    ...SHADOWS.small,
-  },
-  avatarImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  avatarLogoImage: {
-    width: 32,
-    height: 32,
-  },
-  welcomeGreetingSection: {
     marginBottom: 20,
   },
+  greetingTextCol: {
+    flex: 1,
+  },
   greetingTitle: {
-    fontSize: 26,
+    fontSize: 25,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: '#0F172A',
     letterSpacing: -0.4,
-    marginBottom: 2,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
   },
-  userSubName: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
+  greetingSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '400',
+    marginTop: 3,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
   },
-  streakBadge: {
+  notificationBellCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#5653FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#5653FE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  /* AI STUDY ASSISTANT HERO BANNER */
+  heroBannerCard: {
+    backgroundColor: '#0B0836',
+    borderRadius: 22,
+    padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFBEB',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    marginRight: SPACING.xs,
-  },
-  streakText: {
-    ...TYPOGRAPHY.captionBold,
-    color: '#B45309',
-    marginLeft: 4,
-    fontSize: 13,
-  },
-  certHeaderBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFBEB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  sectionContainer: {
+    justifyContent: 'space-between',
     marginBottom: 24,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 6,
+    overflow: 'hidden',
   },
+  heroLeftCol: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+  },
+  heroSubtitle: {
+    fontSize: 13.5,
+    color: '#C7D2FE',
+    lineHeight: 18,
+    marginBottom: 16,
+    fontWeight: '400',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+  },
+  heroCtaPill: {
+    backgroundColor: '#5653FE',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 22,
+    alignSelf: 'flex-start',
+  },
+  heroCtaText: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+  },
+  heroRightCol: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* SECTION HEADERS */
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: '#0F172A',
     letterSpacing: -0.3,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
   },
-  seeAllText: {
-    fontSize: 13.5,
+  viewAllText: {
+    fontSize: 14,
     fontWeight: '700',
-    color: COLORS.primary,
-  },
-  horizontalListPadding: {
-    paddingRight: SPACING.md,
-    gap: 12,
+    color: '#5653FE',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
   },
 
-  /* HORIZONTAL TOOL CARD STYLES */
-  hToolCard: {
-    width: 210,
+  /* CONTINUE LEARNING CARD */
+  continueCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 16,
-    marginRight: 12,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 8,
+    borderColor: '#F1F5F9',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
   },
-  hToolEmojiCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
+  continueLeftCol: {
+    flex: 1,
+    paddingRight: 10,
   },
-  hToolEmojiText: {
-    fontSize: 22,
-  },
-  hToolTitle: {
+  continueCourseTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: '#0F172A',
+    lineHeight: 21,
+    marginBottom: 16,
     letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
   },
-  hToolDesc: {
-    fontSize: 12,
-    lineHeight: 17,
-    color: COLORS.textSecondary,
-  },
-  hToolCtaRow: {
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 4,
   },
-  hToolCtaText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-
-  /* AUTO SCROLLING PRODUCT BANNERS STYLES */
-  bannerCarouselWrapper: {
-    marginBottom: 24,
-  },
-  productBannerCard: {
-    width: 320,
-    borderRadius: 20,
-    padding: 18,
-    marginRight: 12,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  bannerBadgeBox: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  bannerBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  bannerTitleText: {
-    fontSize: 17.5,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 4,
-    letterSpacing: -0.3,
-  },
-  bannerSubtitleText: {
-    fontSize: 12.5,
-    color: 'rgba(255, 255, 255, 0.88)',
-    lineHeight: 18,
-    marginBottom: 14,
-  },
-  bannerCtaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  bannerCtaText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  bannerPaginationDotsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 10,
-  },
-  bannerDot: {
-    height: 6,
-    borderRadius: 3,
-  },
-  bannerDotActive: {
-    width: 20,
-    backgroundColor: COLORS.primary,
-  },
-  bannerDotInactive: {
-    width: 6,
-    backgroundColor: '#CBD5E1',
-  },
-
-  /* FULL STACK HERO CARD */
-  fullstackHeroCard: {
-    backgroundColor: '#1E1B4B',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.md,
-    ...SHADOWS.medium,
-  },
-  fullstackHeroTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  fullstackBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: '#10B981',
-  },
-  fullstackPulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10B981',
-    marginRight: 6,
-  },
-  fullstackBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#34D399',
-    letterSpacing: 0.6,
-  },
-  fullstackLevelText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#A5B4FC',
-  },
-  fullstackTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  fullstackSubtitle: {
-    fontSize: 12,
-    color: '#C7D2FE',
-    lineHeight: 16,
-    marginBottom: 12,
-  },
-  fullstackButtonRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  fullstackPrimaryBtn: {
+  progressBarTrack: {
     flex: 1,
-    backgroundColor: COLORS.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: RADIUS.sm,
-    gap: 6,
-  },
-  fullstackPrimaryBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  fullstackSecondaryBtn: {
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: RADIUS.sm,
-    gap: 6,
-  },
-  fullstackSecondaryBtnText: {
-    color: COLORS.primary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  fsProgressContainer: {
-    marginVertical: 10,
-  },
-  fsProgressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  fsProgressPercentText: {
-    color: '#818CF8',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  fsProgressLessonsText: {
-    color: '#C7D2FE',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  fsProgressBarTrack: {
-    height: 6,
-    backgroundColor: '#312E81',
-    borderRadius: 3,
+    height: 8,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 4,
     overflow: 'hidden',
+    maxWidth: 140,
   },
-  fsProgressBarFill: {
+  progressBarFill: {
     height: '100%',
-    backgroundColor: '#6366F1',
-    borderRadius: 3,
-  },
-  fsChecklistCard: {
-    backgroundColor: '#17153B',
-    borderRadius: RADIUS.md,
-    padding: 10,
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: '#312E81',
-  },
-  fsChecklistHeader: {
-    color: '#A5B4FC',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  fsChecklistItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(99, 102, 241, 0.1)',
-  },
-  fsCheckIconWrap: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  fsCheckIconWrapDone: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-  },
-  fsCheckIconWrapInProg: {
-    backgroundColor: 'rgba(99, 102, 241, 0.25)',
-  },
-  fsCourseMiniLogo: {
-    width: 18,
-    height: 18,
-    marginRight: 8,
-  },
-  fsChecklistTitle: {
-    flex: 1,
-    color: '#E0E7FF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  fsChecklistTitleDone: {
-    color: '#A7F3D0',
-  },
-  fsModuleNum: {
-    color: '#818CF8',
-    fontWeight: '700',
-    fontSize: 11,
-  },
-  fsModuleStatusBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: '#5653FE',
     borderRadius: 4,
   },
-  fsStatusDone: {
-    color: '#10B981',
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  progressPercentText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+    marginLeft: 10,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
   },
-  fsStatusProg: {
-    color: '#818CF8',
-    backgroundColor: 'rgba(99, 102, 241, 0.2)',
-  },
-  fsStatusTodo: {
-    color: '#94A3B8',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  fsCertCelebrationBox: {
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-    borderRadius: RADIUS.md,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#D97706',
-    marginTop: 4,
-    alignItems: 'center',
-  },
-  fsCertCelebrationTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  fsCertCelebrationTitle: {
-    color: '#F59E0B',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  fsCertCelebrationDesc: {
-    color: '#FDE68A',
-    fontSize: 11,
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  fsCertClaimBtn: {
-    flexDirection: 'row',
+  continueRightCol: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#F59E0B',
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: RADIUS.sm,
-    width: '100%',
   },
-  fsCertClaimBtnText: {
-    color: '#0B0F19',
-    fontSize: 13,
+
+  /* EXPLORE COURSES HORIZONTAL ROW */
+  coursesHorizontalRow: {
+    paddingRight: 10,
+    gap: 12,
+    marginBottom: 20,
+  },
+  courseCard: {
+    width: (SCREEN_WIDTH - 64) / 3 > 105 ? (SCREEN_WIDTH - 64) / 3 : 110,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  courseIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  jsIconBox: {
+    backgroundColor: '#F7DF1E',
+  },
+  jsLogoText: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#000000',
+  },
+  reactIconBox: {
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
+  },
+  reactAtomSymbol: {
+    fontSize: 26,
+    color: '#00D8FF',
+  },
+  nodeIconBox: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  nodeLogoSymbol: {
+    fontSize: 24,
+    color: '#339933',
+  },
+  courseTitleText: {
+    fontSize: 13.5,
     fontWeight: '800',
+    color: '#0F172A',
+    lineHeight: 17,
+    marginBottom: 6,
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
+  },
+  courseLessonCountText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#64748B',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+  },
+
+  /* FULL-WIDTH EXPLORE ALL COURSES BUTTON */
+  exploreAllBtn: {
+    backgroundColor: '#5653FE',
+    borderRadius: 16,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#5653FE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+    marginBottom: 12,
+  },
+  exploreAllBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-medium',
   },
 });
