@@ -242,17 +242,16 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* COURSE CARD 1: JavaScript (Dimmed Yellow #FEF08A) */}
+            {/* COURSE CARD 1: JavaScript (Soft Pastel Yellow #FEF9C3) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FEF08A' }]}
+              style={[styles.pastelCard, { backgroundColor: '#FEF9C3' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#EAB308', shadowColor: '#EAB308' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#F7DF1E' }]}>
                   <Text style={styles.jsBadgeText}>JS</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -269,17 +268,16 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 2: CSS3 & Layouts (Dimmed Blue #E0F2FE) - REPLACED REACT.JS */}
+            {/* COURSE CARD 2: CSS3 & Layouts (Soft Pastel Blue #E0F2FE) */}
             <TouchableOpacity
               style={[styles.pastelCard, { backgroundColor: '#E0F2FE' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'css' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#0284C7', shadowColor: '#0284C7' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#0284C7' }]}>
                   <Text style={styles.cssBadgeText}>CSS3</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -296,18 +294,17 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 3: Node.js (Dimmed Mint Green #DCFCE7) */}
+            {/* COURSE CARD 3: Node.js (Soft Pastel Mint Green #DCFCE7) */}
             <TouchableOpacity
               style={[styles.pastelCard, { backgroundColor: '#DCFCE7' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#166534', shadowColor: '#166534' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#166534' }]}>
                   <Text style={styles.nodeSymbolIcon}>⬢</Text>
                   <Text style={styles.nodeBadgeSubText}>node</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -324,17 +321,16 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 4: HTML5 (Dimmed Peach Orange #FFEDD5) */}
+            {/* COURSE CARD 4: HTML5 (Soft Pastel Peach Orange #FFEDD5) */}
             <TouchableOpacity
               style={[styles.pastelCard, { backgroundColor: '#FFEDD5' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#EA580C', shadowColor: '#EA580C' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#EA580C' }]}>
                   <Text style={styles.htmlBadgeText}>HTML5</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -351,17 +347,16 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 5: MongoDB (Dimmed Emerald Green #D1FAE5) */}
+            {/* COURSE CARD 5: MongoDB (Soft Pastel Emerald Green #D1FAE5) */}
             <TouchableOpacity
               style={[styles.pastelCard, { backgroundColor: '#D1FAE5' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#059669', shadowColor: '#059669' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#059669' }]}>
                   <Text style={styles.mongoLeafIcon}>🍃</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -404,17 +399,16 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* TOOL CARD 1: AI Code Generator (Dimmed Indigo #EEF2FF) */}
+            {/* TOOL CARD 1: AI Code Generator (Soft Pastel Lavender #EEF2FF) */}
             <TouchableOpacity
               style={[styles.pastelCard, { backgroundColor: '#EEF2FF' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AICodeGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#4F46E5', shadowColor: '#4F46E5' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#4F46E5' }]}>
                   <Text style={styles.codeIconSymbol}>{'</>'}</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -431,17 +425,16 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 2: AI Image Generator (Dimmed Rose Pink #FCE7F3) */}
+            {/* TOOL CARD 2: AI Image Generator (Soft Pastel Rose Pink #FCE7F3) */}
             <TouchableOpacity
               style={[styles.pastelCard, { backgroundColor: '#FCE7F3' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIImageGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#DB2777', shadowColor: '#DB2777' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#DB2777' }]}>
                   <Text style={styles.toolEmojiSymbol}>🎨</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -458,17 +451,16 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 3: AI Email Writer (Dimmed Amber Yellow #FEF3C7) */}
+            {/* TOOL CARD 3: AI Email Writer (Soft Pastel Amber Yellow #FEF3C7) */}
             <TouchableOpacity
               style={[styles.pastelCard, { backgroundColor: '#FEF3C7' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIEmailWriter')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#D97706', shadowColor: '#D97706' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#D97706' }]}>
                   <Text style={styles.toolEmojiSymbol}>✉️</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -485,17 +477,16 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 4: AI Voice Generator (Dimmed Teal Cyan #CCFBF1) */}
+            {/* TOOL CARD 4: AI Voice Generator (Soft Pastel Teal Cyan #CCFBF1) */}
             <TouchableOpacity
               style={[styles.pastelCard, { backgroundColor: '#CCFBF1' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIVoiceGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#0D9488', shadowColor: '#0D9488' }]}>
+                <View style={[styles.brandLogoBox, { backgroundColor: '#0D9488' }]}>
                   <Text style={styles.toolEmojiSymbol}>🎙️</Text>
                 </View>
-                <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
@@ -773,18 +764,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   cardHeaderArea: {
-    height: 100,
-    position: 'relative',
+    height: 68,
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  archBackdrop: {
-    width: 105,
-    height: 98,
-    borderTopLeftRadius: 52,
-    borderTopRightRadius: 52,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
+  brandLogoBox: {
+    width: 54,
+    height: 54,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#0F172A',
@@ -792,18 +779,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
-    overflow: 'hidden',
-  },
-  cardLogoImage: {
-    width: 78,
-    height: 78,
-  },
-  reactAtomIcon: {
-    fontSize: 54,
-    color: '#38BDF8',
   },
   jsBadgeText: {
-    fontSize: 40,
+    fontSize: 34,
     fontWeight: '900',
     color: '#000000',
     letterSpacing: -1,
@@ -811,7 +789,7 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
   },
   cssBadgeText: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: -0.5,
@@ -819,12 +797,12 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
   },
   nodeSymbolIcon: {
-    fontSize: 40,
+    fontSize: 34,
     color: '#4ADE80',
     marginBottom: -4,
   },
   nodeBadgeSubText: {
-    fontSize: 11,
+    fontSize: 9.5,
     fontWeight: '800',
     color: '#4ADE80',
     letterSpacing: 0.5,
@@ -832,7 +810,7 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
   },
   htmlBadgeText: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: -0.5,
@@ -840,10 +818,10 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
   },
   mongoLeafIcon: {
-    fontSize: 42,
+    fontSize: 34,
   },
   codeIconSymbol: {
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: '900',
     color: '#38BDF8',
     letterSpacing: -1,
@@ -851,18 +829,7 @@ const styles = StyleSheet.create({
     fontStyle: 'normal',
   },
   toolEmojiSymbol: {
-    fontSize: 42,
-  },
-  archAccentPaper: {
-    position: 'absolute',
-    top: 8,
-    right: 12,
-    width: 24,
-    height: 32,
-    backgroundColor: '#FFFFFF',
-    opacity: 0.65,
-    borderRadius: 5,
-    transform: [{ rotate: '18deg' }],
+    fontSize: 34,
   },
   cardBodyContent: {
     flex: 1,
