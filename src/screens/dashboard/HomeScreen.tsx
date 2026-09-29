@@ -242,93 +242,154 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* COURSE CARD 1: JavaScript for Beginners */}
+            {/* COURSE CARD 1: JavaScript (Peach #FED7AA) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#FED7AA' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
             >
-              <View style={[styles.courseIconBox, styles.jsIconBox]}>
-                <Text style={styles.jsLogoText}>JS</Text>
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#FDBA74' }]}>
+                  <Image
+                    source={require('../../assets/courses/javascript.png')}
+                    style={styles.cardLogoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                JavaScript{'\n'}for Beginners
-              </Text>
-              <Text style={styles.courseLessonCountText}>12 Lessons</Text>
-              <View style={styles.courseCtaChip}>
-                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  JavaScript for Beginners
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  Master modern ES6+, DOM manipulation & async code.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 2: React.js Zero to Hero */}
+            {/* COURSE CARD 2: React.js (Lime Green #D9F99D) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#D9F99D' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('FullStackRoadmap')}
             >
-              <View style={[styles.courseIconBox, styles.reactIconBox]}>
-                <Text style={styles.reactAtomSymbol}>⚛</Text>
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#BEF264' }]}>
+                  <Text style={styles.reactAtomIcon}>⚛</Text>
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                React.js{'\n'}Zero to Hero
-              </Text>
-              <Text style={styles.courseLessonCountText}>18 Lessons</Text>
-              <View style={styles.courseCtaChip}>
-                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  React.js Zero to Hero
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  Build fast interactive web UIs with modern Hooks.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 3: Node.js Essentials */}
+            {/* COURSE CARD 3: Node.js (Soft Cyan #BAE6FD) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#BAE6FD' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
             >
-              <View style={[styles.courseIconBox, styles.nodeIconBox]}>
-                <Text style={styles.nodeLogoSymbol}>⬢</Text>
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#7DD3FC' }]}>
+                  <Image
+                    source={require('../../assets/courses/nodejs.png')}
+                    style={styles.cardLogoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                Node.js{'\n'}Essentials
-              </Text>
-              <Text style={styles.courseLessonCountText}>14 Lessons</Text>
-              <View style={styles.courseCtaChip}>
-                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  Node.js Backend
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  Create scalable REST APIs & Express servers.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 4: HTML & Web Basics */}
+            {/* COURSE CARD 4: HTML5 (Soft Lavender #E9D5FF) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#E9D5FF' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
             >
-              <View style={[styles.courseIconBox, styles.htmlIconBox]}>
-                <Text style={styles.htmlLogoSymbol}>HTML5</Text>
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#D8B4FE' }]}>
+                  <Image
+                    source={require('../../assets/courses/html.png')}
+                    style={styles.cardLogoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                HTML5 & Web{'\n'}Fundamentals
-              </Text>
-              <Text style={styles.courseLessonCountText}>10 Lessons</Text>
-              <View style={styles.courseCtaChip}>
-                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  HTML5 & Web Basics
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  Learn semantic tags & web document layouts.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 5: MongoDB & Database */}
+            {/* COURSE CARD 5: MongoDB (Soft Pink #FBCFE8) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#FBCFE8' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
             >
-              <View style={[styles.courseIconBox, styles.mongoIconBox]}>
-                <Text style={styles.mongoLogoSymbol}>🍃</Text>
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#F472B6' }]}>
+                  <Image
+                    source={require('../../assets/courses/mongodb.png')}
+                    style={styles.cardLogoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                MongoDB &{'\n'}Database ODM
-              </Text>
-              <Text style={styles.courseLessonCountText}>16 Lessons</Text>
-              <View style={styles.courseCtaChip}>
-                <Text style={styles.courseCtaChipText}>Start ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  MongoDB & Databases
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  NoSQL database modeling & Mongoose ODM.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
           </ScrollView>
@@ -358,75 +419,127 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* TOOL CARD 1: AI Code Generator */}
+            {/* TOOL CARD 1: AI Code Generator (Soft Lavender #E9D5FF) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#E9D5FF' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('AICodeGenerator')}
             >
-              <View style={[styles.courseIconBox, styles.toolIconCode]}>
-                <Icon name="code" size={24} color="#4F46E5" />
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#D8B4FE' }]}>
+                  <Image
+                    source={require('../../assets/tools/code_generator.png')}
+                    style={styles.cardLogoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                AI Code{'\n'}Generator
-              </Text>
-              <Text style={styles.courseLessonCountText}>Code & Debug</Text>
-              <View style={[styles.courseCtaChip, styles.toolCtaChip]}>
-                <Text style={styles.toolCtaChipText}>Try Tool ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  AI Code Generator
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  Generate, refactor & debug code in seconds.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Try Tool ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 2: AI Image Generator */}
+            {/* TOOL CARD 2: AI Image Generator (Peach #FED7AA) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#FED7AA' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('AIImageGenerator')}
             >
-              <View style={[styles.courseIconBox, styles.toolIconImage]}>
-                <Icon name="image" size={24} color="#DB2777" />
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#FDBA74' }]}>
+                  <Image
+                    source={require('../../assets/tools/image_generator.png')}
+                    style={styles.cardLogoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                AI Image{'\n'}Generator
-              </Text>
-              <Text style={styles.courseLessonCountText}>Create Art</Text>
-              <View style={[styles.courseCtaChip, styles.toolCtaChip]}>
-                <Text style={styles.toolCtaChipText}>Try Tool ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  AI Image Generator
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  Create photorealistic AI graphics & art.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Try Tool ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 3: AI Email Writer */}
+            {/* TOOL CARD 3: AI Email Writer (Lime Green #D9F99D) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#D9F99D' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('AIEmailWriter')}
             >
-              <View style={[styles.courseIconBox, styles.toolIconEmail]}>
-                <Icon name="mail" size={24} color="#D97706" />
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#BEF264' }]}>
+                  <Image
+                    source={require('../../assets/tools/email_writer.png')}
+                    style={styles.cardLogoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                AI Email{'\n'}Writer
-              </Text>
-              <Text style={styles.courseLessonCountText}>Draft Emails</Text>
-              <View style={[styles.courseCtaChip, styles.toolCtaChip]}>
-                <Text style={styles.toolCtaChipText}>Try Tool ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  AI Email Writer
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  Draft professional emails & replies effortlessly.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Try Tool ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 4: AI Voice Generator */}
+            {/* TOOL CARD 4: AI Voice Generator (Soft Cyan #BAE6FD) */}
             <TouchableOpacity
-              style={styles.largeCourseCard}
-              activeOpacity={0.85}
+              style={[styles.pastelCard, { backgroundColor: '#BAE6FD' }]}
+              activeOpacity={0.88}
               onPress={() => navigation.navigate('AIVoiceGenerator')}
             >
-              <View style={[styles.courseIconBox, styles.toolIconVoice]}>
-                <Icon name="mic" size={24} color="#059669" />
+              <View style={styles.cardHeaderArea}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#7DD3FC' }]}>
+                  <Image
+                    source={require('../../assets/tools/voice_generator.png')}
+                    style={styles.cardLogoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.archAccentPaper} />
               </View>
-              <Text style={styles.courseTitleText} numberOfLines={2}>
-                AI Voice{'\n'}Generator
-              </Text>
-              <Text style={styles.courseLessonCountText}>Text Speech</Text>
-              <View style={[styles.courseCtaChip, styles.toolCtaChip]}>
-                <Text style={styles.toolCtaChipText}>Try Tool ➔</Text>
+
+              <View style={styles.cardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                  AI Voice Generator
+                </Text>
+                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                  Convert text scripts into natural AI voice audio.
+                </Text>
+
+                <View style={styles.darkPillButton}>
+                  <Text style={styles.darkPillButtonText}>Try Tool ↗</Text>
+                </View>
               </View>
             </TouchableOpacity>
           </ScrollView>
@@ -672,146 +785,104 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  /* EXPLORE COURSES & AI TOOLS HORIZONTAL CARDS */
+  /* PASTEL CARD STYLING (MATCHING REFERENCE MOCKUPS) */
   coursesHorizontalRow: {
     paddingRight: 10,
-    gap: 14,
+    gap: 16,
     marginBottom: 20,
   },
-  largeCourseCard: {
-    width: 152,
-    minHeight: 188,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+  pastelCard: {
+    width: 255,
+    minHeight: 285,
+    borderRadius: 26,
+    padding: 20,
     justifyContent: 'space-between',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 4,
   },
-  courseIconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 15,
+  cardHeaderArea: {
+    height: 115,
+    position: 'relative',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  archBackdrop: {
+    width: 100,
+    height: 105,
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  jsIconBox: {
-    backgroundColor: '#F7DF1E',
+  cardLogoImage: {
+    width: 58,
+    height: 58,
   },
-  jsLogoText: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#000000',
-    fontFamily: SANS_SERIF_FONT,
-    fontStyle: 'normal',
+  reactAtomIcon: {
+    fontSize: 48,
+    color: '#0F172A',
   },
-  reactIconBox: {
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#E0F2FE',
+  archAccentPaper: {
+    position: 'absolute',
+    top: 10,
+    right: 20,
+    width: 28,
+    height: 38,
+    backgroundColor: '#FFFFFF',
+    opacity: 0.65,
+    borderRadius: 6,
+    transform: [{ rotate: '18deg' }],
   },
-  reactAtomSymbol: {
-    fontSize: 28,
-    color: '#00D8FF',
+  cardBodyContent: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
-  nodeIconBox: {
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1,
-    borderColor: '#DCFCE7',
-  },
-  nodeLogoSymbol: {
-    fontSize: 26,
-    color: '#339933',
-  },
-  htmlIconBox: {
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-  },
-  htmlLogoSymbol: {
-    fontSize: 13,
-    fontWeight: '900',
-    color: '#E34F26',
-  },
-  mongoIconBox: {
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1,
-    borderColor: '#DCFCE7',
-  },
-  mongoLogoSymbol: {
-    fontSize: 24,
-  },
-
-  /* Tool Icon Styling */
-  toolIconCode: {
-    backgroundColor: '#EEF2FF',
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
-  toolIconImage: {
-    backgroundColor: '#FCE7F3',
-    borderWidth: 1,
-    borderColor: '#FBCFE8',
-  },
-  toolIconEmail: {
-    backgroundColor: '#FEF3C7',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  toolIconVoice: {
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-
-  courseTitleText: {
-    fontSize: 14,
+  pastelCardTitle: {
+    fontSize: 20,
     fontWeight: '800',
     color: '#0F172A',
+    letterSpacing: -0.4,
+    marginBottom: 6,
+    lineHeight: 25,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  pastelCardSubtitle: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#334155',
     lineHeight: 18,
-    marginBottom: 4,
-    letterSpacing: -0.2,
+    marginBottom: 18,
     fontFamily: SANS_SERIF_FONT,
     fontStyle: 'normal',
   },
-  courseLessonCountText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#64748B',
-    marginBottom: 10,
-    fontFamily: SANS_SERIF_FONT,
-    fontStyle: 'normal',
-  },
-  courseCtaChip: {
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+  darkPillButton: {
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 22,
     alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  courseCtaChipText: {
-    fontSize: 11.5,
+  darkPillButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#5653FE',
-    fontFamily: SANS_SERIF_FONT,
-    fontStyle: 'normal',
-  },
-  toolCtaChip: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#C7D2FE',
-  },
-  toolCtaChipText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#4F46E5',
+    letterSpacing: -0.1,
     fontFamily: SANS_SERIF_FONT,
     fontStyle: 'normal',
   },
@@ -828,7 +899,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 4,
-    marginBottom: 24,
+    marginBottom: 26,
   },
   exploreAllToolsBtn: {
     backgroundColor: '#433EFE',
