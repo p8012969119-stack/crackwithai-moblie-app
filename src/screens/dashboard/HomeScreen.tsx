@@ -242,9 +242,9 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* COURSE CARD 1: JavaScript (Soft Pastel Yellow #FEF9C3) */}
+            {/* COURSE CARD 1: JavaScript (Vibrant Golden Yellow #FCD34D) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FEF9C3' }]}
+              style={[styles.pastelCard, { backgroundColor: '#FCD34D' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
             >
@@ -270,9 +270,9 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 2: CSS3 & Layouts (Soft Pastel Blue #E0F2FE) */}
+            {/* COURSE CARD 2: CSS3 & Layouts (Vibrant Electric Sky Blue #38BDF8) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#E0F2FE' }]}
+              style={[styles.pastelCard, { backgroundColor: '#38BDF8' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'css' })}
             >
@@ -298,9 +298,9 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 3: Node.js (Soft Pastel Mint Green #DCFCE7) */}
+            {/* COURSE CARD 3: Node.js (Vibrant Node Green #4ADE80) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#DCFCE7' }]}
+              style={[styles.pastelCard, { backgroundColor: '#4ADE80' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
             >
@@ -326,9 +326,9 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 4: HTML5 (Soft Pastel Peach Orange #FFEDD5) */}
+            {/* COURSE CARD 4: HTML5 (Vibrant Coral Orange #FB923C) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FFEDD5' }]}
+              style={[styles.pastelCard, { backgroundColor: '#FB923C' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
             >
@@ -354,9 +354,9 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 5: MongoDB (Soft Pastel Emerald Green #D1FAE5) */}
+            {/* COURSE CARD 5: MongoDB (Vibrant Emerald Mint #34D399) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#D1FAE5' }]}
+              style={[styles.pastelCard, { backgroundColor: '#34D399' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
             >
@@ -408,9 +408,9 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* TOOL CARD 1: AI Code Generator (Soft Pastel Lavender #EEF2FF) */}
+            {/* TOOL CARD 1: AI Code Generator (Vibrant Bright Violet #C084FC - Exact User Reference Color!) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#EEF2FF' }]}
+              style={[styles.pastelCard, { backgroundColor: '#C084FC' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AICodeGenerator')}
             >
@@ -436,9 +436,9 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 2: AI Image Generator (Soft Pastel Rose Pink #FCE7F3) */}
+            {/* TOOL CARD 2: AI Image Generator (Vibrant Magenta Pink #F472B6) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FCE7F3' }]}
+              style={[styles.pastelCard, { backgroundColor: '#F472B6' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIImageGenerator')}
             >
@@ -464,9 +464,9 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 3: AI Email Writer (Soft Pastel Amber Yellow #FEF3C7) */}
+            {/* TOOL CARD 3: AI Email Writer (Vibrant Warm Amber Gold #FBBF24) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FEF3C7' }]}
+              style={[styles.pastelCard, { backgroundColor: '#FBBF24' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIEmailWriter')}
             >
@@ -492,9 +492,9 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 4: AI Voice Generator (Soft Pastel Teal Cyan #CCFBF1) */}
+            {/* TOOL CARD 4: AI Voice Generator (Vibrant Turquoise Teal #2DD4BF) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#CCFBF1' }]}
+              style={[styles.pastelCard, { backgroundColor: '#2DD4BF' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIVoiceGenerator')}
             >
