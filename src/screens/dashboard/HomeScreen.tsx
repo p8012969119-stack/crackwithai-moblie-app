@@ -242,14 +242,14 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* COURSE CARD 1: JavaScript (Peach #FED7AA) */}
+            {/* COURSE CARD 1: JavaScript (Dimmed Yellow #FEF08A) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FED7AA' }]}
+              style={[styles.pastelCard, { backgroundColor: '#FEF08A' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#F7DF1E', shadowColor: '#EAB308' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#EAB308', shadowColor: '#EAB308' }]}>
                   <Text style={styles.jsBadgeText}>JS</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
@@ -269,25 +269,25 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 2: React.js (Lime Green #D9F99D) */}
+            {/* COURSE CARD 2: CSS3 & Layouts (Dimmed Blue #E0F2FE) - REPLACED REACT.JS */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#D9F99D' }]}
+              style={[styles.pastelCard, { backgroundColor: '#E0F2FE' }]}
               activeOpacity={0.88}
-              onPress={() => navigation.navigate('FullStackRoadmap')}
+              onPress={() => navigation.navigate('HtmlCourse', { tech: 'css' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#0F172A', shadowColor: '#0F172A' }]}>
-                  <Text style={styles.reactAtomIcon}>⚛</Text>
+                <View style={[styles.archBackdrop, { backgroundColor: '#0284C7', shadowColor: '#0284C7' }]}>
+                  <Text style={styles.cssBadgeText}>CSS3</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
               </View>
 
               <View style={styles.cardBodyContent}>
                 <Text style={styles.pastelCardTitle} numberOfLines={2}>
-                  React.js Zero to Hero
+                  CSS3 & Web Layouts
                 </Text>
                 <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
-                  Build fast interactive web UIs with modern Hooks.
+                  Flexbox, CSS Grid, animations & responsive design.
                 </Text>
 
                 <View style={styles.darkPillButton}>
@@ -296,14 +296,14 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 3: Node.js (Soft Cyan #BAE6FD) */}
+            {/* COURSE CARD 3: Node.js (Dimmed Mint Green #DCFCE7) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#BAE6FD' }]}
+              style={[styles.pastelCard, { backgroundColor: '#DCFCE7' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#022C22', shadowColor: '#022C22' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#166534', shadowColor: '#166534' }]}>
                   <Text style={styles.nodeSymbolIcon}>⬢</Text>
                   <Text style={styles.nodeBadgeSubText}>node</Text>
                 </View>
@@ -324,14 +324,14 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 4: HTML5 (Soft Lavender #E9D5FF) */}
+            {/* COURSE CARD 4: HTML5 (Dimmed Peach Orange #FFEDD5) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#E9D5FF' }]}
+              style={[styles.pastelCard, { backgroundColor: '#FFEDD5' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#C2410C', shadowColor: '#C2410C' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#EA580C', shadowColor: '#EA580C' }]}>
                   <Text style={styles.htmlBadgeText}>HTML5</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
@@ -351,14 +351,14 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* COURSE CARD 5: MongoDB (Soft Pink #FBCFE8) */}
+            {/* COURSE CARD 5: MongoDB (Dimmed Emerald Green #D1FAE5) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FBCFE8' }]}
+              style={[styles.pastelCard, { backgroundColor: '#D1FAE5' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#064E3B', shadowColor: '#064E3B' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#059669', shadowColor: '#059669' }]}>
                   <Text style={styles.mongoLeafIcon}>🍃</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
@@ -404,14 +404,14 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* TOOL CARD 1: AI Code Generator (Soft Lavender #E9D5FF) */}
+            {/* TOOL CARD 1: AI Code Generator (Dimmed Indigo #EEF2FF) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#E9D5FF' }]}
+              style={[styles.pastelCard, { backgroundColor: '#EEF2FF' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AICodeGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#3730A3', shadowColor: '#3730A3' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#4F46E5', shadowColor: '#4F46E5' }]}>
                   <Text style={styles.codeIconSymbol}>{'</>'}</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
@@ -431,14 +431,14 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 2: AI Image Generator (Peach #FED7AA) */}
+            {/* TOOL CARD 2: AI Image Generator (Dimmed Rose Pink #FCE7F3) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FED7AA' }]}
+              style={[styles.pastelCard, { backgroundColor: '#FCE7F3' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIImageGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#9D174D', shadowColor: '#9D174D' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#DB2777', shadowColor: '#DB2777' }]}>
                   <Text style={styles.toolEmojiSymbol}>🎨</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
@@ -458,14 +458,14 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 3: AI Email Writer (Lime Green #D9F99D) */}
+            {/* TOOL CARD 3: AI Email Writer (Dimmed Amber Yellow #FEF3C7) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#D9F99D' }]}
+              style={[styles.pastelCard, { backgroundColor: '#FEF3C7' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIEmailWriter')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#78350F', shadowColor: '#78350F' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#D97706', shadowColor: '#D97706' }]}>
                   <Text style={styles.toolEmojiSymbol}>✉️</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
@@ -485,14 +485,14 @@ export const HomeScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* TOOL CARD 4: AI Voice Generator (Soft Cyan #BAE6FD) */}
+            {/* TOOL CARD 4: AI Voice Generator (Dimmed Teal Cyan #CCFBF1) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#BAE6FD' }]}
+              style={[styles.pastelCard, { backgroundColor: '#CCFBF1' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIVoiceGenerator')}
             >
               <View style={styles.cardHeaderArea}>
-                <View style={[styles.archBackdrop, { backgroundColor: '#065F46', shadowColor: '#065F46' }]}>
+                <View style={[styles.archBackdrop, { backgroundColor: '#0D9488', shadowColor: '#0D9488' }]}>
                   <Text style={styles.toolEmojiSymbol}>🎙️</Text>
                 </View>
                 <View style={styles.archAccentPaper} />
@@ -807,6 +807,14 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#000000',
     letterSpacing: -1,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  cssBadgeText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
     fontFamily: SANS_SERIF_FONT,
     fontStyle: 'normal',
   },
