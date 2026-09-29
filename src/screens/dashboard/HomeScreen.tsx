@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -23,12 +24,11 @@ import { ErrorState } from '../../components/ErrorState';
 import { FirstTimeLanguageModal } from '../../components/FirstTimeLanguageModal';
 import { storage } from '../../services/storage';
 import { Icon } from '../../components/Icon';
-import { AiRobotMascot } from '../../components/AiRobotMascot';
 import { LaptopTechIllustration } from '../../components/LaptopTechIllustration';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 const SANS_SERIF_FONT = Platform.OS === 'android' ? 'sans-serif' : undefined;
+const BANNER_HEIGHT = (SCREEN_WIDTH - 40) * (538 / 1024);
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
@@ -117,7 +117,6 @@ export const HomeScreen = ({ navigation }: any) => {
   const rawName = user?.fullName || user?.name || 'Arjun';
   const firstName = rawName.split(' ')[0];
 
-  // Calculate REAL progress percentage from backend data
   const progressPercent = typeof fullstackProgress?.overallPercentage === 'number'
     ? Math.min(100, Math.max(0, fullstackProgress.overallPercentage))
     : 0;
@@ -151,23 +150,17 @@ export const HomeScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          {/* AI STUDY ASSISTANT HERO BANNER */}
+          {/* AI STUDY ASSISTANT HERO BANNER IMAGE */}
           <TouchableOpacity
             style={styles.heroBannerCard}
-            activeOpacity={0.92}
+            activeOpacity={0.9}
             onPress={() => navigation.navigate('AITab')}
           >
-            <View style={styles.heroLeftCol}>
-              <Text style={styles.heroTitle}>AI Study Assistant</Text>
-              <Text style={styles.heroSubtitle}>Ask anything. Get instant help.</Text>
-              <View style={styles.heroCtaPill}>
-                <Text style={styles.heroCtaText}>Chat with AI  ➔</Text>
-              </View>
-            </View>
-
-            <View style={styles.heroRightCol}>
-              <AiRobotMascot size={105} />
-            </View>
+            <Image
+              source={require('../../assets/dashboard/ai_hero_banner.png')}
+              style={styles.heroBannerImage}
+              resizeMode="cover"
+            />
           </TouchableOpacity>
 
           {/* CONTINUE LEARNING SECTION */}
@@ -344,59 +337,23 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  /* AI STUDY ASSISTANT HERO BANNER */
+  /* AI STUDY ASSISTANT HERO BANNER IMAGE */
   heroBannerCard: {
-    backgroundColor: '#0B0836',
+    width: '100%',
     borderRadius: 22,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 24,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    elevation: 6,
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 5,
+    backgroundColor: '#0B0836',
     overflow: 'hidden',
   },
-  heroLeftCol: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  heroTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.3,
-    marginBottom: 4,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  heroSubtitle: {
-    fontSize: 13.5,
-    color: '#C7D2FE',
-    lineHeight: 18,
-    marginBottom: 16,
-    fontWeight: '400',
-    fontFamily: SANS_SERIF_FONT,
-  },
-  heroCtaPill: {
-    backgroundColor: '#5653FE',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+  heroBannerImage: {
+    width: '100%',
+    height: BANNER_HEIGHT,
     borderRadius: 22,
-    alignSelf: 'flex-start',
-  },
-  heroCtaText: {
-    color: '#FFFFFF',
-    fontSize: 13.5,
-    fontWeight: '700',
-    letterSpacing: -0.1,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  heroRightCol: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   /* SECTION HEADERS */
