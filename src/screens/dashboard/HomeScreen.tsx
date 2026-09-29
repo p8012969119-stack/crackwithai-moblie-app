@@ -27,9 +27,7 @@ import { Icon } from '../../components/Icon';
 import { LaptopTechIllustration } from '../../components/LaptopTechIllustration';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Standard Roboto font overrides any custom handwritten system fonts on Android devices
-const SANS_SERIF_FONT = Platform.OS === 'android' ? 'Roboto' : undefined;
-const BANNER_HEIGHT = (SCREEN_WIDTH - 40) * (538 / 1024);
+const SANS_SERIF_FONT = Platform.OS === 'android' ? 'sans-serif' : undefined;
 
 export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
@@ -151,19 +149,35 @@ export const HomeScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          {/* AI STUDY ASSISTANT HERO BANNER - Seamless clean banner image card without extra outer layout */}
-          <TouchableOpacity
-            style={styles.heroBannerCard}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('AITab')}
-            accessibilityLabel="Chat with AI"
-          >
-            <Image
-              source={require('../../assets/dashboard/ai_hero_banner.png')}
-              style={styles.heroBannerImage}
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
+          {/* AI STUDY ASSISTANT HERO CARD - Perfect Dark Navy Card with Real Touch Button & 3D Avatar */}
+          <View style={styles.heroCardContainer}>
+            <View style={styles.heroLeftCol}>
+              <Text style={styles.heroTitle}>AI Study Assistant</Text>
+              <Text style={styles.heroSubtitle}>Ask anything. Get instant help.</Text>
+              
+              {/* REAL INTERACTIVE BUTTON FOR USER */}
+              <TouchableOpacity
+                style={styles.heroCtaBtn}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('AITab')}
+                accessibilityLabel="Chat with AI"
+              >
+                <Text style={styles.heroCtaBtnText}>Chat with AI  ➔</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.heroRightCol}
+              activeOpacity={0.9}
+              onPress={() => navigation.navigate('AITab')}
+            >
+              <Image
+                source={require('../../assets/dashboard/ai_boy_avatar.png')}
+                style={styles.heroAvatarImage}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
 
           {/* CONTINUE LEARNING SECTION */}
           <View style={styles.sectionHeaderRow}>
@@ -341,22 +355,72 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  /* AI STUDY ASSISTANT HERO BANNER - Clean Banner Card without double white border */
-  heroBannerCard: {
+  /* AI STUDY ASSISTANT HERO CARD - Clean Dark Navy Card without double white border */
+  heroCardContainer: {
     width: '100%',
+    backgroundColor: '#0A0738',
     borderRadius: 22,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 24,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 6,
     overflow: 'hidden',
   },
-  heroBannerImage: {
-    width: '100%',
-    height: BANNER_HEIGHT,
+  heroLeftCol: {
+    flex: 1,
+    paddingRight: 6,
+  },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+    marginBottom: 4,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  heroSubtitle: {
+    fontSize: 13.5,
+    color: '#C7D2FE',
+    lineHeight: 18,
+    marginBottom: 18,
+    fontWeight: '400',
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  heroCtaBtn: {
+    backgroundColor: '#5653FE',
+    paddingHorizontal: 20,
+    paddingVertical: 11,
     borderRadius: 22,
+    alignSelf: 'flex-start',
+    shadowColor: '#5653FE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  heroCtaBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  heroRightCol: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroAvatarImage: {
+    width: 135,
+    height: 130,
   },
 
   /* SECTION HEADERS */
