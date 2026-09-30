@@ -191,26 +191,15 @@ export const AIScreen = ({route, navigation}: Props) => {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         
-        {/* TOP HEADER WITH COMPACT MODEL SWITCHER PILL */}
+        {/* TOP HEADER */}
         <View style={styles.header}>
           <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Icon name="chevron-left" size={24} color="#0F172A" />
           </Pressable>
 
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setPicker('model')}
-            disabled={busy}
-            style={styles.headerModelSelectorBtn}
-          >
-            {selectedBrand && (
-              <Image source={selectedBrand.icon} style={styles.headerModelIcon} resizeMode="contain" />
-            )}
-            <Text style={styles.headerModelNameText} numberOfLines={1}>
-              {selected ? selected.name : 'Select AI Model'}
-            </Text>
-            <Icon name="chevron-down" size={14} color="#64748B" />
-          </Pressable>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitleText}>AI Workspace</Text>
+          </View>
 
           <Pressable accessibilityRole="button" onPress={() => setPicker('history')} disabled={busy} style={styles.historyCircleBtn}>
             <Icon name="clock" size={18} color="#5653FE" />
@@ -228,10 +217,16 @@ export const AIScreen = ({route, navigation}: Props) => {
           {!messages.length ? (
             <View style={styles.welcome}>
               <View style={styles.welcomeIconBadge}>
-                <Icon name="sparkles" size={36} color="#5653FE" />
+                {selectedBrand ? (
+                  <Image source={selectedBrand.icon} style={{ width: 44, height: 44 }} resizeMode="contain" />
+                ) : (
+                  <Icon name="sparkles" size={36} color="#5653FE" />
+                )}
               </View>
               <Text style={styles.welcomeTitle}>How can I help you today?</Text>
-              <Text style={styles.welcomeSubtitle}>Ask any coding question, prompt technique, or context architecture idea.</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Connected to {selected ? `${selected.name} (${selected.provider})` : 'AI Assistant'}. Ask any question!
+              </Text>
             </View>
           ) : (
             messages.map(message => (
@@ -264,9 +259,27 @@ export const AIScreen = ({route, navigation}: Props) => {
           )}
         </ScrollView>
 
-        {/* BOTTOM INPUT COMPOSER AREA (MATCHING IMAGE 1) */}
+        {/* BOTTOM INPUT COMPOSER AREA WITH MODEL SELECTOR ON LEFT */}
         <View style={styles.composerArea}>
           <View style={styles.inputCapsuleBar}>
+            {/* MODEL SELECTOR BUTTON INSIDE INPUT BAR (LEFT SIDE) */}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setPicker('model')}
+              disabled={busy}
+              style={styles.inputModelBtn}
+            >
+              {selectedBrand && (
+                <Image source={selectedBrand.icon} style={styles.inputModelIcon} resizeMode="contain" />
+              )}
+              <Text style={styles.inputModelText} numberOfLines={1}>
+                {selected ? selected.name.split(' ')[0] : 'AI'}
+              </Text>
+              <Icon name="chevron-down" size={12} color="#64748B" />
+            </Pressable>
+
+            <View style={styles.inputDivider} />
+
             <TextInput
               ref={input}
               value={prompt}
@@ -403,6 +416,12 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 1,
     alignItems: 'center',
+  },
+  headerTitleText: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   headerModelSelectorBtn: {
     flexDirection: 'row',
@@ -610,10 +629,39 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     borderRadius: 30,
-    paddingLeft: 18,
+    paddingLeft: 10,
     paddingRight: 6,
     paddingVertical: 5,
     minHeight: 52,
+  },
+  inputModelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 18,
+    gap: 6,
+  },
+  inputModelIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+  },
+  inputModelText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#0F172A',
+    maxWidth: 90,
+  },
+  inputDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#E2E8F0',
+    marginHorizontal: 8,
   },
   textInput: {
     flex: 1,
