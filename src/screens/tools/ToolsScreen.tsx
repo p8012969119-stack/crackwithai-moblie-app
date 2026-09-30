@@ -8,6 +8,8 @@ import {
   RefreshControl,
   Image,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/theme';
@@ -172,6 +174,7 @@ export const ToolsScreen = ({ navigation }: any) => {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedModel, setSelectedModel] = useState<AIModelItem>(AI_WORKSHOP_MODELS[0]);
+  const [showModelModal, setShowModelModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toolsData, setTools] = useState<AIToolCardItem[]>(DEFAULT_TOOLS_DATA);
@@ -349,41 +352,18 @@ export const ToolsScreen = ({ navigation }: any) => {
             <Text style={styles.headerSubtitleTag}>AI WORKSHOP</Text>
             <Text style={styles.headerMainTitle}>Explore AI tools</Text>
           </View>
-        </View>
 
-        {/* MULTI-AI MODEL SELECTOR HORIZONTAL CAROUSEL */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.modelSelectorScrollContent}
-          style={styles.modelSelectorContainer}
-        >
-          {AI_WORKSHOP_MODELS.map((model) => {
-            const isSelected = selectedModel.id === model.id;
-            return (
-              <TouchableOpacity
-                key={model.id}
-                style={[
-                  styles.modelChip,
-                  isSelected && { borderColor: model.badgeColor, backgroundColor: model.badgeColor + '15' },
-                ]}
-                onPress={() => setSelectedModel(model)}
-                activeOpacity={0.75}
-              >
-                <Image source={model.icon} style={styles.modelIcon} resizeMode="contain" />
-                <View style={styles.modelChipTextCol}>
-                  <Text style={[styles.modelNameText, isSelected && { color: model.badgeColor, fontWeight: '800' }]}>
-                    {model.name}
-                  </Text>
-                  <Text style={styles.modelProviderText}>{model.provider}</Text>
-                </View>
-                {isSelected && (
-                  <View style={[styles.activeModelDot, { backgroundColor: model.badgeColor }]} />
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+          {/* COMPACT MODEL SELECTOR BUTTON: SHOWS ONLY TOOL LOGO AND NAME */}
+          <TouchableOpacity
+            style={styles.headerModelSelectorBtn}
+            onPress={() => setShowModelModal(true)}
+            activeOpacity={0.85}
+          >
+            <Image source={selectedModel.icon} style={styles.headerModelIcon} resizeMode="contain" />
+            <Text style={styles.headerModelNameText} numberOfLines={1}>{selectedModel.name}</Text>
+            <Icon name="chevron-down" size={14} color="#64748B" />
+          </TouchableOpacity>
+        </View>
 
         {/* 3. CATEGORY FILTERS */}
         <ScrollView
@@ -506,6 +486,50 @@ export const ToolsScreen = ({ navigation }: any) => {
           ))
         )}
       </ScrollView>
+
+      {/* MODEL SELECTION MODAL */}
+      <Modal visible={showModelModal} transparent animationType="slide" onRequestClose={() => setShowModelModal(false)}>
+        <View style={styles.overlay}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowModelModal(false)} />
+          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Select AI Model</Text>
+              <TouchableOpacity onPress={() => setShowModelModal(false)} style={styles.closeBtn}>
+                <Icon name="x" size={18} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 380 }}>
+              {AI_WORKSHOP_MODELS.map((modelItem) => {
+                const isSelected = modelItem.id === selectedModel.id;
+                return (
+                  <TouchableOpacity
+                    key={modelItem.id}
+                    onPress={() => {
+                      setSelectedModel(modelItem);
+                      setShowModelModal(false);
+                    }}
+                    style={[styles.modelSheetRow, isSelected && styles.activeModelSheetRow]}
+                  >
+                    <Image source={modelItem.icon} style={styles.sheetModelIcon} resizeMode="contain" />
+                    <View style={styles.sheetModelTextCol}>
+                      <Text style={[styles.sheetModelName, isSelected && { color: modelItem.badgeColor, fontWeight: '800' }]}>
+                        {modelItem.name}
+                      </Text>
+                      <Text style={styles.sheetModelProvider}>{modelItem.provider}</Text>
+                    </View>
+                    {isSelected && (
+                      <View style={[styles.activeCheckBadge, { backgroundColor: modelItem.badgeColor }]}>
+                        <Icon name="check" size={12} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -810,5 +834,107 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     marginTop: 4,
+  },
+  headerModelSelectorBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 18,
+    gap: 6,
+  },
+  headerModelIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+  },
+  headerModelNameText: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#0F172A',
+    maxWidth: 110,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 22,
+    paddingTop: 12,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modelSheetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 8,
+    backgroundColor: '#F8FAFC',
+    gap: 12,
+  },
+  activeModelSheetRow: {
+    borderColor: '#6366F1',
+    backgroundColor: '#EEF2FF',
+  },
+  sheetModelIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+  },
+  sheetModelTextCol: {
+    flex: 1,
+  },
+  sheetModelName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  sheetModelProvider: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  activeCheckBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

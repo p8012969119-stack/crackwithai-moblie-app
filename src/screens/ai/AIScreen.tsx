@@ -185,61 +185,36 @@ export const AIScreen = ({route, navigation}: Props) => {
     setPicker(null);
   };
 
+  const selectedBrand = selected ? getModelBrand(selected.id, selected.provider) : null;
+
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         
-        {/* TOP HEADER */}
+        {/* TOP HEADER WITH COMPACT MODEL SWITCHER PILL */}
         <View style={styles.header}>
           <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Icon name="chevron-left" size={24} color="#0F172A" />
           </Pressable>
 
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitleText}>AI Workspace</Text>
-            <Text style={styles.headerSubText}>
-              {selected ? `${selected.name} (${selected.provider})` : 'Select AI Model'}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setPicker('model')}
+            disabled={busy}
+            style={styles.headerModelSelectorBtn}
+          >
+            {selectedBrand && (
+              <Image source={selectedBrand.icon} style={styles.headerModelIcon} resizeMode="contain" />
+            )}
+            <Text style={styles.headerModelNameText} numberOfLines={1}>
+              {selected ? selected.name : 'Select AI Model'}
             </Text>
-          </View>
+            <Icon name="chevron-down" size={14} color="#64748B" />
+          </Pressable>
 
           <Pressable accessibilityRole="button" onPress={() => setPicker('history')} disabled={busy} style={styles.historyCircleBtn}>
             <Icon name="clock" size={18} color="#5653FE" />
           </Pressable>
-        </View>
-
-        {/* MULTI-AI MODEL SELECTOR HORIZONTAL BAR */}
-        <View style={styles.modelBarWrapper}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.modelBarScrollContent}
-          >
-            {models.map((modelItem) => {
-              const isSelected = modelItem.id === selectedId;
-              const brand = getModelBrand(modelItem.id, modelItem.provider);
-              return (
-                <Pressable
-                  key={modelItem.id}
-                  style={[
-                    styles.modelChip,
-                    isSelected && { borderColor: brand.badgeColor, backgroundColor: brand.badgeColor + '15' },
-                  ]}
-                  onPress={() => setSelectedId(modelItem.id)}
-                >
-                  <Image source={brand.icon} style={styles.modelChipIcon} resizeMode="contain" />
-                  <View style={styles.modelChipTextCol}>
-                    <Text style={[styles.modelChipName, isSelected && { color: brand.badgeColor, fontWeight: '800' }]}>
-                      {modelItem.name}
-                    </Text>
-                    <Text style={styles.modelChipProvider}>{modelItem.provider}</Text>
-                  </View>
-                  {isSelected && (
-                    <View style={[styles.activeModelDot, { backgroundColor: brand.badgeColor }]} />
-                  )}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
         </View>
 
         {/* CHAT MESSAGES SCROLLVIEW */}
@@ -320,38 +295,81 @@ export const AIScreen = ({route, navigation}: Props) => {
         </View>
       </KeyboardAvoidingView>
 
-      {/* HISTORY MODAL */}
+      {/* SELECTION / HISTORY MODAL */}
       <Modal visible={picker !== null} transparent animationType="slide" onRequestClose={() => setPicker(null)}>
         <View style={styles.overlay}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setPicker(null)} />
           <View style={[styles.sheet, {paddingBottom: Math.max(insets.bottom, 20)}]}>
             <View style={styles.sheetHandle} />
-            <View style={styles.answerHeader}>
-              <Text style={styles.sheetTitle}>Recent AI Conversations</Text>
-              <Pressable onPress={() => setPicker(null)} style={styles.backBtn}>
-                <Icon name="x" size={18} color="#0F172A" />
-              </Pressable>
-            </View>
-            <ScrollView keyboardShouldPersistTaps="handled">
-              <Pressable onPress={newChat} style={styles.sheetRow}>
-                <Text style={styles.newChatText}>＋ Start New Chat</Text>
-              </Pressable>
-              {!conversations.length && <Text style={styles.emptyHistoryText}>Your past chats will appear here.</Text>}
-              {conversations.map(conversation => (
-                <Pressable
-                  key={conversation.id}
-                  onPress={() => {
-                    activeId.current = conversation.id;
-                    setMessages(conversation.messages);
-                    setPrompt('');
-                    setPicker(null);
-                  }}
-                  style={styles.sheetRow}
-                >
-                  <Text numberOfLines={2} style={styles.rowTitle}>{conversation.title}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+
+            {picker === 'model' ? (
+              <>
+                <View style={styles.answerHeader}>
+                  <Text style={styles.sheetTitle}>Select AI Model</Text>
+                  <Pressable onPress={() => setPicker(null)} style={styles.backBtn}>
+                    <Icon name="x" size={18} color="#0F172A" />
+                  </Pressable>
+                </View>
+                <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 380 }}>
+                  {models.map((modelItem) => {
+                    const isSelected = modelItem.id === selectedId;
+                    const brand = getModelBrand(modelItem.id, modelItem.provider);
+                    return (
+                      <Pressable
+                        key={modelItem.id}
+                        onPress={() => {
+                          setSelectedId(modelItem.id);
+                          setPicker(null);
+                        }}
+                        style={[styles.modelSheetRow, isSelected && styles.activeModelSheetRow]}
+                      >
+                        <Image source={brand.icon} style={styles.sheetModelIcon} resizeMode="contain" />
+                        <View style={styles.sheetModelTextCol}>
+                          <Text style={[styles.sheetModelName, isSelected && { color: brand.badgeColor, fontWeight: '800' }]}>
+                            {modelItem.name}
+                          </Text>
+                          <Text style={styles.sheetModelProvider}>{modelItem.provider}</Text>
+                        </View>
+                        {isSelected && (
+                          <View style={[styles.activeCheckBadge, { backgroundColor: brand.badgeColor }]}>
+                            <Icon name="check" size={12} color="#FFFFFF" />
+                          </View>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </>
+            ) : (
+              <>
+                <View style={styles.answerHeader}>
+                  <Text style={styles.sheetTitle}>Recent AI Conversations</Text>
+                  <Pressable onPress={() => setPicker(null)} style={styles.backBtn}>
+                    <Icon name="x" size={18} color="#0F172A" />
+                  </Pressable>
+                </View>
+                <ScrollView keyboardShouldPersistTaps="handled">
+                  <Pressable onPress={newChat} style={styles.sheetRow}>
+                    <Text style={styles.newChatText}>＋ Start New Chat</Text>
+                  </Pressable>
+                  {!conversations.length && <Text style={styles.emptyHistoryText}>Your past chats will appear here.</Text>}
+                  {conversations.map(conversation => (
+                    <Pressable
+                      key={conversation.id}
+                      onPress={() => {
+                        activeId.current = conversation.id;
+                        setMessages(conversation.messages);
+                        setPrompt('');
+                        setPicker(null);
+                      }}
+                      style={styles.sheetRow}
+                    >
+                      <Text numberOfLines={2} style={styles.rowTitle}>{conversation.title}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -386,17 +404,28 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  headerTitleText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 17,
+  headerModelSelectorBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    gap: 8,
+  },
+  headerModelIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+  },
+  headerModelNameText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 13.5,
     fontWeight: '800',
     color: '#0F172A',
-  },
-  headerSubText: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 1,
+    maxWidth: 150,
   },
   historyCircleBtn: {
     width: 40,
@@ -654,5 +683,48 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY_MEDIUM,
     fontSize: 14.5,
     color: '#0F172A',
+  },
+  modelSheetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 8,
+    backgroundColor: '#F8FAFC',
+    gap: 12,
+  },
+  activeModelSheetRow: {
+    borderColor: '#5653FE',
+    backgroundColor: '#EEEDFF',
+  },
+  sheetModelIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+  },
+  sheetModelTextCol: {
+    flex: 1,
+  },
+  sheetModelName: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  sheetModelProvider: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  activeCheckBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
