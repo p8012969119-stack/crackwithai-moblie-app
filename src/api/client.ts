@@ -50,10 +50,10 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (axios.isCancel(error)) return Promise.reject(error);
 
-    // Automatic transparent retry on alternate network host (e.g. LAN IP -> localhost or vice versa)
+    // Automatic transparent retry on alternate network host (e.g. LAN IP -> localhost -> emulator IP)
     const config = error.config as (InternalAxiosRequestConfig & { _retryCount?: number }) | undefined;
     const isNetworkOrTimeout = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
-    if (config && (!config._retryCount || config._retryCount < 1) && isNetworkOrTimeout) {
+    if (config && (!config._retryCount || config._retryCount < 3) && isNetworkOrTimeout) {
       const currentBase = config.baseURL || CONFIG.API_BASE_URL;
       const altBase = getAlternateApiBaseUrl(currentBase);
       if (altBase && altBase !== currentBase) {
@@ -64,7 +64,7 @@ apiClient.interceptors.response.use(
           setDynamicApiBaseUrl(altBase);
           return res;
         } catch (retryErr) {
-          // Alternate retry also failed; reset dynamic base URL back to default
+          // Alternate retry failed; continue cycling candidate URLs
           setDynamicApiBaseUrl('');
         }
       }

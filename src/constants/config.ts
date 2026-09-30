@@ -1,8 +1,11 @@
 import { NativeModules, Platform } from 'react-native';
 
-const DEV_LAN_IP = '172.168.14.65';
+const DEV_LAN_IP = '172.168.10.173';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
+const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
+
+const CANDIDATE_URLS = [LOCAL_URL, EMULATOR_URL, DEV_LAN_URL];
 
 let dynamicApiBaseUrl: string | null = null;
 
@@ -11,8 +14,11 @@ export const setDynamicApiBaseUrl = (url: string | null) => {
 };
 
 export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
-  if (currentUrl.includes('127.0.0.1') || currentUrl.includes('localhost')) {
-    return DEV_LAN_URL;
+  const cleanCurrent = (currentUrl || '').trim().replace(/\/$/, '');
+  const currentIndex = CANDIDATE_URLS.findIndex(url => url.replace(/\/$/, '') === cleanCurrent);
+  if (currentIndex >= 0) {
+    const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
+    return CANDIDATE_URLS[nextIndex];
   }
   return LOCAL_URL;
 };
