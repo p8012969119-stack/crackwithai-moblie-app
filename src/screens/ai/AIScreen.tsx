@@ -46,6 +46,28 @@ const readHistory = (raw: string | null): Conversation[] => {
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
+const MODEL_BRAND_MAP: Record<string, { badgeColor: string; icon: any }> = {
+  gemini: { badgeColor: '#4285F4', icon: require('../../assets/images/models/gemini.png') },
+  claude: { badgeColor: '#D97706', icon: require('../../assets/courses/claude.png') },
+  groq: { badgeColor: '#F59E0B', icon: require('../../assets/images/models/groq.png') },
+  deepseek: { badgeColor: '#0284C7', icon: require('../../assets/tool-logos/copilot.png') },
+  openai: { badgeColor: '#10A37F', icon: require('../../assets/tool-logos/copilot.png') },
+  mistral: { badgeColor: '#FF7000', icon: require('../../assets/images/models/mistral.png') },
+  cerebras: { badgeColor: '#EC4899', icon: require('../../assets/images/models/cerebras.png') },
+  free: { badgeColor: '#6D28D9', icon: require('../../assets/images/models/mistral.png') },
+};
+
+const getModelBrand = (modelId: string, provider: string) => {
+  const key = (modelId || '').toLowerCase();
+  const provKey = (provider || '').toLowerCase();
+  for (const mKey of Object.keys(MODEL_BRAND_MAP)) {
+    if (key.includes(mKey) || provKey.includes(mKey)) {
+      return MODEL_BRAND_MAP[mKey];
+    }
+  }
+  return { badgeColor: '#5653FE', icon: require('../../assets/images/models/gemini.png') };
+};
+
 export const AIScreen = ({route, navigation}: Props) => {
   const {user} = useAuth();
   const insets = useSafeAreaInsets();
@@ -167,20 +189,57 @@ export const AIScreen = ({route, navigation}: Props) => {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         
-        {/* TOP HEADER (SINGLE DEFAULT AI MODEL) */}
+        {/* TOP HEADER */}
         <View style={styles.header}>
           <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Icon name="chevron-left" size={24} color="#0F172A" />
           </Pressable>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitleText}>AI Assistant</Text>
-            <Text style={styles.headerSubText}>Instant Help • Single Fast Model</Text>
+            <Text style={styles.headerTitleText}>AI Workspace</Text>
+            <Text style={styles.headerSubText}>
+              {selected ? `${selected.name} (${selected.provider})` : 'Select AI Model'}
+            </Text>
           </View>
 
           <Pressable accessibilityRole="button" onPress={() => setPicker('history')} disabled={busy} style={styles.historyCircleBtn}>
             <Icon name="clock" size={18} color="#5653FE" />
           </Pressable>
+        </View>
+
+        {/* MULTI-AI MODEL SELECTOR HORIZONTAL BAR */}
+        <View style={styles.modelBarWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.modelBarScrollContent}
+          >
+            {models.map((modelItem) => {
+              const isSelected = modelItem.id === selectedId;
+              const brand = getModelBrand(modelItem.id, modelItem.provider);
+              return (
+                <Pressable
+                  key={modelItem.id}
+                  style={[
+                    styles.modelChip,
+                    isSelected && { borderColor: brand.badgeColor, backgroundColor: brand.badgeColor + '15' },
+                  ]}
+                  onPress={() => setSelectedId(modelItem.id)}
+                >
+                  <Image source={brand.icon} style={styles.modelChipIcon} resizeMode="contain" />
+                  <View style={styles.modelChipTextCol}>
+                    <Text style={[styles.modelChipName, isSelected && { color: brand.badgeColor, fontWeight: '800' }]}>
+                      {modelItem.name}
+                    </Text>
+                    <Text style={styles.modelChipProvider}>{modelItem.provider}</Text>
+                  </View>
+                  {isSelected && (
+                    <View style={[styles.activeModelDot, { backgroundColor: brand.badgeColor }]} />
+                  )}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
 
         {/* CHAT MESSAGES SCROLLVIEW */}
@@ -346,6 +405,53 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEEDFF',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modelBarWrapper: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  modelBarScrollContent: {
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  modelChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    gap: 8,
+  },
+  modelChipIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+  },
+  modelChipTextCol: {
+    justifyContent: 'center',
+  },
+  modelChipName: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  modelChipProvider: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 9.5,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  activeModelDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginLeft: 2,
   },
   content: {
     padding: 18,
