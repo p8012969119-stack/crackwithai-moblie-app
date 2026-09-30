@@ -17,6 +17,24 @@ import { bookmarkApi } from '../../api/bookmarkApi';
 import { useAuth } from '../../store/AuthContext';
 import { AiTool } from '../../types';
 
+export interface AIModelItem {
+  id: string;
+  name: string;
+  provider: string;
+  badgeColor: string;
+  icon: any;
+  description: string;
+}
+
+export const AI_WORKSHOP_MODELS: AIModelItem[] = [
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google AI', badgeColor: '#4285F4', icon: require('../../assets/images/models/gemini.png'), description: 'Advanced reasoning, multimodal analysis & long context window.' },
+  { id: 'claude-3.5', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', badgeColor: '#D97706', icon: require('../../assets/courses/claude.png'), description: 'Industry-leading code generation, architectural design & logic.' },
+  { id: 'llama-3-groq', name: 'Llama 3 70B', provider: 'Groq Fast', badgeColor: '#F59E0B', icon: require('../../assets/images/models/groq.png'), description: 'Ultra-low latency Llama inference at 500+ tokens/second.' },
+  { id: 'copilot-gpt4', name: 'GitHub Copilot', provider: 'OpenAI / MS', badgeColor: '#4F46E5', icon: require('../../assets/tool-logos/copilot.png'), description: 'Specialized developer assistant for syntax & refactoring.' },
+  { id: 'mistral-large', name: 'Mistral Large', provider: 'Mistral AI', badgeColor: '#FF7000', icon: require('../../assets/images/models/mistral.png'), description: 'High-precision European open-weight model for enterprise tasks.' },
+  { id: 'cerebras-ultra', name: 'Cerebras Ultra', provider: 'Cerebras', badgeColor: '#EC4899', icon: require('../../assets/images/models/cerebras.png'), description: 'Instant wafer-scale engine processing for massive prompts.' },
+];
+
 export interface AIToolCardItem {
   id: string;
   name: string;
@@ -43,16 +61,48 @@ const LOCAL_TOOL_IMAGES: Record<string, any> = {
 
 const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
   {
+    id: 'code_generator',
+    name: 'AI Code Generator',
+    category: 'coding',
+    categoryLabel: 'DEVELOPMENT',
+    isFeatured: true,
+    description: 'Generate clean React Native components, fix bugs, and refactor functions in seconds.',
+    useCasesCount: 15,
+    pricingType: 'free',
+    progressPercentage: 90,
+    actionText: 'Open Code Studio',
+    actionToolMode: 'code',
+    iconImage: LOCAL_TOOL_IMAGES['code'],
+    iconEmoji: '💻',
+    isBookmarked: false,
+  },
+  {
+    id: 'image_generator',
+    name: 'AI Image Studio',
+    category: 'image',
+    categoryLabel: 'IMAGE ART',
+    isFeatured: true,
+    description: 'Generate high-resolution social media graphics, UI assets, and creative visuals.',
+    useCasesCount: 18,
+    pricingType: 'freemium',
+    progressPercentage: 85,
+    actionText: 'Open Image Studio',
+    actionToolMode: 'image',
+    iconImage: LOCAL_TOOL_IMAGES['image'],
+    iconEmoji: '🎨',
+    isBookmarked: false,
+  },
+  {
     id: 'email_writer',
-    name: 'AI Email Writer',
+    name: 'AI Email & Copy Writer',
     category: 'writing',
     categoryLabel: 'EMAIL WRITING',
     isFeatured: true,
-    description: 'Draft professional outreach, sales proposals, and newsletter email copy in seconds.',
-    useCasesCount: 8,
+    description: 'Draft professional outreach emails, sales proposals, and newsletter copy instantly.',
+    useCasesCount: 12,
     pricingType: 'free',
-    progressPercentage: 65,
-    actionText: 'Open Email',
+    progressPercentage: 75,
+    actionText: 'Open Writer',
     actionToolMode: 'email',
     iconImage: LOCAL_TOOL_IMAGES['email'],
     iconEmoji: '✉️',
@@ -60,66 +110,68 @@ const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
   },
   {
     id: 'voice_generator',
-    name: 'AI Voice Generator',
+    name: 'AI Voice Synthesizer',
     category: 'voice',
     categoryLabel: 'VOICE OVER',
     isFeatured: true,
-    description: 'Convert script text into realistic natural-sounding voiceover audio tracks.',
-    useCasesCount: 12,
+    description: 'Convert script text into realistic, natural-sounding voiceover audio tracks.',
+    useCasesCount: 14,
     pricingType: 'freemium',
     progressPercentage: 80,
-    actionText: 'Open Voice',
+    actionText: 'Open Voice Studio',
     actionToolMode: 'voice',
     iconImage: LOCAL_TOOL_IMAGES['voice'],
     iconEmoji: '🎙️',
     isBookmarked: false,
   },
   {
-    id: 'image_generator',
-    name: 'AI Image Generator',
-    category: 'image',
-    categoryLabel: 'IMAGE ART',
-    isFeatured: true,
-    description: 'Generate high-resolution social media graphics, UI assets, and creative visuals.',
-    useCasesCount: 15,
-    pricingType: 'freemium',
-    progressPercentage: 50,
-    actionText: 'Open Image',
-    actionToolMode: 'image',
-    iconImage: LOCAL_TOOL_IMAGES['image'],
-    iconEmoji: '🎨',
+    id: 'prompt_engineering',
+    name: 'Prompt Engineering Coach',
+    category: 'research',
+    categoryLabel: 'PROMPT STUDIO',
+    isFeatured: false,
+    description: 'Master zero-shot, few-shot, and chain-of-thought prompt techniques for AI models.',
+    useCasesCount: 20,
+    pricingType: 'free',
+    progressPercentage: 95,
+    actionText: 'Open Prompt Studio',
+    actionToolMode: 'chat',
+    iconImage: LOCAL_TOOL_IMAGES['code'],
+    iconEmoji: '🧠',
     isBookmarked: false,
   },
   {
-    id: 'code_generator',
-    name: 'AI Code Generator',
-    category: 'coding',
-    categoryLabel: 'DEVELOPMENT',
-    isFeatured: true,
-    description: 'Generate clean React Native components, fix bugs, and refactor functions.',
+    id: 'context_engineering',
+    name: 'Context Architecture Studio',
+    category: 'productivity',
+    categoryLabel: 'CONTEXT ARCH',
+    isFeatured: false,
+    description: 'Optimize RAG context windows, token limits, and vector knowledge structures.',
     useCasesCount: 10,
-    pricingType: 'freemium',
-    progressPercentage: 90,
-    actionText: 'Open Code',
-    actionToolMode: 'code',
+    pricingType: 'pro',
+    progressPercentage: 60,
+    actionText: 'Open Context Studio',
+    actionToolMode: 'chat',
     iconImage: LOCAL_TOOL_IMAGES['code'],
-    iconEmoji: '💻',
+    iconEmoji: '🏗️',
     isBookmarked: false,
   },
 ];
 
 const CATEGORY_FILTERS = [
-  { id: 'all', label: 'All' },
-  { id: 'writing', label: 'AI Writing' },
-  { id: 'image', label: 'AI Image' },
-  { id: 'voice', label: 'AI Voice' },
+  { id: 'all', label: 'All Tools' },
   { id: 'coding', label: 'AI Coding' },
+  { id: 'image', label: 'AI Image' },
+  { id: 'writing', label: 'AI Writing' },
+  { id: 'voice', label: 'AI Voice' },
+  { id: 'research', label: 'Prompt Studio' },
 ];
 
 export const ToolsScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedModel, setSelectedModel] = useState<AIModelItem>(AI_WORKSHOP_MODELS[0]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toolsData, setTools] = useState<AIToolCardItem[]>(DEFAULT_TOOLS_DATA);
@@ -226,12 +278,16 @@ export const ToolsScreen = ({ navigation }: any) => {
   };
 
   const handleActionPress = (tool: AIToolCardItem) => {
+    const modelParams = {
+      selectedModelId: selectedModel.id,
+      selectedModelName: selectedModel.name,
+    };
     if (tool.actionToolMode === 'email' || tool.id === 'email_writer' || tool.id.includes('email')) {
-      navigation.navigate('AIEmailWriter');
+      navigation.navigate('AIEmailWriter', modelParams);
     } else if (tool.actionToolMode === 'voice' || tool.id === 'voice_generator' || tool.id.includes('voice')) {
-      navigation.navigate('AIVoiceGenerator');
+      navigation.navigate('AIVoiceGenerator', modelParams);
     } else if (tool.actionToolMode === 'image' || tool.id === 'image_generator' || tool.id.includes('image')) {
-      navigation.navigate('AIImageGenerator');
+      navigation.navigate('AIImageGenerator', modelParams);
     } else if (
       tool.actionToolMode === 'code' ||
       (tool.actionToolMode as string) === 'coding' ||
@@ -239,11 +295,12 @@ export const ToolsScreen = ({ navigation }: any) => {
       tool.id.includes('code') ||
       tool.name.toLowerCase().includes('code')
     ) {
-      navigation.navigate('AICodeGenerator');
+      navigation.navigate('AICodeGenerator', modelParams);
     } else {
       navigation.navigate('AITab', {
         activeTool: tool.actionToolMode,
         toolName: tool.name,
+        ...modelParams,
       });
     }
   };
@@ -289,12 +346,44 @@ export const ToolsScreen = ({ navigation }: any) => {
           </TouchableOpacity>
 
           <View style={styles.headerTitleCol}>
-            <Text style={styles.headerSubtitleTag}>AI TOOLS</Text>
+            <Text style={styles.headerSubtitleTag}>AI WORKSHOP</Text>
             <Text style={styles.headerMainTitle}>Explore AI tools</Text>
           </View>
         </View>
 
-
+        {/* MULTI-AI MODEL SELECTOR HORIZONTAL CAROUSEL */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.modelSelectorScrollContent}
+          style={styles.modelSelectorContainer}
+        >
+          {AI_WORKSHOP_MODELS.map((model) => {
+            const isSelected = selectedModel.id === model.id;
+            return (
+              <TouchableOpacity
+                key={model.id}
+                style={[
+                  styles.modelChip,
+                  isSelected && { borderColor: model.badgeColor, backgroundColor: model.badgeColor + '15' },
+                ]}
+                onPress={() => setSelectedModel(model)}
+                activeOpacity={0.75}
+              >
+                <Image source={model.icon} style={styles.modelIcon} resizeMode="contain" />
+                <View style={styles.modelChipTextCol}>
+                  <Text style={[styles.modelNameText, isSelected && { color: model.badgeColor, fontWeight: '800' }]}>
+                    {model.name}
+                  </Text>
+                  <Text style={styles.modelProviderText}>{model.provider}</Text>
+                </View>
+                {isSelected && (
+                  <View style={[styles.activeModelDot, { backgroundColor: model.badgeColor }]} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
         {/* 3. CATEGORY FILTERS */}
         <ScrollView
@@ -470,20 +559,47 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     letterSpacing: -0.3,
   },
-  aiWorkspacePillBtn: {
+  modelSelectorContainer: {
+    marginBottom: 12,
+  },
+  modelSelectorScrollContent: {
+    gap: 10,
+    paddingRight: 12,
+  },
+  modelChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 14,
-    marginLeft: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    gap: 8,
   },
-  aiWorkspacePillText: {
-    color: '#FFFFFF',
-    fontSize: 12.5,
+  modelIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+  },
+  modelChipTextCol: {
+    justifyContent: 'center',
+  },
+  modelNameText: {
+    fontSize: 12,
     fontWeight: '700',
-    marginLeft: 6,
+    color: '#1E293B',
+  },
+  modelProviderText: {
+    fontSize: 9.5,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  activeModelDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginLeft: 2,
   },
   searchBarBox: {
     flexDirection: 'row',

@@ -167,7 +167,7 @@ export const AIScreen = ({route, navigation}: Props) => {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         
-        {/* TOP HEADER (MATCHING IMAGE 1) */}
+        {/* TOP HEADER (SINGLE DEFAULT AI MODEL) */}
         <View style={styles.header}>
           <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Icon name="chevron-left" size={24} color="#0F172A" />
@@ -175,7 +175,7 @@ export const AIScreen = ({route, navigation}: Props) => {
 
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitleText}>AI Assistant</Text>
-            <Text style={styles.headerSubText}>Always here to help you</Text>
+            <Text style={styles.headerSubText}>Instant Help • Single Fast Model</Text>
           </View>
 
           <Pressable accessibilityRole="button" onPress={() => setPicker('history')} disabled={busy} style={styles.historyCircleBtn}>
