@@ -160,6 +160,35 @@ export const FullStackOverviewScreen = () => {
               <Icon name="chevron-right" size={16} color="#0284C7" />
             </View>
           </TouchableOpacity>
+
+          {/* CARD 4: AI AUTOMATION */}
+          <TouchableOpacity
+            style={styles.cleanWhiteCard}
+            activeOpacity={0.88}
+            onPress={() => navigation.navigate('AIAutomation')}
+          >
+            <View style={styles.cardMainRow}>
+              <View style={[styles.logoSquareContainer, { backgroundColor: '#D1FAE5' }]}>
+                <Icon name="zap" size={26} color="#10B981" />
+              </View>
+
+              <View style={styles.cardCenterBlock}>
+                <View style={styles.cardTitleRow}>
+                  <Text style={styles.courseName}>AI Automation</Text>
+                  <Text style={styles.percentText}>80%</Text>
+                </View>
+
+                <View style={styles.progressTrackBar}>
+                  <View style={[styles.progressFillBar, { width: '80%', backgroundColor: '#10B981' }]} />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.cardFooterRow}>
+              <Text style={[styles.startCourseBtnText, { color: '#10B981' }]}>Explore Course</Text>
+              <Icon name="chevron-right" size={16} color="#10B981" />
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

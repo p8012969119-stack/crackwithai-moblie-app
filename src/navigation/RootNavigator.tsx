@@ -38,6 +38,8 @@ import { PromptEngineeringScreen } from '../screens/prompt/PromptEngineeringScre
 import { PromptStageDetailScreen } from '../screens/prompt/PromptStageDetailScreen';
 import { ContextEngineeringScreen } from '../screens/context/ContextEngineeringScreen';
 import { ContextStageDetailScreen } from '../screens/context/ContextStageDetailScreen';
+import { AIAutomationScreen } from '../screens/automation/AIAutomationScreen';
+import { AIAutomationStageDetailScreen } from '../screens/automation/AIAutomationStageDetailScreen';
 
 type RootStackParams = ParamListBase;
 const Stack = createNativeStackNavigator<RootStackParams>();
@@ -95,6 +97,8 @@ export const RootNavigator = () => {
           <Stack.Screen name="PromptStageDetail" component={PromptStageDetailScreen} />
           <Stack.Screen name="ContextEngineering" component={ContextEngineeringScreen} />
           <Stack.Screen name="ContextStageDetail" component={ContextStageDetailScreen} />
+          <Stack.Screen name="AIAutomation" component={AIAutomationScreen} />
+          <Stack.Screen name="AIAutomationStageDetail" component={AIAutomationStageDetailScreen} />
         </Stack.Group>
       )}
     </Stack.Navigator>

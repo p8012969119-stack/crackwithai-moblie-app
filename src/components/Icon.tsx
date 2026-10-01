@@ -59,7 +59,12 @@ export type IconName =
   | 'download'
   | 'circle'
   | 'x'
-  | 'alert-triangle';
+  | 'alert-triangle'
+  | 'zap'
+  | 'sliders'
+  | 'cpu'
+  | 'layers'
+  | 'activity';
 
 interface IconProps {
   name: IconName;
@@ -127,6 +132,11 @@ const ICON_MAP: Record<IconName, string> = {
   circle: '○',
   x: '✕',
   'alert-triangle': '⚠️',
+  zap: '⚡',
+  sliders: '🎛️',
+  cpu: '⚙️',
+  layers: '📚',
+  activity: '📈',
 };
 
 export const Icon: React.FC<IconProps> = ({

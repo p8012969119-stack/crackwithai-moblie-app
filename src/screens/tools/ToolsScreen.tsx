@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,34 +8,17 @@ import {
   RefreshControl,
   Image,
   ActivityIndicator,
-  Modal,
+  Platform,
+  Animated,
   Pressable,
 } from 'react-native';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS } from '../../constants/theme';
 import { Icon } from '../../components/Icon';
 import { aiApi } from '../../api/aiApi';
 import { bookmarkApi } from '../../api/bookmarkApi';
 import { useAuth } from '../../store/AuthContext';
 import { AiTool } from '../../types';
-
-export interface AIModelItem {
-  id: string;
-  name: string;
-  provider: string;
-  badgeColor: string;
-  icon: any;
-  description: string;
-}
-
-export const AI_WORKSHOP_MODELS: AIModelItem[] = [
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google AI', badgeColor: '#4285F4', icon: require('../../assets/images/models/gemini.png'), description: 'Advanced reasoning, multimodal analysis & long context window.' },
-  { id: 'claude-3.5', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', badgeColor: '#D97706', icon: require('../../assets/courses/claude.png'), description: 'Industry-leading code generation, architectural design & logic.' },
-  { id: 'llama-3-groq', name: 'Llama 3 70B', provider: 'Groq Fast', badgeColor: '#F59E0B', icon: require('../../assets/images/models/groq.png'), description: 'Ultra-low latency Llama inference at 500+ tokens/second.' },
-  { id: 'copilot-gpt4', name: 'GitHub Copilot', provider: 'OpenAI / MS', badgeColor: '#4F46E5', icon: require('../../assets/tool-logos/copilot.png'), description: 'Specialized developer assistant for syntax & refactoring.' },
-  { id: 'mistral-large', name: 'Mistral Large', provider: 'Mistral AI', badgeColor: '#FF7000', icon: require('../../assets/images/models/mistral.png'), description: 'High-precision European open-weight model for enterprise tasks.' },
-  { id: 'cerebras-ultra', name: 'Cerebras Ultra', provider: 'Cerebras', badgeColor: '#EC4899', icon: require('../../assets/images/models/cerebras.png'), description: 'Instant wafer-scale engine processing for massive prompts.' },
-];
 
 export interface AIToolCardItem {
   id: string;
@@ -54,11 +37,60 @@ export interface AIToolCardItem {
   isBookmarked?: boolean;
 }
 
+export interface CardTheme {
+  cardBg: string;
+  borderColor: string;
+  accent: string;
+  btnBg: string;
+  btnText: string;
+  titleColor: string;
+  shadowColor: string;
+}
+
 const LOCAL_TOOL_IMAGES: Record<string, any> = {
-  'email': require('../../assets/tools/email_writer.png'),
-  'voice': require('../../assets/tools/voice_generator.png'),
-  'image': require('../../assets/tools/image_generator.png'),
-  'code': require('../../assets/tools/code_generator.png'),
+  'email': require('../../assets/tools/email_writer_dark.jpg'),
+  'voice': require('../../assets/tools/voice_generator_dark.jpg'),
+  'image': require('../../assets/tools/image_generator_dark.jpg'),
+  'code': require('../../assets/tools/code_generator_dark.jpg'),
+};
+
+const CARD_THEMES: Record<string, CardTheme> = {
+  code_generator: {
+    cardBg: '#1E1B4B',        // Deep Indigo Slate (Dark Theme)
+    borderColor: '#3730A3',
+    accent: '#818CF8',
+    btnBg: '#090D16',         // High Contrast Dark Button
+    btnText: '#FFFFFF',
+    titleColor: '#FFFFFF',
+    shadowColor: '#1E1B4B',
+  },
+  image_generator: {
+    cardBg: '#4C0519',        // Deep Crimson Wine (Dark Theme)
+    borderColor: '#9F1239',
+    accent: '#FB7185',
+    btnBg: '#090D16',         // High Contrast Dark Button
+    btnText: '#FFFFFF',
+    titleColor: '#FFFFFF',
+    shadowColor: '#4C0519',
+  },
+  email_writer: {
+    cardBg: '#064E3B',        // Deep Forest Emerald (Dark Theme)
+    borderColor: '#065F46',
+    accent: '#34D399',
+    btnBg: '#090D16',         // High Contrast Dark Button
+    btnText: '#FFFFFF',
+    titleColor: '#FFFFFF',
+    shadowColor: '#064E3B',
+  },
+  voice_generator: {
+    cardBg: '#3B0764',        // Deep Midnight Violet (Dark Theme)
+    borderColor: '#5B21B6',
+    accent: '#A78BFA',
+    btnBg: '#090D16',         // High Contrast Dark Button
+    btnText: '#FFFFFF',
+    titleColor: '#FFFFFF',
+    shadowColor: '#3B0764',
+  },
 };
 
 const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
@@ -69,7 +101,7 @@ const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
     categoryLabel: 'DEVELOPMENT',
     isFeatured: true,
     description: 'Generate clean React Native components, fix bugs, and refactor functions in seconds.',
-    useCasesCount: 15,
+    useCasesCount: 8,
     pricingType: 'free',
     progressPercentage: 90,
     actionText: 'Open Code Studio',
@@ -80,12 +112,12 @@ const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
   },
   {
     id: 'image_generator',
-    name: 'AI Image Studio',
+    name: 'AI Image Generator',
     category: 'image',
     categoryLabel: 'IMAGE ART',
     isFeatured: true,
-    description: 'Generate high-resolution social media graphics, UI assets, and creative visuals.',
-    useCasesCount: 18,
+    description: 'Generate high-resolution social media graphics, UI assets, and creative visual artwork.',
+    useCasesCount: 8,
     pricingType: 'freemium',
     progressPercentage: 85,
     actionText: 'Open Image Studio',
@@ -96,12 +128,12 @@ const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
   },
   {
     id: 'email_writer',
-    name: 'AI Email & Copy Writer',
+    name: 'AI Email Writer',
     category: 'writing',
     categoryLabel: 'EMAIL WRITING',
     isFeatured: true,
     description: 'Draft professional outreach emails, sales proposals, and newsletter copy instantly.',
-    useCasesCount: 12,
+    useCasesCount: 8,
     pricingType: 'free',
     progressPercentage: 75,
     actionText: 'Open Writer',
@@ -112,12 +144,12 @@ const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
   },
   {
     id: 'voice_generator',
-    name: 'AI Voice Synthesizer',
+    name: 'AI Voice Generator',
     category: 'voice',
     categoryLabel: 'VOICE OVER',
     isFeatured: true,
     description: 'Convert script text into realistic, natural-sounding voiceover audio tracks.',
-    useCasesCount: 14,
+    useCasesCount: 8,
     pricingType: 'freemium',
     progressPercentage: 80,
     actionText: 'Open Voice Studio',
@@ -126,212 +158,180 @@ const DEFAULT_TOOLS_DATA: AIToolCardItem[] = [
     iconEmoji: '🎙️',
     isBookmarked: false,
   },
-  {
-    id: 'prompt_engineering',
-    name: 'Prompt Engineering Coach',
-    category: 'research',
-    categoryLabel: 'PROMPT STUDIO',
-    isFeatured: false,
-    description: 'Master zero-shot, few-shot, and chain-of-thought prompt techniques for AI models.',
-    useCasesCount: 20,
-    pricingType: 'free',
-    progressPercentage: 95,
-    actionText: 'Open Prompt Studio',
-    actionToolMode: 'chat',
-    iconImage: LOCAL_TOOL_IMAGES['code'],
-    iconEmoji: '🧠',
-    isBookmarked: false,
-  },
-  {
-    id: 'context_engineering',
-    name: 'Context Architecture Studio',
-    category: 'productivity',
-    categoryLabel: 'CONTEXT ARCH',
-    isFeatured: false,
-    description: 'Optimize RAG context windows, token limits, and vector knowledge structures.',
-    useCasesCount: 10,
-    pricingType: 'pro',
-    progressPercentage: 60,
-    actionText: 'Open Context Studio',
-    actionToolMode: 'chat',
-    iconImage: LOCAL_TOOL_IMAGES['code'],
-    iconEmoji: '🏗️',
-    isBookmarked: false,
-  },
 ];
 
 const CATEGORY_FILTERS = [
   { id: 'all', label: 'All Tools' },
   { id: 'coding', label: 'AI Coding' },
   { id: 'image', label: 'AI Image' },
-  { id: 'writing', label: 'AI Writing' },
+  { id: 'writing', label: 'AI Email' },
   { id: 'voice', label: 'AI Voice' },
-  { id: 'research', label: 'Prompt Studio' },
 ];
 
-export const ToolsScreen = ({ navigation }: any) => {
-  const insets = useSafeAreaInsets();
+const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
+const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
+
+/* ANIMATED DARK TOOL CARD COMPONENT WITH ZOOM EFFECT ON TOUCH */
+const AnimatedToolCard: React.FC<{
+  tool: AIToolCardItem;
+  theme: CardTheme;
+  onPress: () => void;
+}> = ({ tool, theme, onPress }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      speed: 24,
+      bounciness: 4,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 24,
+      bounciness: 4,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, styles.cardWrapper]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={({ pressed }) => [
+          styles.toolCard,
+          {
+            backgroundColor: theme.cardBg,
+            borderColor: theme.borderColor,
+            shadowColor: theme.shadowColor,
+          },
+        ]}
+      >
+        {/* CARD MAIN BODY ROW */}
+        <View style={styles.cardMainRow}>
+          {/* LEFT COLUMN: BIGGER IMAGE + WIDER BLACK CURVED BUTTON DIRECTLY UNDERNEATH */}
+          <View style={styles.leftCol}>
+            <View style={styles.thumbnailBox}>
+              <Image
+                source={
+                  tool.iconImage ||
+                  (tool.name.toLowerCase().includes('email') || tool.id.includes('email') || tool.category === 'writing'
+                    ? LOCAL_TOOL_IMAGES['email']
+                    : tool.name.toLowerCase().includes('voice') || tool.id.includes('voice') || tool.category === 'voice'
+                    ? LOCAL_TOOL_IMAGES['voice']
+                    : tool.name.toLowerCase().includes('image') || tool.id.includes('image') || tool.category === 'image'
+                    ? LOCAL_TOOL_IMAGES['image']
+                    : LOCAL_TOOL_IMAGES['code'])
+                }
+                style={styles.thumbnailImage}
+                resizeMode="cover"
+              />
+            </View>
+
+            {/* WIDER BLACK CURVED ACTION BUTTON WITH FULL TEXT VISIBILITY */}
+            <TouchableOpacity
+              style={styles.blackActionBtn}
+              onPress={onPress}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.blackActionBtnText} numberOfLines={1}>
+                {tool.actionText} →
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* RIGHT COLUMN: ONLY CLEAN TOPIC HEADING */}
+          <View style={styles.rightContentCol}>
+            <Text style={[styles.toolTitleText, { color: theme.titleColor }]}>
+              {tool.name}
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+};
+
+export const ToolsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedModel, setSelectedModel] = useState<AIModelItem>(AI_WORKSHOP_MODELS[0]);
-  const [showModelModal, setShowModelModal] = useState(false);
+  const [toolsData, setToolsData] = useState<AIToolCardItem[]>(DEFAULT_TOOLS_DATA);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [toolsData, setTools] = useState<AIToolCardItem[]>(DEFAULT_TOOLS_DATA);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const fetchToolsData = useCallback(async () => {
+  const fetchBackendTools = useCallback(async () => {
     try {
-      setErrorMsg(null);
-      const res = await aiApi.getTools();
-      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-        const allowedApiTools = res.data.filter((tool: AiTool) => {
-          const s = (tool.slug || tool.name || '').toLowerCase();
-          return (
-            !s.includes('pdf') &&
-            !s.includes('summarizer') &&
-            !s.includes('translator') &&
-            !s.includes('translation')
+      const response = await aiApi.getTools();
+      if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+        const merged: AIToolCardItem[] = DEFAULT_TOOLS_DATA.map((localTool) => {
+          const matchedBackend = response.data.find(
+            (bTool: AiTool) =>
+              (bTool.slug && bTool.slug.toLowerCase().includes(localTool.id)) ||
+              bTool._id === localTool.id ||
+              (bTool.name && bTool.name.toLowerCase().includes(localTool.name.toLowerCase().split(' ')[1] || ''))
           );
+          if (matchedBackend) {
+            return {
+              ...localTool,
+              name: matchedBackend.name || localTool.name,
+              description: matchedBackend.description || localTool.description,
+            };
+          }
+          return localTool;
         });
 
-        const mappedApiTools: AIToolCardItem[] = allowedApiTools.map((apiTool: AiTool, index: number) => {
-          const str = `${apiTool.slug || ''} ${apiTool.name || ''} ${apiTool.type || ''} ${apiTool.category || ''}`.toLowerCase();
-          const matchingPreset = DEFAULT_TOOLS_DATA.find((t) => t.id === apiTool.slug || t.id.includes(apiTool.slug) || str.includes(t.category));
-
-          let inferredCategory: 'writing' | 'image' | 'voice' | 'coding' | 'research' | 'productivity' = 'productivity';
-          let categoryLabel = 'AI TOOL';
-
-          if (str.includes('email') || str.includes('mail') || str.includes('writing') || str.includes('writer')) {
-            inferredCategory = 'writing';
-            categoryLabel = 'EMAIL WRITING';
-          } else if (str.includes('voice') || str.includes('audio') || str.includes('speech')) {
-            inferredCategory = 'voice';
-            categoryLabel = 'VOICE OVER';
-          } else if (str.includes('image') || str.includes('art') || str.includes('photo')) {
-            inferredCategory = 'image';
-            categoryLabel = 'IMAGE ART';
-          } else if (str.includes('code') || str.includes('coding') || str.includes('developer')) {
-            inferredCategory = 'coding';
-            categoryLabel = 'DEVELOPMENT';
-          } else if (matchingPreset) {
-            inferredCategory = matchingPreset.category;
-            categoryLabel = matchingPreset.categoryLabel;
-          }
-
-          let toolImg = matchingPreset?.iconImage;
-          if (!toolImg) {
-            if (inferredCategory === 'writing') toolImg = LOCAL_TOOL_IMAGES['email'];
-            else if (inferredCategory === 'voice') toolImg = LOCAL_TOOL_IMAGES['voice'];
-            else if (inferredCategory === 'image') toolImg = LOCAL_TOOL_IMAGES['image'];
-            else toolImg = LOCAL_TOOL_IMAGES['code'];
-          }
-
-          return {
-            id: apiTool._id || apiTool.slug || `tool_${index}`,
-            name: apiTool.name || matchingPreset?.name || 'AI Tool',
-            category: inferredCategory,
-            categoryLabel,
-            isFeatured: index < 4,
-            description: apiTool.description || matchingPreset?.description || 'Supercharge your AI workflow.',
-            useCasesCount: 8,
-            pricingType: index % 2 === 0 ? 'free' : 'freemium',
-            progressPercentage: 65,
-            actionText: matchingPreset?.actionText || 'Open Tool',
-            actionToolMode: (apiTool.type as any) || matchingPreset?.actionToolMode || 'chat',
-            iconImage: toolImg,
-            iconEmoji: matchingPreset?.iconEmoji || '⚡',
-            isBookmarked: false,
-          };
-        });
-        setTools(mappedApiTools);
-      } else {
-        setTools(DEFAULT_TOOLS_DATA);
+        setToolsData(merged);
       }
-    } catch (err) {
-      setTools(DEFAULT_TOOLS_DATA);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    } catch {
+      // Fallback gracefully to DEFAULT_TOOLS_DATA
     }
   }, []);
 
   useEffect(() => {
-    fetchToolsData();
-  }, [fetchToolsData]);
+    fetchBackendTools();
+  }, [fetchBackendTools]);
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    fetchToolsData();
-  };
-
-  const toggleSaveBookmark = async (toolId: string) => {
-    setTools((prevTools) =>
-      prevTools.map((t) => (t.id === toolId ? { ...t, isBookmarked: !t.isBookmarked } : t))
-    );
-
-    try {
-      await bookmarkApi.toggleBookmark({
-        itemType: 'aitool',
-        itemId: toolId,
-      });
-    } catch (err) {
-      console.warn('[ToolsScreen] Bookmark toggle failed:', err);
-    }
-  };
+    await fetchBackendTools();
+    setRefreshing(false);
+  }, [fetchBackendTools]);
 
   const handleActionPress = (tool: AIToolCardItem) => {
-    const modelParams = {
-      selectedModelId: selectedModel.id,
-      selectedModelName: selectedModel.name,
-    };
-    if (tool.actionToolMode === 'email' || tool.id === 'email_writer' || tool.id.includes('email')) {
-      navigation.navigate('AIEmailWriter', modelParams);
-    } else if (tool.actionToolMode === 'voice' || tool.id === 'voice_generator' || tool.id.includes('voice')) {
-      navigation.navigate('AIVoiceGenerator', modelParams);
-    } else if (tool.actionToolMode === 'image' || tool.id === 'image_generator' || tool.id.includes('image')) {
-      navigation.navigate('AIImageGenerator', modelParams);
-    } else if (
-      tool.actionToolMode === 'code' ||
-      (tool.actionToolMode as string) === 'coding' ||
-      tool.id === 'code_generator' ||
-      tool.id.includes('code') ||
-      tool.name.toLowerCase().includes('code')
-    ) {
-      navigation.navigate('AICodeGenerator', modelParams);
+    if (tool.actionToolMode === 'email') {
+      navigation.navigate('AIEmailWriter');
+    } else if (tool.actionToolMode === 'voice') {
+      navigation.navigate('AIVoiceGenerator');
+    } else if (tool.actionToolMode === 'image') {
+      navigation.navigate('AIImageGenerator');
+    } else if (tool.actionToolMode === 'code') {
+      navigation.navigate('AICodeGenerator');
     } else {
       navigation.navigate('AITab', {
         activeTool: tool.actionToolMode,
         toolName: tool.name,
-        ...modelParams,
       });
     }
   };
 
   const filteredTools = toolsData.filter((tool) => {
     if (selectedCategory === 'all') return true;
-
     const str = `${tool.id} ${tool.name} ${tool.category} ${tool.categoryLabel}`.toLowerCase();
-
-    if (selectedCategory === 'writing') {
-      return tool.category === 'writing' || str.includes('email') || str.includes('writing') || str.includes('mail');
-    }
-    if (selectedCategory === 'image') {
-      return tool.category === 'image' || str.includes('image') || str.includes('art');
-    }
-    if (selectedCategory === 'voice') {
-      return tool.category === 'voice' || str.includes('voice') || str.includes('audio');
-    }
-    if (selectedCategory === 'coding') {
-      return tool.category === 'coding' || str.includes('code') || str.includes('coding');
-    }
-
+    if (selectedCategory === 'writing') return tool.category === 'writing' || str.includes('email');
+    if (selectedCategory === 'image') return tool.category === 'image' || str.includes('image');
+    if (selectedCategory === 'voice') return tool.category === 'voice' || str.includes('voice');
+    if (selectedCategory === 'coding') return tool.category === 'coding' || str.includes('code');
     return tool.category === selectedCategory;
   });
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* 1. iOS HEADER */}
+      {/* 1. HEADER (NO AI MODEL SELECTOR) */}
       <View style={styles.headerContainer}>
         <View style={styles.headerTopRow}>
           <TouchableOpacity
@@ -352,20 +352,11 @@ export const ToolsScreen = ({ navigation }: any) => {
             <Text style={styles.headerSubtitleTag}>AI WORKSHOP</Text>
             <Text style={styles.headerMainTitle}>Explore AI tools</Text>
           </View>
-
-          {/* COMPACT MODEL SELECTOR BUTTON: SHOWS ONLY TOOL LOGO AND NAME */}
-          <TouchableOpacity
-            style={styles.headerModelSelectorBtn}
-            onPress={() => setShowModelModal(true)}
-            activeOpacity={0.85}
-          >
-            <Image source={selectedModel.icon} style={styles.headerModelIcon} resizeMode="contain" />
-            <Text style={styles.headerModelNameText} numberOfLines={1}>{selectedModel.name}</Text>
-            <Icon name="chevron-down" size={14} color="#64748B" />
-          </TouchableOpacity>
+          
+          <View style={{ width: 38 }} />
         </View>
 
-        {/* 3. CATEGORY FILTERS */}
+        {/* 2. CATEGORY FILTERS */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -408,128 +399,28 @@ export const ToolsScreen = ({ navigation }: any) => {
             <Text style={styles.emptySubtitle}>Try adjusting your search query or filter category.</Text>
           </View>
         ) : (
-          filteredTools.map((tool) => (
-            <View key={tool.id} style={styles.toolCard}>
-              {/* CARD TOP ROW (BADGES & SAVE BUTTON) */}
-              <View style={styles.cardHeaderRow}>
-                <View style={styles.leftBadgesGroup}>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>{tool.categoryLabel}</Text>
-                  </View>
-                  {tool.isFeatured && (
-                    <View style={styles.featuredBadge}>
-                      <Text style={styles.featuredBadgeText}>FEATURED</Text>
-                    </View>
-                  )}
-                </View>
+          filteredTools.map((tool) => {
+            const theme = CARD_THEMES[tool.id] || {
+              cardBg: '#1E1B4B',
+              borderColor: '#3730A3',
+              accent: '#818CF8',
+              btnBg: '#090D16',
+              btnText: '#FFFFFF',
+              titleColor: '#FFFFFF',
+              shadowColor: '#1E1B4B',
+            };
 
-                {/* SAVE BUTTON */}
-                <TouchableOpacity
-                  style={styles.savePillButton}
-                  onPress={() => toggleSaveBookmark(tool.id)}
-                  activeOpacity={0.7}
-                >
-                  <Icon
-                    name={tool.isBookmarked ? 'bookmark-filled' : 'tag'}
-                    size={13}
-                    color={tool.isBookmarked ? COLORS.primary : '#E11D48'}
-                  />
-                  <Text style={[styles.savePillText, tool.isBookmarked && styles.savePillTextBookmarked]}>
-                    {tool.isBookmarked ? 'Saved' : 'Save'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* CARD MAIN CONTENT ROW (IMAGE LEFT, CONTENT RIGHT) */}
-              <View style={styles.cardMainRow}>
-                {/* LARGE THUMBNAIL IMAGE */}
-                <View style={styles.thumbnailBox}>
-                  <Image
-                    source={
-                      tool.iconImage ||
-                      (tool.name.toLowerCase().includes('email') || tool.id.includes('email') || tool.category === 'writing'
-                        ? LOCAL_TOOL_IMAGES['email']
-                        : tool.name.toLowerCase().includes('voice') || tool.id.includes('voice') || tool.category === 'voice'
-                        ? LOCAL_TOOL_IMAGES['voice']
-                        : tool.name.toLowerCase().includes('image') || tool.id.includes('image') || tool.category === 'image'
-                        ? LOCAL_TOOL_IMAGES['image']
-                        : LOCAL_TOOL_IMAGES['code'])
-                    }
-                    style={styles.thumbnailImage}
-                    resizeMode="cover"
-                  />
-                </View>
-
-                {/* RIGHT CONTENT COLUMN */}
-                <View style={styles.rightContentCol}>
-                  <Text style={styles.toolTitleText}>{tool.name}</Text>
-                  <Text style={styles.toolSubMetaText}>
-                    {tool.useCasesCount} use cases • {tool.pricingType}
-                  </Text>
-
-                  {/* PROGRESS BAR */}
-                  <View style={styles.cardProgressBarTrack}>
-                    <View style={[styles.cardProgressBarFill, { width: `${tool.progressPercentage}%` }]} />
-                  </View>
-
-                  {/* OPEN TOOL BUTTON */}
-                  <TouchableOpacity
-                    style={styles.actionBtnPrimary}
-                    onPress={() => handleActionPress(tool)}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.actionBtnPrimaryText}>{tool.actionText} →</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          ))
+            return (
+              <AnimatedToolCard
+                key={tool.id}
+                tool={tool}
+                theme={theme}
+                onPress={() => handleActionPress(tool)}
+              />
+            );
+          })
         )}
       </ScrollView>
-
-      {/* MODEL SELECTION MODAL */}
-      <Modal visible={showModelModal} transparent animationType="slide" onRequestClose={() => setShowModelModal(false)}>
-        <View style={styles.overlay}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowModelModal(false)} />
-          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-            <View style={styles.sheetHandle} />
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Select AI Model</Text>
-              <TouchableOpacity onPress={() => setShowModelModal(false)} style={styles.closeBtn}>
-                <Icon name="x" size={18} color="#0F172A" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 380 }}>
-              {AI_WORKSHOP_MODELS.map((modelItem) => {
-                const isSelected = modelItem.id === selectedModel.id;
-                return (
-                  <TouchableOpacity
-                    key={modelItem.id}
-                    onPress={() => {
-                      setSelectedModel(modelItem);
-                      setShowModelModal(false);
-                    }}
-                    style={[styles.modelSheetRow, isSelected && styles.activeModelSheetRow]}
-                  >
-                    <Image source={modelItem.icon} style={styles.sheetModelIcon} resizeMode="contain" />
-                    <View style={styles.sheetModelTextCol}>
-                      <Text style={[styles.sheetModelName, isSelected && { color: modelItem.badgeColor, fontWeight: '800' }]}>
-                        {modelItem.name}
-                      </Text>
-                      <Text style={styles.sheetModelProvider}>{modelItem.provider}</Text>
-                    </View>
-                    {isSelected && (
-                      <View style={[styles.activeCheckBadge, { backgroundColor: modelItem.badgeColor }]}>
-                        <Icon name="check" size={12} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 };
@@ -542,7 +433,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
     shadowColor: '#0F172A',
@@ -554,7 +445,7 @@ const styles = StyleSheet.create({
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   backBtn: {
     width: 38,
@@ -572,6 +463,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitleTag: {
     fontSize: 10.5,
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontWeight: '800',
     color: '#6D28D9',
     letterSpacing: 0.8,
@@ -579,69 +471,10 @@ const styles = StyleSheet.create({
   },
   headerMainTitle: {
     fontSize: 21,
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.3,
-  },
-  modelSelectorContainer: {
-    marginBottom: 12,
-  },
-  modelSelectorScrollContent: {
-    gap: 10,
-    paddingRight: 12,
-  },
-  modelChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    gap: 8,
-  },
-  modelIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-  },
-  modelChipTextCol: {
-    justifyContent: 'center',
-  },
-  modelNameText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1E293B',
-  },
-  modelProviderText: {
-    fontSize: 9.5,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  activeModelDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginLeft: 2,
-  },
-  searchBarBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    height: 44,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 12,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#0F172A',
-    fontWeight: '500',
   },
   categoryScrollContent: {
     gap: 8,
@@ -662,155 +495,87 @@ const styles = StyleSheet.create({
   },
   categoryChipText: {
     fontSize: 12.5,
+    fontFamily: FONT_FAMILY,
     fontWeight: '600',
     color: '#334155',
   },
   activeCategoryChipText: {
     color: '#6D28D9',
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontWeight: '800',
   },
   scrollListContent: {
     padding: 16,
     paddingBottom: 32,
   },
-  toolCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 16,
+  cardWrapper: {
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
   },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  leftBadgesGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  categoryBadge: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  categoryBadgeText: {
-    color: '#475569',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  featuredBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  featuredBadgeText: {
-    color: '#6366F1',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  savePillButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 4,
-  },
-  savePillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
-  },
-  savePillTextBookmarked: {
-    color: COLORS.primary,
+  toolCard: {
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   cardMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  leftCol: {
+    width: 155,
+    marginRight: 16,
+    alignItems: 'center',
+  },
   thumbnailBox: {
-    width: 140,
-    height: 96,
+    width: 155,
+    height: 98,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#F8FAFC',
-    marginRight: 14,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
+    backgroundColor: '#000000',
   },
   thumbnailImage: {
     width: '100%',
     height: '100%',
   },
-  emojiFallbackBox: {
-    flex: 1,
+  blackActionBtn: {
+    backgroundColor: '#090D16',
+    borderRadius: 20,
+    paddingVertical: 9.5,
+    paddingHorizontal: 4,
+    width: 155,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  toolEmojiText: {
-    fontSize: 36,
+  blackActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11.5,
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   rightContentCol: {
     flex: 1,
     justifyContent: 'center',
+    paddingRight: 4,
   },
   toolTitleText: {
-    fontSize: 16,
+    fontSize: 19,
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  toolSubMetaText: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  cardProgressBarTrack: {
-    width: '100%',
-    height: 4,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 10,
-  },
-  cardProgressBarFill: {
-    height: '100%',
-    backgroundColor: '#6366F1',
-    borderRadius: 2,
-  },
-  actionBtnPrimary: {
-    backgroundColor: '#6366F1',
-    paddingVertical: 9,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  actionBtnPrimaryText: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
+    letterSpacing: -0.2,
+    lineHeight: 25,
   },
   loadingBox: {
     paddingVertical: 40,
@@ -827,114 +592,14 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
+    fontFamily: FONT_FAMILY_MEDIUM,
     fontWeight: '700',
     color: '#0F172A',
   },
   emptySubtitle: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY,
     color: '#64748B',
     marginTop: 4,
-  },
-  headerModelSelectorBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 18,
-    gap: 6,
-  },
-  headerModelIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
-  },
-  headerModelNameText: {
-    fontSize: 12.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    maxWidth: 110,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 22,
-    paddingTop: 12,
-  },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#CBD5E1',
-    alignSelf: 'center',
-    marginBottom: 14,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  sheetTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modelSheetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    marginBottom: 8,
-    backgroundColor: '#F8FAFC',
-    gap: 12,
-  },
-  activeModelSheetRow: {
-    borderColor: '#6366F1',
-    backgroundColor: '#EEF2FF',
-  },
-  sheetModelIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-  },
-  sheetModelTextCol: {
-    flex: 1,
-  },
-  sheetModelName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  sheetModelProvider: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  activeCheckBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
