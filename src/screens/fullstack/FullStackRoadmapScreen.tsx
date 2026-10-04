@@ -69,8 +69,6 @@ export const FullStackRoadmapScreen: React.FC = () => {
     navigation.navigate('HtmlCourse', { tech: techId });
   };
 
-  const overallPercentage = fsProgress?.overallPercentage || 0;
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -85,7 +83,7 @@ export const FullStackRoadmapScreen: React.FC = () => {
           <Icon name="chevron-left" size={22} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.topBarTitle} numberOfLines={1}>
-          My Progress
+          Full Stack Roadmap
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -96,32 +94,16 @@ export const FullStackRoadmapScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
       >
-        {/* HERO OVERALL PROGRESS BANNER (EXACT MATCH OF IMAGE 3) */}
-        <View style={styles.heroProgressCard}>
-          <View style={styles.heroLeft}>
-            <Text style={styles.heroTitle}>Great Progress! 🎉</Text>
-            <Text style={styles.heroSubtitle}>You're doing awesome.</Text>
-          </View>
-
-          <View style={styles.heroRightCircle}>
-            <Text style={styles.circlePercentageText}>{overallPercentage}%</Text>
-            <Text style={styles.circleSubLabel}>Overall Progress</Text>
-          </View>
-        </View>
-
         {/* SECTION TITLE */}
-        <Text style={styles.sectionHeaderTitle}>Skills Progress</Text>
+        <Text style={styles.sectionHeaderTitle}>Technology Modules</Text>
 
         {/* Loading Spinner */}
         {loading && !refreshing ? (
           <ActivityIndicator size="large" color={COLORS.primary} style={{ marginVertical: 30 }} />
         ) : (
-          /* COMPACT WHITE MODULE CARDS (EXACT MATCH OF IMAGE 3) */
+          /* COMPACT WHITE MODULE CARDS */
           <View style={styles.coursesList}>
             {FULLSTACK_TRACKS.map((track) => {
-              // Real backend percentage
-              const trackPercent = (fsProgress as any)?.trackProgress?.[track.id] ?? (fsProgress as any)?.[track.id]?.percentage ?? 0;
-
               return (
                 <TouchableOpacity
                   key={track.id}
@@ -130,7 +112,6 @@ export const FullStackRoadmapScreen: React.FC = () => {
                   onPress={() => handleOpenCourse(track.id)}
                 >
                   <View style={styles.cardMainRow}>
-                    {/* Larger, Prominent Tech Logo */}
                     <View style={styles.logoSquareContainer}>
                       {COURSE_LOGOS[track.id] ? (
                         <Image
@@ -139,30 +120,18 @@ export const FullStackRoadmapScreen: React.FC = () => {
                           resizeMode="contain"
                         />
                       ) : (
-                        <Icon name={track.icon as any || 'code'} size={30} color="#0F172A" />
+                        <Icon name={track.icon as any || 'code'} size={28} color="#0F172A" />
                       )}
                     </View>
 
-                    {/* Middle Info & Progress Line */}
                     <View style={styles.cardCenterBlock}>
-                      <View style={styles.cardTitleRow}>
-                        <Text style={styles.courseName}>{track.title}</Text>
-                        <Text style={styles.percentText}>{trackPercent}%</Text>
-                      </View>
-
-                      {/* Sleek Progress Track */}
-                      <View style={styles.progressTrackBar}>
-                        <View
-                          style={[
-                            styles.progressFillBar,
-                            { width: `${Math.max(4, trackPercent)}%` }
-                          ]}
-                        />
-                      </View>
+                      <Text style={styles.courseName}>{track.title}</Text>
+                      <Text style={styles.courseSubtext} numberOfLines={2}>
+                        {track.description}
+                      </Text>
                     </View>
                   </View>
 
-                  {/* Start Course Colored Button Footer */}
                   <View style={styles.cardFooterRow}>
                     <TouchableOpacity
                       style={styles.startBtnPill}
@@ -223,95 +192,39 @@ const styles = StyleSheet.create({
     paddingBottom: 40
   },
 
-  /* HERO OVERALL PROGRESS BANNER */
-  heroProgressCard: {
-    backgroundColor: '#2D1E80',
-    borderRadius: 20,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-    shadowColor: '#2D1E80',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5
-  },
-  heroLeft: {
-    flex: 1,
-    paddingRight: 10
-  },
-  heroTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 19,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 4
-  },
-  heroSubtitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    color: '#C7D2FE'
-  },
-  heroRightCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    borderColor: '#6366F1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)'
-  },
-  circlePercentageText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 19,
-    fontWeight: '800',
-    color: '#FFFFFF'
-  },
-  circleSubLabel: {
-    fontSize: 7.5,
-    fontWeight: '700',
-    color: '#A5B4FC',
-    marginTop: 1,
-    textAlign: 'center'
-  },
-
-  /* SECTION HEADING */
   sectionHeaderTitle: {
     fontFamily: FONT_FAMILY,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0F172A',
+    marginTop: 4,
     marginBottom: 12
   },
 
-  /* COMPACT WHITE COURSE CARDS (EXACT MATCH OF IMAGE 3) */
   coursesList: {
-    gap: 12
+    gap: 14
   },
   cleanWhiteCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    padding: 13,
+    padding: 16,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 2
   },
   cardMainRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12
+    alignItems: 'flex-start',
+    gap: 14
   },
   logoSquareContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#F1F5F9',
@@ -319,65 +232,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   courseLogoImage: {
-    width: 38,
-    height: 38
+    width: 34,
+    height: 34
   },
   cardCenterBlock: {
     flex: 1
-  },
-  cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6
   },
   courseName: {
     fontFamily: FONT_FAMILY,
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A'
+    color: '#0F172A',
+    marginBottom: 4,
+    lineHeight: 22
   },
-  percentText: {
+  courseSubtext: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13.5,
-    fontWeight: '800',
-    color: '#0F172A'
-  },
-  progressTrackBar: {
-    height: 5,
-    backgroundColor: '#EEEDFF',
-    borderRadius: 3,
-    overflow: 'hidden'
-  },
-  progressFillBar: {
-    height: '100%',
-    backgroundColor: '#5653FE',
-    borderRadius: 3
+    fontSize: 12.5,
+    color: '#64748B',
+    lineHeight: 18
   },
   cardFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginTop: 8,
-    paddingTop: 6
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC'
   },
   startBtnPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#5653FE',
-    paddingVertical: 7,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    shadowColor: '#5653FE',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2
   },
   startBtnPillText: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#FFFFFF'
   }

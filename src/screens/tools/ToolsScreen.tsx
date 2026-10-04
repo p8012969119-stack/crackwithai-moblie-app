@@ -41,55 +41,60 @@ export interface CardTheme {
   cardBg: string;
   borderColor: string;
   accent: string;
-  btnBg: string;
-  btnText: string;
   titleColor: string;
+  descColor: string;
+  badgeBg: string;
+  badgeText: string;
   shadowColor: string;
 }
 
 const LOCAL_TOOL_IMAGES: Record<string, any> = {
-  'email': require('../../assets/tools/email_writer_dark.jpg'),
-  'voice': require('../../assets/tools/voice_generator_dark.jpg'),
-  'image': require('../../assets/tools/image_generator_dark.jpg'),
-  'code': require('../../assets/tools/code_generator_dark.jpg'),
+  'email': require('../../assets/tools/email_writer.png'),
+  'voice': require('../../assets/tools/voice_generator.png'),
+  'image': require('../../assets/tools/image_generator.png'),
+  'code': require('../../assets/tools/code_generator.png'),
 };
 
 const CARD_THEMES: Record<string, CardTheme> = {
   code_generator: {
-    cardBg: '#1E1B4B',        // Deep Indigo Slate (Dark Theme)
-    borderColor: '#3730A3',
-    accent: '#818CF8',
-    btnBg: '#090D16',         // High Contrast Dark Button
-    btnText: '#FFFFFF',
-    titleColor: '#FFFFFF',
-    shadowColor: '#1E1B4B',
+    cardBg: '#FFEDD5',        // Warm Soft Peach Gold (Reference Image 2 Palette!)
+    borderColor: '#FDBA74',
+    accent: '#EA580C',
+    titleColor: '#0F172A',
+    descColor: '#475569',
+    badgeBg: '#FFD8A8',
+    badgeText: '#C2410C',
+    shadowColor: '#EA580C',
   },
   image_generator: {
-    cardBg: '#4C0519',        // Deep Crimson Wine (Dark Theme)
-    borderColor: '#9F1239',
-    accent: '#FB7185',
-    btnBg: '#090D16',         // High Contrast Dark Button
-    btnText: '#FFFFFF',
-    titleColor: '#FFFFFF',
-    shadowColor: '#4C0519',
+    cardBg: '#FFE4E6',        // Soft Warm Rose Coral
+    borderColor: '#FDA4AF',
+    accent: '#E11D48',
+    titleColor: '#0F172A',
+    descColor: '#475569',
+    badgeBg: '#FECDD3',
+    badgeText: '#BE123C',
+    shadowColor: '#E11D48',
   },
   email_writer: {
-    cardBg: '#064E3B',        // Deep Forest Emerald (Dark Theme)
-    borderColor: '#065F46',
-    accent: '#34D399',
-    btnBg: '#090D16',         // High Contrast Dark Button
-    btnText: '#FFFFFF',
-    titleColor: '#FFFFFF',
-    shadowColor: '#064E3B',
+    cardBg: '#D1FAE5',        // Soft Fresh Mint Green
+    borderColor: '#6EE7B7',
+    accent: '#059669',
+    titleColor: '#0F172A',
+    descColor: '#475569',
+    badgeBg: '#A7F3D0',
+    badgeText: '#047857',
+    shadowColor: '#059669',
   },
   voice_generator: {
-    cardBg: '#3B0764',        // Deep Midnight Violet (Dark Theme)
-    borderColor: '#5B21B6',
-    accent: '#A78BFA',
-    btnBg: '#090D16',         // High Contrast Dark Button
-    btnText: '#FFFFFF',
-    titleColor: '#FFFFFF',
-    shadowColor: '#3B0764',
+    cardBg: '#EDE9FE',        // Soft Lavender Periwinkle
+    borderColor: '#C7D2FE',
+    accent: '#7C3AED',
+    titleColor: '#0F172A',
+    descColor: '#475569',
+    badgeBg: '#DDD6FE',
+    badgeText: '#6D28D9',
+    shadowColor: '#7C3AED',
   },
 };
 
@@ -171,7 +176,7 @@ const CATEGORY_FILTERS = [
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
-/* ANIMATED DARK TOOL CARD COMPONENT WITH ZOOM EFFECT ON TOUCH */
+/* ANIMATED TOOL CARD COMPONENT WITH ZOOM EFFECT ON TOUCH */
 const AnimatedToolCard: React.FC<{
   tool: AIToolCardItem;
   theme: CardTheme;
@@ -214,7 +219,7 @@ const AnimatedToolCard: React.FC<{
       >
         {/* CARD MAIN BODY ROW */}
         <View style={styles.cardMainRow}>
-          {/* LEFT COLUMN: BIGGER IMAGE + WIDER BLACK CURVED BUTTON DIRECTLY UNDERNEATH */}
+          {/* LEFT COLUMN: IMAGE + BLACK CURVED BUTTON DIRECTLY UNDERNEATH */}
           <View style={styles.leftCol}>
             <View style={styles.thumbnailBox}>
               <Image
@@ -233,22 +238,28 @@ const AnimatedToolCard: React.FC<{
               />
             </View>
 
-            {/* WIDER BLACK CURVED ACTION BUTTON WITH FULL TEXT VISIBILITY */}
+            {/* BLACK CURVED ACTION BUTTON WITH FULL TEXT VISIBILITY */}
             <TouchableOpacity
               style={styles.blackActionBtn}
               onPress={onPress}
               activeOpacity={0.85}
             >
               <Text style={styles.blackActionBtnText} numberOfLines={1}>
-                {tool.actionText} →
+                {tool.actionText} ↗
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* RIGHT COLUMN: ONLY CLEAN TOPIC HEADING */}
+          {/* RIGHT COLUMN: TITLE, META & DESCRIPTION */}
           <View style={styles.rightContentCol}>
             <Text style={[styles.toolTitleText, { color: theme.titleColor }]}>
               {tool.name}
+            </Text>
+            <Text style={[styles.toolSubMetaText, { color: theme.accent }]}>
+              {tool.useCasesCount} use cases • {tool.pricingType}
+            </Text>
+            <Text style={[styles.toolDescText, { color: theme.descColor }]} numberOfLines={3}>
+              {tool.description}
             </Text>
           </View>
         </View>
@@ -401,13 +412,14 @@ export const ToolsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         ) : (
           filteredTools.map((tool) => {
             const theme = CARD_THEMES[tool.id] || {
-              cardBg: '#1E1B4B',
-              borderColor: '#3730A3',
-              accent: '#818CF8',
-              btnBg: '#090D16',
-              btnText: '#FFFFFF',
-              titleColor: '#FFFFFF',
-              shadowColor: '#1E1B4B',
+              cardBg: '#FFEDD5',
+              borderColor: '#FDBA74',
+              accent: '#EA580C',
+              titleColor: '#0F172A',
+              descColor: '#475569',
+              badgeBg: '#FFD8A8',
+              badgeText: '#C2410C',
+              shadowColor: '#EA580C',
             };
 
             return (
@@ -515,67 +527,79 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 18,
     borderWidth: 1.5,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   cardMainRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   leftCol: {
-    width: 155,
+    width: 145,
     marginRight: 16,
     alignItems: 'center',
   },
   thumbnailBox: {
-    width: 155,
-    height: 98,
+    width: 145,
+    height: 94,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
   },
   thumbnailImage: {
     width: '100%',
     height: '100%',
   },
   blackActionBtn: {
-    backgroundColor: '#090D16',
+    backgroundColor: '#0F172A',
     borderRadius: 20,
-    paddingVertical: 9.5,
-    paddingHorizontal: 4,
-    width: 155,
+    paddingVertical: 9,
+    paddingHorizontal: 6,
+    width: 145,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 3,
   },
   blackActionBtnText: {
     color: '#FFFFFF',
-    fontSize: 11.5,
+    fontSize: 11,
     fontFamily: FONT_FAMILY_MEDIUM,
     fontWeight: '700',
     textAlign: 'center',
   },
   rightContentCol: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingRight: 4,
   },
   toolTitleText: {
-    fontSize: 19,
+    fontSize: 18,
     fontFamily: FONT_FAMILY_MEDIUM,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#0F172A',
+    marginBottom: 4,
     letterSpacing: -0.2,
-    lineHeight: 25,
+  },
+  toolSubMetaText: {
+    fontSize: 11.5,
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  toolDescText: {
+    fontSize: 12.5,
+    fontFamily: FONT_FAMILY,
+    color: '#475569',
+    lineHeight: 18,
   },
   loadingBox: {
     paddingVertical: 40,

@@ -1,9 +1,9 @@
 import { NativeModules, Platform } from 'react-native';
 
+const LOCAL_URL = 'http://127.0.0.1:5001/api';
+const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 const DEV_LAN_IP = '172.168.10.173';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
-const EMULATOR_URL = 'http://10.0.2.2:5001/api';
-const LOCAL_URL = 'http://127.0.0.1:5001/api';
 
 const CANDIDATE_URLS = [LOCAL_URL, EMULATOR_URL, DEV_LAN_URL];
 
@@ -32,7 +32,12 @@ export const getDevApiBaseUrl = (): string => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // Extract host IP from Metro bundle URL (e.g. http://172.168.9.242:8081/index.bundle?...)
+  // On Android physical & emulator devices with ADB reverse, 127.0.0.1:5001 is direct, zero-latency USB loopback
+  if (Platform.OS === 'android') {
+    return LOCAL_URL;
+  }
+
+  // Extract host IP from Metro bundle URL if on iOS
   const scriptURL = typeof NativeModules !== 'undefined' ? NativeModules?.SourceCode?.scriptURL : undefined;
   if (scriptURL && typeof scriptURL === 'string' && /^https?:\/\//i.test(scriptURL)) {
     try {
@@ -46,13 +51,7 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  // On Android physical/emulator devices with ADB reverse, 127.0.0.1:5001 connects directly over USB.
-  if (Platform.OS === 'android') {
-    return LOCAL_URL;
-  }
-
-  // Use Mac LAN IP so physical devices on local Wi-Fi can reach port 5001
-  return DEV_LAN_URL;
+  return LOCAL_URL;
 };
 
 // Environment & App Configuration
@@ -60,7 +59,7 @@ export const CONFIG = {
   get API_BASE_URL(): string {
     return getDevApiBaseUrl();
   },
-  TIMEOUT: 12000,
+  TIMEOUT: 4000,
   STORAGE_KEYS: {
     AUTH_TOKEN: '@crackwithai_auth_token',
     USER_DATA: '@crackwithai_user_data',

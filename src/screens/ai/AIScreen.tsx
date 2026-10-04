@@ -46,26 +46,36 @@ const readHistory = (raw: string | null): Conversation[] => {
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
-const MODEL_BRAND_MAP: Record<string, { badgeColor: string; icon: any }> = {
-  gemini: { badgeColor: '#4285F4', icon: require('../../assets/images/models/gemini.png') },
-  claude: { badgeColor: '#D97706', icon: require('../../assets/courses/claude.png') },
-  groq: { badgeColor: '#F59E0B', icon: require('../../assets/images/models/groq.png') },
-  deepseek: { badgeColor: '#0284C7', icon: require('../../assets/tool-logos/copilot.png') },
-  openai: { badgeColor: '#10A37F', icon: require('../../assets/tool-logos/copilot.png') },
-  mistral: { badgeColor: '#FF7000', icon: require('../../assets/images/models/mistral.png') },
-  cerebras: { badgeColor: '#EC4899', icon: require('../../assets/images/models/cerebras.png') },
-  free: { badgeColor: '#6D28D9', icon: require('../../assets/images/models/mistral.png') },
-};
-
-const getModelBrand = (modelId: string, provider: string) => {
-  const key = (modelId || '').toLowerCase();
-  const provKey = (provider || '').toLowerCase();
-  for (const mKey of Object.keys(MODEL_BRAND_MAP)) {
-    if (key.includes(mKey) || provKey.includes(mKey)) {
-      return MODEL_BRAND_MAP[mKey];
-    }
+const getModelBrand = (modelId: string = '', provider: string = '', name: string = '') => {
+  const key = `${modelId} ${provider} ${name}`.toLowerCase();
+  if (key.includes('gemini') || key.includes('google')) {
+    return { badgeColor: '#4285F4', icon: require('../../assets/images/models/gemini.png') };
   }
-  return { badgeColor: '#5653FE', icon: require('../../assets/images/models/gemini.png') };
+  if (key.includes('claude') || key.includes('anthropic')) {
+    return { badgeColor: '#D97706', icon: require('../../assets/tool-logos/claude.png') };
+  }
+  if (key.includes('groq')) {
+    return { badgeColor: '#F59E0B', icon: require('../../assets/images/models/groq.png') };
+  }
+  if (key.includes('openai') || key.includes('gpt') || key.includes('chatgpt')) {
+    return { badgeColor: '#10A37F', icon: require('../../assets/tool-logos/chatgpt.png') };
+  }
+  if (key.includes('deepseek')) {
+    return { badgeColor: '#0284C7', icon: require('../../assets/tool-logos/copilot.png') };
+  }
+  if (key.includes('mistral')) {
+    return { badgeColor: '#FF7000', icon: require('../../assets/images/models/mistral.png') };
+  }
+  if (key.includes('cerebras')) {
+    return { badgeColor: '#EC4899', icon: require('../../assets/images/models/cerebras.png') };
+  }
+  if (key.includes('cohere')) {
+    return { badgeColor: '#34D399', icon: require('../../assets/images/models/cohere.png') };
+  }
+  if (key.includes('nvidia')) {
+    return { badgeColor: '#76B900', icon: require('../../assets/images/models/nvidia.png') };
+  }
+  return { badgeColor: '#000000', icon: require('../../assets/images/logo/crackwithai.png') };
 };
 
 export const AIScreen = ({route, navigation}: Props) => {
@@ -185,7 +195,7 @@ export const AIScreen = ({route, navigation}: Props) => {
     setPicker(null);
   };
 
-  const selectedBrand = selected ? getModelBrand(selected.id, selected.provider) : null;
+  const selectedBrand = selected ? getModelBrand(selected.id, selected.provider, selected.name) : null;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -201,8 +211,8 @@ export const AIScreen = ({route, navigation}: Props) => {
             <Text style={styles.headerTitleText}>AI Workspace</Text>
           </View>
 
-          <Pressable accessibilityRole="button" onPress={() => setPicker('history')} disabled={busy} style={styles.historyCircleBtn}>
-            <Icon name="clock" size={18} color="#5653FE" />
+          <Pressable accessibilityRole="button" onPress={() => setPicker('history')} disabled={busy} style={styles.historyBlackBtn}>
+            <Text style={styles.historyBlackBtnText}>History</Text>
           </Pressable>
         </View>
 
@@ -326,7 +336,7 @@ export const AIScreen = ({route, navigation}: Props) => {
                 <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 380 }}>
                   {models.map((modelItem) => {
                     const isSelected = modelItem.id === selectedId;
-                    const brand = getModelBrand(modelItem.id, modelItem.provider);
+                    const brand = getModelBrand(modelItem.id, modelItem.provider, modelItem.name);
                     return (
                       <Pressable
                         key={modelItem.id}
@@ -446,13 +456,19 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     maxWidth: 150,
   },
-  historyCircleBtn: {
-    width: 40,
-    height: 40,
+  historyBlackBtn: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#EEEDFF',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  historyBlackBtnText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   modelBarWrapper: {
     backgroundColor: '#FFFFFF',

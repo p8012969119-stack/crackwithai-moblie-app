@@ -34,7 +34,7 @@ export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [fullstackProgress, setFullstackProgress] = useState<FullStackCourseProgress | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [tools, setTools] = useState<AiTool[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +58,6 @@ export const HomeScreen = ({ navigation }: any) => {
     if (request.current) return;
     const controller = new AbortController();
     request.current = controller;
-    setLoading(true);
     setError(null);
     try {
       const [dashboard, toolResult, fsResult] = await Promise.allSettled([
@@ -72,8 +71,10 @@ export const HomeScreen = ({ navigation }: any) => {
       if (fsResult.status === 'fulfilled') setFullstackProgress(fsResult.value);
     } catch {
       if (!controller.signal.aborted) {
-        const fallback = await userApi.getDashboard();
-        setDashboardData(fallback.data);
+        try {
+          const fallback = await userApi.getDashboard();
+          setDashboardData(fallback.data);
+        } catch (e) {}
       }
     } finally {
       if (!controller.signal.aborted) {
@@ -98,14 +99,6 @@ export const HomeScreen = ({ navigation }: any) => {
     setRefreshing(true);
     fetchDashboard();
   };
-
-  if (loading && !refreshing) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <LoadingView message="Loading your dashboard..." />
-      </SafeAreaView>
-    );
-  }
 
   if (error) {
     return (

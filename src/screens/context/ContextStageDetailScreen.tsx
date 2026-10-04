@@ -16,6 +16,7 @@ import { useAuth } from '../../store/AuthContext';
 import { storage } from '../../services/storage';
 import { CONTEXT_STAGES, ContextStage } from './contextCourseData';
 import { Icon } from '../../components/Icon';
+import { fullstackApi } from '../../api/fullstackApi';
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
@@ -92,6 +93,10 @@ export const ContextStageDetailScreen: React.FC = () => {
           updatedAt: new Date().toISOString()
         })
       );
+
+      try {
+        await fullstackApi.completeLesson(stageId.toString(), 'context-engineering');
+      } catch {}
 
       setIsCompleted(true);
       Alert.alert('Stage Completed! 🎉', 'Great job mastering this Context Engineering technique!', [

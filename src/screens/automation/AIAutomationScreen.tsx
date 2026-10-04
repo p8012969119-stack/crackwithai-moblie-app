@@ -74,7 +74,6 @@ export const AIAutomationScreen: React.FC = () => {
 
   const completedCount = completedStageIds.length;
   const totalStages = AI_AUTOMATION_STAGES.length;
-  const overallPercentage = Math.round((completedCount / totalStages) * 100);
   const isAllCompleted = completedCount >= totalStages;
 
   const handleOpenStage = (stageId: number) => {
@@ -158,33 +157,15 @@ export const AIAutomationScreen: React.FC = () => {
           />
         }
       >
-        {/* VIEW 1: MODULE CARDS & HERO BANNER */}
+        {/* VIEW 1: MODULE CARDS */}
         {selectedModuleId === null ? (
           <View style={styles.viewBlock}>
-            {/* HERO OVERALL PROGRESS BANNER */}
-            <View style={styles.heroProgressCard}>
-              <View style={styles.heroLeft}>
-                <Text style={styles.heroTitle}>Great Progress! 🎉</Text>
-                <Text style={styles.heroSubtitle}>Building Workflows & Agents.</Text>
-              </View>
-
-              <View style={styles.heroRightCircle}>
-                <Text style={styles.circlePercentageText}>{overallPercentage}%</Text>
-                <Text style={styles.circleSubLabel}>Overall Progress</Text>
-              </View>
-            </View>
-
             {/* SECTION HEADING */}
             <Text style={styles.sectionHeaderTitle}>Automation Modules</Text>
 
-            {/* COMPACT WHITE MODULE CARDS */}
+            {/* COMPACT CLEAN MODULE CARDS */}
             <View style={styles.modulesStack}>
               {AI_AUTOMATION_MODULES.map((mod) => {
-                const completedInModule = mod.stageIds.filter((id) =>
-                  completedStageIds.includes(id)
-                ).length;
-                const modPercent = Math.round((completedInModule / mod.lessonCount) * 100);
-
                 return (
                   <TouchableOpacity
                     key={`module-card-${mod.id}`}
@@ -194,23 +175,12 @@ export const AIAutomationScreen: React.FC = () => {
                   >
                     <View style={styles.cardMainRow}>
                       <View style={styles.logoSquareContainer}>
-                        <Icon name={mod.icon as any} size={28} color="#10B981" />
+                        <Icon name={mod.icon as any} size={26} color="#10B981" />
                       </View>
 
                       <View style={styles.cardCenterBlock}>
-                        <View style={styles.cardTitleRow}>
-                          <Text style={styles.courseName}>{mod.title}</Text>
-                          <Text style={styles.percentText}>{modPercent}%</Text>
-                        </View>
-
-                        <View style={styles.progressTrackBar}>
-                          <View
-                            style={[
-                              styles.progressFillBar,
-                              { width: `${Math.max(4, modPercent)}%` }
-                            ]}
-                          />
-                        </View>
+                        <Text style={styles.courseName}>{mod.title}</Text>
+                        <Text style={styles.courseSubtext}>{mod.shortDesc}</Text>
                       </View>
                     </View>
 
@@ -328,7 +298,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC'
   },
   topBar: {
-    height: 56,
+    height: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -338,17 +308,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E2E8F0'
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F1F5F9'
   },
   topBarTitle: {
     flex: 1,
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: FONT_FAMILY_MEDIUM,
+    fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center'
   },
@@ -362,127 +333,71 @@ const styles = StyleSheet.create({
   viewBlock: {
     flex: 1
   },
-  heroProgressCard: {
-    backgroundColor: '#10B981',
-    borderRadius: 16,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4
-  },
-  heroLeft: {
-    flex: 1,
-    paddingRight: 12
-  },
-  heroTitle: {
+  sectionHeaderTitle: {
     fontSize: 20,
     fontFamily: FONT_FAMILY_MEDIUM,
-    color: '#FFFFFF',
-    marginBottom: 4
-  },
-  heroSubtitle: {
-    fontSize: 13,
-    fontFamily: FONT_FAMILY,
-    color: '#D1FAE5'
-  },
-  heroRightCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  circlePercentageText: {
-    fontSize: 18,
-    fontFamily: FONT_FAMILY_MEDIUM,
-    color: '#FFFFFF'
-  },
-  circleSubLabel: {
-    fontSize: 9,
-    fontFamily: FONT_FAMILY,
-    color: '#E0E7FF',
-    textAlign: 'center'
-  },
-  sectionHeaderTitle: {
-    fontSize: 18,
-    fontFamily: FONT_FAMILY_MEDIUM,
+    fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 14
+    marginTop: 4,
+    marginBottom: 10
   },
   modulesStack: {
-    gap: 12
+    gap: 14
   },
   cleanWhiteCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: 12
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2
   },
   cardMainRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14
+    alignItems: 'flex-start',
+    gap: 14
   },
   logoSquareContainer: {
-    width: 48,
-    height: 48,
+    width: 46,
+    height: 46,
     borderRadius: 12,
     backgroundColor: '#D1FAE5',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14
+    justifyContent: 'center'
   },
   cardCenterBlock: {
     flex: 1
   },
-  cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6
-  },
   courseName: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: FONT_FAMILY_MEDIUM,
+    fontWeight: '800',
     color: '#0F172A',
-    flex: 1,
-    marginRight: 8
+    marginBottom: 4,
+    lineHeight: 22
   },
-  percentText: {
-    fontSize: 14,
-    fontFamily: FONT_FAMILY_MEDIUM,
-    color: '#10B981'
-  },
-  progressTrackBar: {
-    height: 6,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 3,
-    overflow: 'hidden'
-  },
-  progressFillBar: {
-    height: '100%',
-    backgroundColor: '#10B981',
-    borderRadius: 3
+  courseSubtext: {
+    fontSize: 12.5,
+    fontFamily: FONT_FAMILY,
+    color: '#64748B',
+    lineHeight: 18
   },
   cardFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC'
   },
   startBtnPill: {
     backgroundColor: '#10B981',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     flexDirection: 'row',
@@ -490,13 +405,14 @@ const styles = StyleSheet.create({
     gap: 6
   },
   startBtnPillText: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontFamily: FONT_FAMILY_MEDIUM,
+    fontWeight: '800',
     color: '#FFFFFF'
   },
   certBtn: {
     backgroundColor: '#059669',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',

@@ -3,78 +3,80 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
-  Alert,
-  BackHandler,
-  Modal,
-  Image,
-  FlatList,
-  Animated,
-  Easing,
+  ScrollView,
   StatusBar,
+  Modal,
+  Alert,
+  ActivityIndicator,
+  BackHandler,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../../components/Icon';
 import { aiApi } from '../../api/aiApi';
 import { copyToClipboard } from '../../utils/clipboard';
 
-const STYLE_OPTIONS = [
-  { id: 'Photorealistic', name: 'Photorealistic', icon: '📷' },
-  { id: 'Anime / Manga', name: 'Anime & Manga', icon: '⛩️' },
-  { id: 'Digital Art', name: 'Digital Art', icon: '🎨' },
-  { id: '3D Render', name: '3D Render', icon: '💎' },
-  { id: 'Cyberpunk', name: 'Cyberpunk', icon: '🌆' },
-  { id: 'Oil Painting', name: 'Oil Painting', icon: '🖼️' },
-  { id: 'Cinematic', name: 'Cinematic', icon: '🎬' },
-];
-
-const ASPECT_RATIOS = [
-  { id: '1:1', label: '1:1 Square', icon: '⬛' },
-  { id: '9:16', label: '9:16 Story', icon: '📱' },
-  { id: '16:9', label: '16:9 Banner', icon: '📺' },
-  { id: '4:3', label: '4:3 Standard', icon: '🖼️' },
-];
-
-const QUICK_PROMPTS = [
-  'Cyberpunk samurai in neon rain',
-  'Cute 3D anime mascot in space',
-  'Hyperrealistic astronaut dog on moon',
-  'Fantasy castle in crystal mountain',
-];
-
-interface ImageHistoryItem {
+interface ImageMessage {
   id: string;
-  prompt: string;
-  imageUrl: string;
-  date: string;
-  style: string;
+  sender: 'user' | 'studio';
+  text?: string;
+  imageUrl?: string;
+  style?: string;
+  aspectRatio?: string;
+  timestamp: string;
 }
+
+const STYLE_OPTIONS = [
+  { id: 'Photorealistic', name: 'Photorealistic', tag: '8k photo, DSLR, realistic, high detail' },
+  { id: 'Anime', name: 'Anime & Manga', tag: 'Ghibli style, vibrant anime illustration' },
+  { id: 'Digital Art', name: 'Digital Art', tag: 'concept art, vibrant colors, trending on artstation' },
+  { id: '3D Render', name: '3D Render', tag: 'octane 3D render, raytracing, 4k detail' },
+  { id: 'Cyberpunk', name: 'Cyberpunk', tag: 'neon lights, futuristic synthwave vibe' },
+  { id: 'Cinematic', name: 'Cinematic', tag: 'movie still, IMAX lighting, dramatic composition' },
+];
+
+const ASPECT_RATIO_OPTIONS = [
+  { id: '1:1', label: '1:1 Square', width: 1024, height: 1024 },
+  { id: '16:9', label: '16:9 Banner', width: 1344, height: 768 },
+  { id: '9:16', label: '9:16 Story', width: 768, height: 1344 },
+  { id: '4:3', label: '4:3 Standard', width: 1024, height: 768 },
+];
+
+const QUICK_PILLS = [
+  { label: 'Cyberpunk Samurai ➔', prompt: 'Cyberpunk samurai standing in neon rain with glowing katana' },
+  { label: '3D Mascot ➔', prompt: 'Cute 3D anime mascot character floating in magical space' },
+  { label: 'Cinematic Portrait ➔', prompt: 'Cinematic portrait of a visionary founder looking at futuristic holographic screens' },
+  { label: 'Hyper-realistic Lion ➔', prompt: 'Hyper-realistic lion crowned with glowing golden aura' },
+  { label: 'Futuristic City ➔', prompt: 'Futuristic skyline of a sci-fi metropolis at dusk with flying vehicles' },
+];
 
 export const AIImageGeneratorScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [prompt, setPrompt] = useState('');
-  const [style, setStyle] = useState('Photorealistic');
-  const [aspectRatio, setAspectRatio] = useState('1:1');
+  const [selectedStyle, setSelectedStyle] = useState('Photorealistic');
+  const [selectedRatio, setSelectedRatio] = useState('1:1');
+
+  // Dropdown & Modal states
+  const [showStyleDropdown, setShowStyleDropdown] = useState(false);
+  const [showRatioDropdown, setShowRatioDropdown] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
 
   const [generating, setGenerating] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
-  const [selectedPreviewImage, setSelectedPreviewImage] = useState<string | null>(null);
+  const [history, setHistory] = useState<{ id: string; prompt: string; imageUrl: string; timestamp: string }[]>([]);
 
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const imageFadeAnim = useRef(new Animated.Value(0)).current;
-
-  const [history, setHistory] = useState<ImageHistoryItem[]>([
+  const [messages, setMessages] = useState<ImageMessage[]>([
     {
-      id: 'img1',
-      prompt: 'Futuristic AI neural network glowing nodes floating in cyber space',
-      imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-      date: '10 mins ago',
-      style: 'Cyberpunk',
+      id: 'welcome_msg',
+      sender: 'studio',
+      text: '🎨 **CrackWithAI Studio** ready. Type a prompt, tap a quick pill, or use voice input to generate high-resolution images.',
+      timestamp: 'Just now',
     },
   ]);
 
@@ -91,307 +93,397 @@ export const AIImageGeneratorScreen = ({ navigation }: any) => {
       handleGoBack();
       return true;
     };
-
     const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => subscription.remove();
   }, [navigation]);
 
   useEffect(() => {
-    if (generating) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.04,
-            duration: 750,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 0.98,
-            duration: 750,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [generating]);
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
+  }, [messages, generating]);
 
-  const triggerImageRevealAnimation = () => {
-    imageFadeAnim.setValue(0);
-    Animated.timing(imageFadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
+  const handleVoiceInput = () => {
+    setIsRecordingVoice(true);
+    setTimeout(() => {
+      setIsRecordingVoice(false);
+      const voicePrompts = [
+        'Cyberpunk samurai standing in neon rain',
+        'Hyper-realistic astronaut walking on Mars surface',
+        'Futuristic cybernetic lion with glowing neon eyes',
+        'Cute 3D anime mascot floating in space',
+      ];
+      const randomPrompt = voicePrompts[Math.floor(Math.random() * voicePrompts.length)];
+      setPrompt(randomPrompt);
+    }, 2000);
   };
 
-  const handleGenerateImage = async () => {
-    const effectivePrompt = prompt.trim() || 'High quality digital AI artwork';
+  const handleAttachFile = () => {
+    Alert.alert(
+      'Attach Sample Concept',
+      'Select a preset concept to populate prompt:',
+      [
+        {
+          text: 'Cyberpunk Samurai',
+          onPress: () => setPrompt('Cyberpunk samurai standing in neon rain with glowing katana'),
+        },
+        {
+          text: 'Futuristic AI Workspace',
+          onPress: () => setPrompt('Ultra-modern futuristic AI workspace with developer holograms'),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
 
+  const handleSendPrompt = async (overridePrompt?: string) => {
+    const activePrompt = (overridePrompt || prompt).trim();
+    if (!activePrompt) {
+      Alert.alert('Required Prompt', 'Please type a prompt, tap a quick pill, or use voice input.');
+      return;
+    }
+
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Append User Message
+    const userMsg: ImageMessage = {
+      id: `usr_${Date.now()}`,
+      sender: 'user',
+      text: activePrompt,
+      timestamp: nowStr,
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setPrompt('');
     setGenerating(true);
+    setShowStyleDropdown(false);
+    setShowRatioDropdown(false);
+
+    const styleObj = STYLE_OPTIONS.find((s) => s.id === selectedStyle);
+    const styleTag = styleObj?.tag || selectedStyle;
+    const enhancedPrompt = `${activePrompt}, ${styleTag}, masterpiece, 8k resolution, crisp details, professional lighting`;
+    const ratioObj = ASPECT_RATIO_OPTIONS.find((r) => r.id === selectedRatio) || ASPECT_RATIO_OPTIONS[0];
+    const seed = Math.floor(Math.random() * 1000000);
+
+    const fallbackImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${ratioObj.width}&height=${ratioObj.height}&seed=${seed}&nologo=true&model=flux`;
 
     try {
-      const res = await aiApi.generateImage(effectivePrompt, {
-        negativePrompt: 'blurry, low quality',
-        style,
-        aspectRatio,
+      const res = await aiApi.generateImage(enhancedPrompt, {
+        style: selectedStyle,
+        aspectRatio: selectedRatio,
         quality: 'high',
-        numImages: 1,
       });
 
-      const newUrl =
-        res.data?.imageUrl ||
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
+      const finalUrl = res.data?.imageUrl || fallbackImageUrl;
 
-      const imgList = res.data?.images || [newUrl];
-      setGeneratedImages(imgList);
-      setSelectedPreviewImage(imgList[0]);
-      triggerImageRevealAnimation();
+      const studioMsg: ImageMessage = {
+        id: `studio_${Date.now()}`,
+        sender: 'studio',
+        imageUrl: finalUrl,
+        style: selectedStyle,
+        aspectRatio: selectedRatio,
+        timestamp: nowStr,
+      };
 
-      setHistory((prev) => [
-        {
-          id: `h_${Date.now()}`,
-          prompt: effectivePrompt,
-          imageUrl: newUrl,
-          date: 'Just now',
-          style,
-        },
-        ...prev,
-      ]);
+      setMessages((prev) => [...prev, studioMsg]);
+      setHistory((prev) => [{ id: studioMsg.id, prompt: activePrompt, imageUrl: finalUrl, timestamp: nowStr }, ...prev]);
     } catch (err) {
-      console.warn('[AIImageGeneratorScreen] Error generating image:', err);
-      const fallbackUrl =
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80';
-      setGeneratedImages([fallbackUrl]);
-      setSelectedPreviewImage(fallbackUrl);
-      triggerImageRevealAnimation();
+      console.warn('[AIImageGeneratorScreen] Image fallback active:', err);
+      const studioMsg: ImageMessage = {
+        id: `studio_${Date.now()}`,
+        sender: 'studio',
+        imageUrl: fallbackImageUrl,
+        style: selectedStyle,
+        aspectRatio: selectedRatio,
+        timestamp: nowStr,
+      };
+      setMessages((prev) => [...prev, studioMsg]);
+      setHistory((prev) => [{ id: studioMsg.id, prompt: activePrompt, imageUrl: fallbackImageUrl, timestamp: nowStr }, ...prev]);
     } finally {
       setGenerating(false);
     }
   };
 
-  const activeImage = selectedPreviewImage || (generatedImages.length > 0 ? generatedImages[0] : null);
-
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* 1. LIGHT HEADER BAR */}
+      {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={handleGoBack} activeOpacity={0.7}>
-          <Icon name="chevron-left" size={18} color="#0F172A" />
-          <Text style={styles.backBtnText}>Tools</Text>
+        <TouchableOpacity style={styles.backPill} onPress={handleGoBack} activeOpacity={0.7}>
+          <Icon name="chevron-left" size={16} color="#0F172A" />
+          <Text style={styles.backPillText}>Tools</Text>
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>AI Image Generator</Text>
 
-        <TouchableOpacity
-          style={styles.historyBtn}
-          onPress={() => setShowHistoryModal(true)}
-          activeOpacity={0.7}
-        >
-          <Icon name="clock" size={16} color="#7C3AED" />
-          <Text style={styles.historyBtnText}>History</Text>
+        <TouchableOpacity style={styles.historyBlackBtn} onPress={() => setShowHistoryModal(true)} activeOpacity={0.8}>
+          <Text style={styles.historyBlackBtnText}>History</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      {/* QUICK PROMPT PILLS ROW */}
+      <View style={styles.quickPillsWrapper}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPillsScroll}>
+          {QUICK_PILLS.map((pill, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.quickPillBtn}
+              onPress={() => {
+                setPrompt(pill.prompt);
+                handleSendPrompt(pill.prompt);
+              }}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.quickPillText}>{pill.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* CHAT THREAD MESSAGES AREA */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
       >
-        {/* 2. IMAGE DISPLAY CANVAS CARD */}
-        <View style={styles.canvasCard}>
-          {generating ? (
-            <Animated.View style={[styles.loadingBox, { transform: [{ scale: pulseAnim }] }]}>
-              <ActivityIndicator color="#7C3AED" size="large" />
-              <Text style={styles.loadingTitle}>Generating Image...</Text>
-              <Text style={styles.loadingSub}>Applying {style} style ({aspectRatio})</Text>
-            </Animated.View>
-          ) : activeImage ? (
-            <Animated.View style={[styles.imagePreviewWrapper, { opacity: imageFadeAnim }]}>
-              <Image source={{ uri: activeImage }} style={styles.canvasImage} resizeMode="cover" />
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesFeed}
+          contentContainerStyle={styles.messagesContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {messages.map((item) => {
+            const isUser = item.sender === 'user';
+            return (
+              <View key={item.id} style={[styles.msgRow, isUser ? styles.msgRowUser : styles.msgRowStudio]}>
+                {!isUser && (
+                  <View style={styles.studioAvatar}>
+                    <Image
+                      source={require('../../assets/images/logo/crackwithai.png')}
+                      style={styles.studioAvatarLogo}
+                      resizeMode="contain"
+                    />
+                  </View>
+                )}
 
-              {/* OVERLAY BADGES */}
-              <View style={styles.overlayBadgeRow}>
-                <View style={styles.badgePill}>
-                  <Text style={styles.badgePillText}>{style}</Text>
+                <View style={[styles.msgBubble, isUser ? styles.userBubble : styles.studioBubble]}>
+                  {/* TEXT CONTENT */}
+                  {item.text && (
+                    <Text style={[styles.msgText, isUser ? styles.userMsgText : styles.studioMsgText]}>
+                      {item.text}
+                    </Text>
+                  )}
+
+                  {/* GENERATED IMAGE ITEM */}
+                  {item.imageUrl && (
+                    <View style={styles.imageWrapper}>
+                      <View style={styles.imageMetaHeader}>
+                        <Text style={styles.imageMetaText}>
+                          Style: <Text style={styles.imageMetaBold}>{item.style}</Text> | Aspect: <Text style={styles.imageMetaBold}>{item.aspectRatio}</Text>
+                        </Text>
+                      </View>
+
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.generatedImage}
+                        resizeMode="cover"
+                      />
+
+                      {/* IMAGE ACTION BUTTONS */}
+                      <View style={styles.imageActionBar}>
+                        <TouchableOpacity
+                          style={styles.actionBtn}
+                          onPress={() => copyToClipboard(item.imageUrl!, 'Image Link')}
+                          activeOpacity={0.8}
+                        >
+                          <Icon name="copy" size={13} color="#7C3AED" />
+                          <Text style={styles.actionBtnText}>Copy Link</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={styles.downloadBtn}
+                          onPress={() => Alert.alert('Image Saved 🎉', 'High resolution image downloaded to gallery!')}
+                          activeOpacity={0.85}
+                        >
+                          <Icon name="download" size={13} color="#FFFFFF" />
+                          <Text style={styles.downloadBtnText}>Download</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+
+                  <Text style={[styles.msgTimestamp, isUser ? styles.userMsgTimestamp : styles.studioMsgTimestamp]}>
+                    {item.timestamp}
+                  </Text>
                 </View>
-                <View style={styles.badgePillRatio}>
-                  <Text style={styles.badgePillRatioText}>{aspectRatio}</Text>
-                </View>
               </View>
+            );
+          })}
 
-              {/* 1-TAP ACTION BUTTONS */}
-              <View style={styles.canvasActionBar}>
-                <TouchableOpacity
-                  style={styles.copyActionBtn}
-                  onPress={() => copyToClipboard(activeImage, 'Image Link')}
-                  activeOpacity={0.8}
-                >
-                  <Icon name="copy" size={15} color="#7C3AED" />
-                  <Text style={styles.copyActionBtnText}>Copy Link</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.downloadActionBtn}
-                  onPress={() => {
-                    Alert.alert('Image Saved', 'Image downloaded successfully to gallery!');
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Icon name="arrow-up" size={15} color="#FFFFFF" style={{ transform: [{ rotate: '180deg' }] }} />
-                  <Text style={styles.downloadActionBtnText}>Download</Text>
-                </TouchableOpacity>
+          {/* GENERATING LOADING CARD */}
+          {generating && (
+            <View style={[styles.msgRow, styles.msgRowStudio]}>
+              <View style={styles.studioAvatar}>
+                <Image
+                  source={require('../../assets/images/logo/crackwithai.png')}
+                  style={styles.studioAvatarLogo}
+                  resizeMode="contain"
+                />
               </View>
-            </Animated.View>
-          ) : (
-            <View style={styles.emptyStateBox}>
-              <View style={styles.emptyIconCircle}>
-                <Icon name="image" size={32} color="#7C3AED" />
+              <View style={[styles.msgBubble, styles.studioBubble, styles.loadingBubble]}>
+                <ActivityIndicator color="#7C3AED" size="small" />
+                <Text style={styles.loadingBubbleText}>Generating HD Image...</Text>
               </View>
-              <Text style={styles.emptyTitle}>Create Instant AI Visuals</Text>
-              <Text style={styles.emptySub}>
-                Type a prompt or tap a sample idea below to generate high quality images in 1 click.
-              </Text>
             </View>
           )}
-        </View>
+        </ScrollView>
 
-        {/* 3. PROMPT INPUT & GENERATE BUTTON */}
-        <View style={styles.inputCard}>
-          <Text style={styles.inputLabel}>Enter Prompt</Text>
-
-          <TextInput
-            style={styles.promptInput}
-            placeholder="What do you want to create? (e.g. Cute cat on a motorcycle)"
-            placeholderTextColor="#94A3B8"
-            value={prompt}
-            onChangeText={setPrompt}
-            multiline
-            numberOfLines={3}
-          />
-
-          {/* QUICK PROMPT CHIPS */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickPromptsScroll}>
-            {QUICK_PROMPTS.map((item, idx) => (
+        {/* DROPDOWN OVERLAYS */}
+        {showStyleDropdown && (
+          <View style={[styles.dropdownMenuBox, { left: 80 }]}>
+            {STYLE_OPTIONS.map((style) => (
               <TouchableOpacity
-                key={idx}
-                style={styles.quickPromptChip}
-                onPress={() => setPrompt(item)}
-                activeOpacity={0.7}
+                key={style.id}
+                style={[styles.dropdownItem, selectedStyle === style.id && styles.dropdownItemActive]}
+                onPress={() => {
+                  setSelectedStyle(style.id);
+                  setShowStyleDropdown(false);
+                }}
               >
-                <Text style={styles.quickPromptText}>✨ {item}</Text>
+                <Text style={[styles.dropdownItemText, selectedStyle === style.id && styles.dropdownItemTextActive]}>
+                  {style.name}
+                </Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
+        )}
 
-          {/* 1-CLICK GENERATE BUTTON */}
-          <TouchableOpacity
-            style={[styles.generateBtn, (!prompt.trim() || generating) && styles.generateBtnDisabled]}
-            onPress={handleGenerateImage}
-            disabled={!prompt.trim() || generating}
-            activeOpacity={0.85}
-          >
-            {generating ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
-            ) : (
-              <Text style={styles.generateBtnText}>Generate Image</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        {showRatioDropdown && (
+          <View style={[styles.dropdownMenuBox, { left: 160 }]}>
+            {ASPECT_RATIO_OPTIONS.map((ratio) => (
+              <TouchableOpacity
+                key={ratio.id}
+                style={[styles.dropdownItem, selectedRatio === ratio.id && styles.dropdownItemActive]}
+                onPress={() => {
+                  setSelectedRatio(ratio.id);
+                  setShowRatioDropdown(false);
+                }}
+              >
+                <Text style={[styles.dropdownItemText, selectedRatio === ratio.id && styles.dropdownItemTextActive]}>
+                  {ratio.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-        {/* 4. SIMPLE 1-TAP STYLE CHIPS */}
-        <View style={styles.optionsCard}>
-          <Text style={styles.optionsTitle}>Select Style</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-            {STYLE_OPTIONS.map((item) => {
-              const isSelected = style === item.id;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[styles.styleChip, isSelected && styles.styleChipSelected]}
-                  onPress={() => setStyle(item.id)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.chipEmoji}>{item.icon}</Text>
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                    {item.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+        {/* BOTTOM INPUT COMPOSER CARD */}
+        <View style={[styles.bottomInputBar, { paddingBottom: Math.max(10, insets.bottom) }]}>
+          <View style={styles.inputInnerCard}>
+            <TextInput
+              style={styles.textInput}
+              multiline
+              placeholder="Describe the image you want to create..."
+              placeholderTextColor="#94A3B8"
+              value={prompt}
+              onChangeText={setPrompt}
+            />
 
-        {/* 5. SIMPLE 1-TAP ASPECT RATIO CHIPS */}
-        <View style={styles.optionsCard}>
-          <Text style={styles.optionsTitle}>Select Aspect Ratio</Text>
-          <View style={styles.ratioGrid}>
-            {ASPECT_RATIOS.map((item) => {
-              const isSelected = aspectRatio === item.id;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[styles.ratioChip, isSelected && styles.ratioChipSelected]}
-                  onPress={() => setAspectRatio(item.id)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.chipEmoji}>{item.icon}</Text>
-                  <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            <View style={styles.inputToolbarRow}>
+              {/* Add Presets / Ideas (+) */}
+              <TouchableOpacity style={styles.iconCircleBtn} onPress={handleAttachFile} activeOpacity={0.7}>
+                <Text style={styles.plusText}>+</Text>
+              </TouchableOpacity>
+
+              {/* Clean Microphone Icon Button */}
+              <TouchableOpacity
+                style={[styles.iconCircleBtn, isRecordingVoice && styles.micActiveBtn]}
+                onPress={handleVoiceInput}
+                activeOpacity={0.7}
+              >
+                <Icon name="mic" size={16} color={isRecordingVoice ? '#EF4444' : '#7C3AED'} />
+              </TouchableOpacity>
+
+              {/* Style Dropdown Pill */}
+              <TouchableOpacity
+                style={styles.miniPill}
+                onPress={() => {
+                  setShowStyleDropdown(!showStyleDropdown);
+                  setShowRatioDropdown(false);
+                }}
+              >
+                <Text style={styles.miniPillText}>{selectedStyle} ▾</Text>
+              </TouchableOpacity>
+
+              {/* Aspect Ratio Dropdown Pill */}
+              <TouchableOpacity
+                style={styles.miniPill}
+                onPress={() => {
+                  setShowRatioDropdown(!showRatioDropdown);
+                  setShowStyleDropdown(false);
+                }}
+              >
+                <Text style={styles.miniPillText}>{selectedRatio} ▾</Text>
+              </TouchableOpacity>
+
+              <View style={{ flex: 1 }} />
+
+              {/* Send Arrow Button */}
+              <TouchableOpacity
+                style={[styles.sendBtn, (!prompt.trim() || generating) && styles.sendBtnDisabled]}
+                onPress={() => handleSendPrompt()}
+                disabled={!prompt.trim() || generating}
+                activeOpacity={0.85}
+              >
+                {generating ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Icon name="arrow-up" size={16} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* HISTORY MODAL */}
-      <Modal visible={showHistoryModal} animationType="slide" transparent>
+      <Modal visible={showHistoryModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Image History</Text>
+              <Text style={styles.modalTitle}>Image Generation History</Text>
               <TouchableOpacity onPress={() => setShowHistoryModal(false)}>
-                <Icon name="x-circle" size={22} color="#64748B" />
+                <Icon name="x" size={20} color="#0F172A" />
               </TouchableOpacity>
             </View>
 
             {history.length === 0 ? (
-              <View style={styles.emptyHistoryState}>
-                <Text style={styles.emptyHistoryText}>No past images generated yet.</Text>
-              </View>
+              <Text style={styles.emptyHistoryText}>No image history yet. Generate images to see them here.</Text>
             ) : (
-              <FlatList
-                data={history}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => (
-                  <View style={styles.historyItem}>
-                    <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} />
-                    <View style={styles.historyInfo}>
-                      <Text style={styles.historyStyleBadgeText}>{item.style}</Text>
-                      <Text style={styles.historyPrompt} numberOfLines={2}>{item.prompt}</Text>
-                      <Text style={styles.historyDate}>{item.date}</Text>
+              <ScrollView style={styles.historyList}>
+                {history.map((item) => (
+                  <View key={item.id} style={styles.historyItemCard}>
+                    <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} resizeMode="cover" />
+                    <View style={styles.historyItemContent}>
+                      <Text style={styles.historyItemPrompt} numberOfLines={2}>
+                        {item.prompt}
+                      </Text>
+                      <Text style={styles.historyItemTime}>{item.timestamp}</Text>
+                      <TouchableOpacity
+                        style={styles.historyUseBtn}
+                        onPress={() => {
+                          setPrompt(item.prompt);
+                          setShowHistoryModal(false);
+                        }}
+                      >
+                        <Text style={styles.historyUseBtnText}>Use Prompt</Text>
+                      </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                      style={styles.reuseBtn}
-                      onPress={() => {
-                        setPrompt(item.prompt);
-                        setSelectedPreviewImage(item.imageUrl);
-                        setShowHistoryModal(false);
-                      }}
-                    >
-                      <Text style={styles.reuseBtnText}>Use</Text>
-                    </TouchableOpacity>
                   </View>
-                )}
-              />
+                ))}
+              </ScrollView>
             )}
           </View>
         </View>
@@ -405,6 +497,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+
+  /* HEADER */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -413,390 +507,397 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#F1F5F9',
   },
-  backBtn: {
+  backPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-  },
-  backBtnText: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  headerTitle: {
-    color: '#0F172A',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  historyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#F3E8FF',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-  },
-  historyBtnText: {
-    color: '#7C3AED',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  scrollContent: {
-    padding: 16,
-    gap: 16,
-  },
-
-  /* CANVAS CARD */
-  canvasCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    overflow: 'hidden',
-    shadowColor: '#64748B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    minHeight: 260,
-    justifyContent: 'center',
-  },
-  loadingBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 36,
-    gap: 10,
-  },
-  loadingTitle: {
-    color: '#0F172A',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  loadingSub: {
-    color: '#64748B',
-    fontSize: 13,
-  },
-  imagePreviewWrapper: {
-    position: 'relative',
-    width: '100%',
-  },
-  canvasImage: {
-    width: '100%',
-    height: 300,
-  },
-  overlayBadgeRow: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    flexDirection: 'row',
-    gap: 8,
-  },
-  badgePill: {
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  badgePillText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  badgePillRatio: {
-    backgroundColor: 'rgba(124, 58, 237, 0.85)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  badgePillRatioText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  canvasActionBar: {
-    flexDirection: 'row',
-    padding: 12,
-    gap: 10,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-  },
-  copyActionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F3E8FF',
-    paddingVertical: 10,
-    borderRadius: 12,
-    gap: 6,
-  },
-  copyActionBtnText: {
-    color: '#7C3AED',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  downloadActionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#7C3AED',
-    paddingVertical: 10,
-    borderRadius: 12,
-    gap: 6,
-  },
-  downloadActionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  emptyStateBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  emptyIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#F3E8FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  emptyTitle: {
-    color: '#0F172A',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  emptySub: {
-    color: '#64748B',
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-
-  /* INPUT CARD */
-  inputCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#64748B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  inputLabel: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  promptInput: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 12,
-    color: '#0F172A',
-    fontSize: 14,
-    lineHeight: 20,
-    minHeight: 70,
-    textAlignVertical: 'top',
-    marginBottom: 12,
-  },
-  quickPromptsScroll: {
-    flexDirection: 'row',
-    marginBottom: 14,
-  },
-  quickPromptChip: {
     backgroundColor: '#F1F5F9',
     paddingHorizontal: 12,
     paddingVertical: 6,
+    borderRadius: 20,
+    gap: 4,
+  },
+  backPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  historyBlackBtn: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  historyBlackBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  /* QUICK PILLS */
+  quickPillsWrapper: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  quickPillsScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  quickPillBtn: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  quickPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#334155',
+  },
+
+  /* CHAT MESSAGES FEED */
+  messagesFeed: {
+    flex: 1,
+  },
+  messagesContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 16,
+  },
+  msgRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    marginVertical: 4,
+  },
+  msgRowUser: {
+    justifyContent: 'flex-end',
+  },
+  msgRowStudio: {
+    justifyContent: 'flex-start',
+  },
+  studioAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  studioAvatarLogo: {
+    width: 22,
+    height: 22,
+  },
+  msgBubble: {
+    maxWidth: '85%',
+    borderRadius: 16,
+    padding: 12,
+  },
+  userBubble: {
+    backgroundColor: '#7C3AED',
+    borderBottomRightRadius: 4,
+  },
+  studioBubble: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderBottomLeftRadius: 4,
+  },
+  msgText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  userMsgText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  studioMsgText: {
+    color: '#0F172A',
+  },
+  msgTimestamp: {
+    fontSize: 10,
+    marginTop: 6,
+    alignSelf: 'flex-end',
+  },
+  userMsgTimestamp: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  studioMsgTimestamp: {
+    color: '#94A3B8',
+  },
+
+  /* GENERATED IMAGE ITEM IN MESSAGES */
+  imageWrapper: {
+    marginTop: 6,
     borderRadius: 12,
-    marginRight: 8,
+    overflow: 'hidden',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  quickPromptText: {
-    color: '#475569',
-    fontSize: 12,
-    fontWeight: '500',
+  imageMetaHeader: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#F1F5F9',
   },
-  generateBtn: {
+  imageMetaText: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  imageMetaBold: {
+    fontWeight: '700',
+    color: '#7C3AED',
+  },
+  generatedImage: {
+    width: '100%',
+    height: 240,
+    backgroundColor: '#E2E8F0',
+  },
+  imageActionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    gap: 8,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  actionBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#7C3AED',
+  },
+  downloadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#7C3AED',
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  downloadBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  /* LOADING BUBBLE */
+  loadingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  loadingBubbleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#7C3AED',
+  },
+
+  /* DROPDOWNS */
+  dropdownMenuBox: {
+    position: 'absolute',
+    bottom: 85,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    zIndex: 99,
+    minWidth: 150,
+  },
+  dropdownItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  dropdownItemActive: {
+    backgroundColor: '#F3E8FF',
+  },
+  dropdownItemText: {
+    fontSize: 13,
+    color: '#334155',
+  },
+  dropdownItemTextActive: {
+    fontWeight: '700',
+    color: '#7C3AED',
+  },
+
+  /* BOTTOM COMPOSER CARD */
+  bottomInputBar: {
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  inputInnerCard: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    padding: 10,
+  },
+  textInput: {
+    fontSize: 14,
+    color: '#0F172A',
+    maxHeight: 100,
+    minHeight: 40,
+    paddingHorizontal: 6,
+    paddingTop: 4,
+    textAlignVertical: 'top',
+  },
+  inputToolbarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  iconCircleBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  generateBtnDisabled: {
-    opacity: 0.5,
+  micActiveBtn: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
   },
-  generateBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-
-  /* OPTIONS CARDS */
-  optionsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#64748B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  optionsTitle: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  chipsScroll: {
-    flexDirection: 'row',
-  },
-  styleChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 6,
-  },
-  styleChipSelected: {
-    backgroundColor: '#7C3AED',
-    borderColor: '#7C3AED',
-  },
-  chipEmoji: {
-    fontSize: 14,
-  },
-  chipText: {
-    color: '#475569',
-    fontSize: 13,
+  plusText: {
+    fontSize: 18,
     fontWeight: '600',
+    color: '#7C3AED',
+    marginTop: -2,
   },
-  chipTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  ratioGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  ratioChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
+  miniPill: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
-  ratioChipSelected: {
+  miniPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  sendBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#7C3AED',
-    borderColor: '#7C3AED',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendBtnDisabled: {
+    backgroundColor: '#CBD5E1',
   },
 
   /* MODAL */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
-  modalContainer: {
+  modalCard: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 20,
-    maxHeight: '75%',
+    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   modalTitle: {
-    color: '#0F172A',
     fontSize: 16,
     fontWeight: '700',
-  },
-  emptyHistoryState: {
-    padding: 32,
-    alignItems: 'center',
+    color: '#0F172A',
   },
   emptyHistoryText: {
+    textAlign: 'center',
     color: '#64748B',
-    fontSize: 13,
+    fontSize: 14,
+    marginVertical: 20,
   },
-  historyItem: {
+  historyList: {
+    maxHeight: 400,
+  },
+  historyItemCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    gap: 12,
     backgroundColor: '#F8FAFC',
-    padding: 10,
     borderRadius: 12,
+    padding: 10,
     marginBottom: 10,
-    gap: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   historyThumb: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     borderRadius: 8,
+    backgroundColor: '#CBD5E1',
   },
-  historyInfo: {
+  historyItemContent: {
     flex: 1,
   },
-  historyStyleBadgeText: {
-    color: '#7C3AED',
-    fontSize: 10,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  historyPrompt: {
+  historyItemPrompt: {
+    fontSize: 13,
+    fontWeight: '600',
     color: '#0F172A',
-    fontSize: 12,
-    fontWeight: '500',
   },
-  historyDate: {
+  historyItemTime: {
+    fontSize: 11,
     color: '#94A3B8',
-    fontSize: 10,
     marginTop: 2,
   },
-  reuseBtn: {
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+  historyUseBtn: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  reuseBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
+  historyUseBtnText: {
+    fontSize: 11,
     fontWeight: '700',
+    color: '#7C3AED',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,29 +11,27 @@ import {
   Alert,
   ActivityIndicator,
   BackHandler,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { Icon } from '../../components/Icon';
+import { Icon, IconName } from '../../components/Icon';
 import { aiApi } from '../../api/aiApi';
 import { copyToClipboard } from '../../utils/clipboard';
 
-interface HistoryItem {
+interface ChatMessage {
   id: string;
-  prompt: string;
-  code: string;
+  sender: 'user' | 'codex';
+  text: string;
+  code?: string;
   explanation?: string;
-  language: string;
-  action: string;
-  date: string;
+  language?: string;
+  action?: string;
+  timestamp: string;
 }
 
-const ACTION_OPTIONS = [
-  'Generate',
-  'Explain',
-  'Fix Bug',
-  'Refactor',
-  'Add Tests',
-];
+const ACTION_OPTIONS = ['Generate', 'Explain', 'Fix Bug', 'Refactor'];
 
 const LANGUAGE_OPTIONS = [
   'Auto',
@@ -43,65 +41,39 @@ const LANGUAGE_OPTIONS = [
   'Python',
   'HTML / CSS',
   'Java',
-  'C++',
   'SQL',
 ];
 
-const QUICK_PROMPTS = [
-  {
-    label: 'Build a React component',
-    prompt: 'Build a modern, responsive React Native card component with state toggle and clean styling.',
-    action: 'Generate',
-    language: 'React Native / React',
-  },
-  {
-    label: 'Create REST API',
-    prompt: 'Create an Express.js TypeScript REST API router endpoint for user profile analytics.',
-    action: 'Generate',
-    language: 'TypeScript',
-  },
-  {
-    label: 'Fix my code',
-    prompt: 'Identify potential memory leaks and fix errors in this code snippet:\n\nuseEffect(() => {\n  const interval = setInterval(() => fetchData(), 1000);\n}, []);',
-    action: 'Fix Bug',
-    language: 'JavaScript',
-  },
-  {
-    label: 'Explain code',
-    prompt: 'Explain line by line how a JWT authentication middleware works in Express.js:',
-    action: 'Explain',
-    language: 'Auto',
-  },
+const QUICK_PILLS = [
+  { label: 'Build React Component', action: 'Generate', language: 'React Native / React', prompt: 'Build a modern React Native component with active state toggle and clean styling.' },
+  { label: 'Create REST API', action: 'Generate', language: 'TypeScript', prompt: 'Create an Express.js TypeScript REST API router endpoint.' },
+  { label: 'Fix Bug in Code', action: 'Fix Bug', language: 'JavaScript', prompt: 'Find and fix memory leak or state bugs in this code snippet:\nuseEffect(() => { setInterval(fetchData, 1000); }, []);' },
+  { label: 'Explain Code', action: 'Explain', language: 'Auto', prompt: 'Explain line by line how a JWT authentication middleware works in Express.js:' },
 ];
 
 export const AICodeGeneratorScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [prompt, setPrompt] = useState('');
   const [selectedAction, setSelectedAction] = useState('Generate');
   const [selectedLanguage, setSelectedLanguage] = useState('Auto');
+  const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
 
-  // Dropdown states
+  // States
   const [showActionDropdown, setShowActionDropdown] = useState(false);
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
 
-  // Output states
   const [generating, setGenerating] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  const [codeExplanation, setCodeExplanation] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  // History state
-  const [history, setHistory] = useState<HistoryItem[]>([
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: 'codex_1',
-      prompt: 'Build a React Native component with state management',
-      code: `import React, { useState } from 'react';\nimport { View, Text, TouchableOpacity } from 'react-native';\n\nexport const SampleComponent = () => {\n  const [count, setCount] = useState(0);\n  return (\n    <View>\n      <Text>Count: {count}</Text>\n      <TouchableOpacity onPress={() => setCount(count + 1)}>\n        <Text>Increment</Text>\n      </TouchableOpacity>\n    </View>\n  );\n};`,
-      explanation: 'Created a simple counter component using React hooks.',
-      language: 'React Native / React',
-      action: 'Generate',
-      date: '1 hour ago',
+      id: 'welcome_msg',
+      sender: 'codex',
+      text: '👋 **CrackWithAI Codex** ready. Type a prompt, tap a quick pill, attach a code file, or use voice input to generate code.',
+      timestamp: 'Just now',
     },
   ]);
 
@@ -118,10 +90,55 @@ export const AICodeGeneratorScreen = ({ navigation }: any) => {
       handleGoBack();
       return true;
     };
-
     const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => subscription.remove();
   }, [navigation]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
+  }, [messages, generating]);
+
+  const handleVoiceInput = () => {
+    setIsRecordingVoice(true);
+    setTimeout(() => {
+      setIsRecordingVoice(false);
+      const voicePrompts = [
+        'Build a responsive React Native user profile screen',
+        'Create a Node.js REST API with JWT authentication',
+        'Fix memory leak in my useEffect hook',
+      ];
+      const randomPrompt = voicePrompts[Math.floor(Math.random() * voicePrompts.length)];
+      setPrompt(randomPrompt);
+    }, 2000);
+  };
+
+  const handleAttachFile = () => {
+    Alert.alert(
+      'Attach File / Code Snippet',
+      'Select a file source or sample snippet to attach:',
+      [
+        {
+          text: 'Component.tsx',
+          onPress: () =>
+            setAttachedFile({
+              name: 'Component.tsx',
+              content: 'export const Card = () => <View><Text>Card Component</Text></View>;',
+            }),
+        },
+        {
+          text: 'server.js',
+          onPress: () =>
+            setAttachedFile({
+              name: 'server.js',
+              content: 'const express = require("express");\nconst app = express();',
+            }),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
 
   const generateFallbackCode = (promptText: string, lang: string, actionType: string) => {
     const lower = (promptText + ' ' + lang + ' ' + actionType).toLowerCase();
@@ -153,7 +170,7 @@ const styles = StyleSheet.create({
   cardContainer: { padding: 16, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' },
   title: { fontSize: 18, fontWeight: '700', color: '#111827' },
   description: { fontSize: 14, color: '#6B7280', marginVertical: 8 },
-  button: { backgroundColor: '#6366F1', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8, alignItems: 'center' },
+  button: { backgroundColor: '#5653FE', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8, alignItems: 'center' },
   buttonActive: { backgroundColor: '#10B981' },
   buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
 });`;
@@ -163,21 +180,17 @@ const styles = StyleSheet.create({
 
 const router = express.Router();
 
-// GET /api/v1/resource
-router.get('/resource', async (req: Request, res: Response) => {
+// POST /api/v1/resource
+router.post('/resource', async (req: Request, res: Response) => {
   try {
-    const data = [
-      { id: 1, name: 'Resource A', status: 'Active' },
-      { id: 2, name: 'Resource B', status: 'Pending' },
-    ];
-
+    const { name = 'Sample Resource' } = req.body;
     return res.status(200).json({
       success: true,
-      message: 'Resource list fetched successfully',
-      data,
+      message: 'Resource processed successfully',
+      data: { id: Date.now(), name, status: 'Active' },
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 });
 
@@ -192,30 +205,42 @@ export function executeSolution(inputData?: any) {
   
   const result = {
     status: 'success',
-    prompt: '${promptText}',
+    prompt: '${promptText.replace(/'/g, "\\'")}',
     timestamp: new Date().toISOString(),
     output: inputData || 'Task completed successfully',
   };
 
   return result;
-}
-
-// Example invocation:
-const response = executeSolution({ active: true });
-console.log('Result:', response);`;
-      explStr = `Generated a production-ready ${lang} module tailored for "${promptText}".`;
+}`;
+      explStr = `Generated a production-ready ${lang} module.`;
     }
 
     return { code: codeStr, explanation: explStr };
   };
 
-  const handleGenerateCode = async (overridePrompt?: string) => {
-    const activePrompt = overridePrompt || prompt.trim();
+  const handleSendPrompt = async (overridePrompt?: string) => {
+    let activePrompt = (overridePrompt || prompt).trim();
     if (!activePrompt) {
-      Alert.alert('Required Prompt', 'Please type a code request or select a quick prompt below.');
+      Alert.alert('Required Input', 'Please enter a prompt, tap a quick pill, or use voice input.');
       return;
     }
 
+    if (attachedFile) {
+      activePrompt = `Attached File (${attachedFile.name}):\n\`\`\`\n${attachedFile.content}\n\`\`\`\n\nTask: ${activePrompt}`;
+    }
+
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const userMsg: ChatMessage = {
+      id: `usr_${Date.now()}`,
+      sender: 'user',
+      text: activePrompt,
+      timestamp: nowStr,
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setPrompt('');
+    setAttachedFile(null);
     setGenerating(true);
     setShowActionDropdown(false);
     setShowLanguageDropdown(false);
@@ -226,312 +251,315 @@ console.log('Result:', response);`;
         action: selectedAction,
       });
 
+      let codeOutput = '';
+      let explanationOutput = '';
+
       if (res && res.data && res.data.code) {
-        setGeneratedCode(res.data.code);
-        setCodeExplanation(res.data.explanation || 'Generated using CrackWithAI Codex.');
+        codeOutput = res.data.code;
+        explanationOutput = res.data.explanation || 'Generated using CrackWithAI Codex.';
       } else {
         const fallback = generateFallbackCode(activePrompt, selectedLanguage, selectedAction);
-        setGeneratedCode(fallback.code);
-        setCodeExplanation(fallback.explanation);
+        codeOutput = fallback.code;
+        explanationOutput = fallback.explanation;
       }
+
+      const codexMsg: ChatMessage = {
+        id: `codex_${Date.now()}`,
+        sender: 'codex',
+        text: 'Here is your generated solution:',
+        code: codeOutput,
+        explanation: explanationOutput,
+        language: selectedLanguage,
+        action: selectedAction,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      setMessages((prev) => [...prev, codexMsg]);
     } catch (err) {
-      console.log('[AICodeGeneratorScreen] Code generation fallback active:', err);
+      console.warn('[AICodeGeneratorScreen] Code generation fallback active:', err);
       const fallback = generateFallbackCode(activePrompt, selectedLanguage, selectedAction);
-      setGeneratedCode(fallback.code);
-      setCodeExplanation(fallback.explanation);
+      const codexMsg: ChatMessage = {
+        id: `codex_${Date.now()}`,
+        sender: 'codex',
+        text: 'Here is your solution:',
+        code: fallback.code,
+        explanation: fallback.explanation,
+        language: selectedLanguage,
+        action: selectedAction,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, codexMsg]);
     } finally {
       setGenerating(false);
     }
   };
 
-  const handleQuickPromptSelect = (item: typeof QUICK_PROMPTS[0]) => {
-    setPrompt(item.prompt);
-    setSelectedAction(item.action);
-    setSelectedLanguage(item.language);
-    handleGenerateCode(item.prompt);
-  };
-
-  const handleCopyCode = (codeText?: string) => {
-    const textToCopy = codeText || generatedCode;
-    if (textToCopy) {
-      copyToClipboard(textToCopy, 'Code');
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+  const handleCopyCode = (id: string, codeText?: string) => {
+    if (codeText) {
+      copyToClipboard(codeText, 'Code');
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* TOP HEADER BAR */}
+      {/* SLEEK TOP HEADER */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backPill} onPress={handleGoBack} activeOpacity={0.7}>
-          <Icon name="chevron-left" size={16} color="#6366F1" />
-          <Text style={styles.backPillText}>AI Tools</Text>
+          <Icon name="chevron-left" size={16} color="#0F172A" />
+          <Text style={styles.backPillText}>Tools</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.historyBtn} onPress={() => setShowHistoryModal(true)} activeOpacity={0.8}>
-          <Text style={styles.historyBtnText}>History</Text>
+        <Text style={styles.headerTitle}>AI Code Generator</Text>
+
+        <TouchableOpacity style={styles.historyBlackBtn} onPress={() => setShowHistoryModal(true)} activeOpacity={0.8}>
+          <Text style={styles.historyBlackBtnText}>History</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* HERO TITLE SECTION */}
-        <View style={styles.heroSection}>
-          <Text style={styles.subTag}>CRACKWITHAI CODEX</Text>
-          <Text style={styles.mainTitle}>AI Code Generator</Text>
-          <Text style={styles.heroDesc}>
-            Describe what you want to build and let CrackWithAI generate the code.
-          </Text>
-        </View>
+        {/* CHAT THREAD */}
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.chatScrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* MINIMAL QUICK PROMPT PILLS */}
+          {messages.length <= 2 && (
+            <View style={styles.quickPillSection}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsScroll}>
+                {QUICK_PILLS.map((pill, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.quickPill}
+                    onPress={() => {
+                      setSelectedAction(pill.action);
+                      setSelectedLanguage(pill.language);
+                      handleSendPrompt(pill.prompt);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.quickPillText}>{pill.label} ➔</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
-        {/* MAIN INPUT CARD */}
-        <View style={styles.inputCard}>
-          <TextInput
-            style={styles.textInput}
-            multiline
-            placeholder="Ask CrackWithAI to build, fix, explain, or improve code..."
-            placeholderTextColor="#9CA3AF"
-            value={prompt}
-            onChangeText={setPrompt}
-            textAlignVertical="top"
-          />
+          {/* CHAT MESSAGES */}
+          {messages.map((msg) => {
+            const isUser = msg.sender === 'user';
+            return (
+              <View key={msg.id} style={[styles.messageWrapper, isUser ? styles.userWrapper : styles.codexWrapper]}>
+                {!isUser && (
+                  <View style={styles.codexAvatarCircle}>
+                    <Icon name="code" size={14} color="#FFFFFF" />
+                  </View>
+                )}
 
-          {/* CARD TOOLBAR */}
-          <View style={styles.cardToolbar}>
-            {/* Left Attachment (+) Button */}
-            <TouchableOpacity
-              style={styles.attachBtn}
-              onPress={() => Alert.alert('Attachment', 'You can paste or attach existing code snippets into the prompt.')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.attachBtnIcon}>+</Text>
-            </TouchableOpacity>
+                <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.codexBubble]}>
+                  <Text style={[styles.messageText, isUser && styles.userMessageText]}>{msg.text}</Text>
 
-            {/* Dropdown 1: Action */}
-            <TouchableOpacity
-              style={styles.dropdownPill}
-              onPress={() => {
-                setShowActionDropdown(!showActionDropdown);
-                setShowLanguageDropdown(false);
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.dropdownPillText}>{selectedAction}</Text>
-              <Icon name="chevron-down" size={14} color="#4B5563" style={styles.dropdownChevron} />
-            </TouchableOpacity>
+                  {/* CODE BLOCK CONTAINER */}
+                  {msg.code && (
+                    <View style={styles.codeBlockCard}>
+                      <View style={styles.codeBlockHeader}>
+                        <Text style={styles.codeLangText}>{msg.language || 'Code'}</Text>
+                        <TouchableOpacity
+                          style={styles.copyBtn}
+                          onPress={() => handleCopyCode(msg.id, msg.code)}
+                          activeOpacity={0.7}
+                        >
+                          <Icon name={copiedId === msg.id ? 'check' : 'copy'} size={12} color="#E2E8F0" />
+                          <Text style={styles.copyBtnText}>{copiedId === msg.id ? 'Copied' : 'Copy Code'}</Text>
+                        </TouchableOpacity>
+                      </View>
 
-            {/* Dropdown 2: Language */}
-            <TouchableOpacity
-              style={styles.dropdownPill}
-              onPress={() => {
-                setShowLanguageDropdown(!showLanguageDropdown);
-                setShowActionDropdown(false);
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.dropdownPillText}>{selectedLanguage}</Text>
-              <Icon name="chevron-down" size={14} color="#4B5563" style={styles.dropdownChevron} />
-            </TouchableOpacity>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.codeCodeScroll}>
+                        <Text style={styles.codeTextContent}>{msg.code}</Text>
+                      </ScrollView>
 
-            {/* Flex Spacer */}
-            <View style={{ flex: 1 }} />
+                      {msg.explanation && (
+                        <View style={styles.explanationFooter}>
+                          <Text style={styles.explanationTitle}>💡 Explanation:</Text>
+                          <Text style={styles.explanationBody}>{msg.explanation}</Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
 
-            {/* Far-Right Submit Arrow Button */}
-            <TouchableOpacity
-              style={[styles.submitBtn, generating && styles.submitBtnDisabled]}
-              onPress={() => handleGenerateCode()}
-              disabled={generating}
-              activeOpacity={0.8}
-            >
-              {generating ? (
+                  <Text style={[styles.timestampText, isUser && styles.userTimestampText]}>{msg.timestamp}</Text>
+                </View>
+              </View>
+            );
+          })}
+
+          {generating && (
+            <View style={[styles.messageWrapper, styles.codexWrapper]}>
+              <View style={styles.codexAvatarCircle}>
                 <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.submitBtnIcon}>↑</Text>
-              )}
+              </View>
+              <View style={[styles.messageBubble, styles.codexBubble]}>
+                <Text style={styles.typingText}>CrackWithAI Codex is writing code...</Text>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* ATTACHED FILE PREVIEW */}
+        {attachedFile && (
+          <View style={styles.attachedPreviewBar}>
+            <Icon name="file-text" size={14} color="#5653FE" />
+            <Text style={styles.attachedFileName} numberOfLines={1}>
+              {attachedFile.name}
+            </Text>
+            <TouchableOpacity onPress={() => setAttachedFile(null)}>
+              <Icon name="x-circle" size={16} color="#64748B" />
             </TouchableOpacity>
           </View>
+        )}
 
-          {/* INLINE DROPDOWN OPTIONS: ACTION */}
-          {showActionDropdown && (
-            <View style={styles.inlineMenu}>
-              {ACTION_OPTIONS.map((item) => (
-                <TouchableOpacity
-                  key={item}
-                  style={[styles.menuItem, selectedAction === item && styles.menuItemActive]}
-                  onPress={() => {
-                    setSelectedAction(item);
-                    setShowActionDropdown(false);
-                  }}
-                >
-                  <Text style={[styles.menuItemText, selectedAction === item && styles.menuItemTextActive]}>
-                    {item}
-                  </Text>
-                  {selectedAction === item && <Icon name="check" size={14} color="#6366F1" />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+        {/* VOICE RECORDING INDICATOR */}
+        {isRecordingVoice && (
+          <View style={styles.voiceRecordingBanner}>
+            <ActivityIndicator size="small" color="#EF4444" />
+            <Text style={styles.voiceRecordingText}>🎙️ Listening... Speak your code request</Text>
+          </View>
+        )}
 
-          {/* INLINE DROPDOWN OPTIONS: LANGUAGE */}
-          {showLanguageDropdown && (
-            <View style={styles.inlineMenu}>
-              {LANGUAGE_OPTIONS.map((item) => (
-                <TouchableOpacity
-                  key={item}
-                  style={[styles.menuItem, selectedLanguage === item && styles.menuItemActive]}
-                  onPress={() => {
-                    setSelectedLanguage(item);
-                    setShowLanguageDropdown(false);
-                  }}
-                >
-                  <Text style={[styles.menuItemText, selectedLanguage === item && styles.menuItemTextActive]}>
-                    {item}
-                  </Text>
-                  {selectedLanguage === item && <Icon name="check" size={14} color="#6366F1" />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* QUICK PROMPTS SUGGESTION SECTION */}
-        <View style={styles.quickPromptsSection}>
-          <Text style={styles.quickPromptsLabel}>Try asking CrackWithAI to build something.</Text>
-          <View style={styles.pillsContainer}>
-            {QUICK_PROMPTS.map((qp, index) => (
+        {/* DROPDOWN OVERLAYS */}
+        {showActionDropdown && (
+          <View style={styles.dropdownMenuBox}>
+            {ACTION_OPTIONS.map((act) => (
               <TouchableOpacity
-                key={index}
-                style={styles.promptPill}
-                onPress={() => handleQuickPromptSelect(qp)}
-                activeOpacity={0.7}
+                key={act}
+                style={[styles.dropdownItem, selectedAction === act && styles.dropdownItemActive]}
+                onPress={() => {
+                  setSelectedAction(act);
+                  setShowActionDropdown(false);
+                }}
               >
-                <Text style={styles.promptPillText}>{qp.label}</Text>
+                <Text style={[styles.dropdownItemText, selectedAction === act && styles.dropdownItemTextActive]}>
+                  {act}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        {/* GENERATING LOADING INDICATOR */}
-        {generating && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6366F1" />
-            <Text style={styles.loadingText}>CrackWithAI Codex is writing your code...</Text>
-          </View>
         )}
 
-        {/* GENERATED CODE OUTPUT AREA */}
-        {generatedCode && !generating && (
-          <View style={styles.codeOutputContainer}>
-            {/* Output Header */}
-            <View style={styles.codeHeader}>
-              <View style={styles.codeHeaderLeft}>
-                <View style={styles.langBadge}>
-                  <Text style={styles.langBadgeText}>{selectedLanguage.toUpperCase()}</Text>
-                </View>
-                <Text style={styles.codeHeaderTitle}>{selectedAction} Output</Text>
-              </View>
-
+        {showLanguageDropdown && (
+          <View style={[styles.dropdownMenuBox, { left: 80 }]}>
+            {LANGUAGE_OPTIONS.map((lang) => (
               <TouchableOpacity
-                style={[styles.copyBtn, copied && styles.copyBtnSuccess]}
-                onPress={() => handleCopyCode()}
-                activeOpacity={0.7}
+                key={lang}
+                style={[styles.dropdownItem, selectedLanguage === lang && styles.dropdownItemActive]}
+                onPress={() => {
+                  setSelectedLanguage(lang);
+                  setShowLanguageDropdown(false);
+                }}
               >
-                <Icon name={copied ? 'check' : 'copy'} size={14} color={copied ? '#10B981' : '#6366F1'} />
-                <Text style={[styles.copyBtnText, copied && styles.copyBtnTextSuccess]}>
-                  {copied ? 'Copied!' : 'Copy Code'}
+                <Text style={[styles.dropdownItemText, selectedLanguage === lang && styles.dropdownItemTextActive]}>
+                  {lang}
                 </Text>
               </TouchableOpacity>
-            </View>
-
-            {/* Dark Code Terminal Box */}
-            <ScrollView horizontal style={styles.codeTerminalScroll} showsHorizontalScrollIndicator={false}>
-              <View style={styles.codeTerminal}>
-                <Text style={styles.codeText}>{generatedCode}</Text>
-              </View>
-            </ScrollView>
-
-            {/* Explanation / Breakdown */}
-            {codeExplanation && (
-              <View style={styles.explanationBox}>
-                <Text style={styles.explanationTitle}>💡 Code Explanation</Text>
-                <Text style={styles.explanationText}>{codeExplanation}</Text>
-              </View>
-            )}
-
-            {/* Action Bar */}
-            <View style={styles.codeActions}>
-              <TouchableOpacity
-                style={styles.actionSecondaryBtn}
-                onPress={() => handleGenerateCode()}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.actionSecondaryText}>⚡ Regenerate</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.actionSecondaryBtn}
-                onPress={() => {
-                  setGeneratedCode(null);
-                  setCodeExplanation(null);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.actionSecondaryText}>Clear</Text>
-              </TouchableOpacity>
-            </View>
+            ))}
           </View>
         )}
-      </ScrollView>
+
+        {/* MINIMAL BOTTOM INPUT TOOLBAR */}
+        <View style={[styles.bottomInputBar, { paddingBottom: Math.max(10, insets.bottom) }]}>
+          <View style={styles.inputInnerCard}>
+            <TextInput
+              style={styles.textInput}
+              multiline
+              placeholder="Ask Codex to build, fix, or explain code..."
+              placeholderTextColor="#94A3B8"
+              value={prompt}
+              onChangeText={setPrompt}
+            />
+
+            <View style={styles.inputToolbarRow}>
+              {/* Add Files (+) */}
+              <TouchableOpacity style={styles.iconCircleBtn} onPress={handleAttachFile} activeOpacity={0.7}>
+                <Text style={styles.plusText}>+</Text>
+              </TouchableOpacity>
+
+              {/* Voice Input (🎙️ Mic) */}
+              <TouchableOpacity
+                style={[styles.iconCircleBtn, isRecordingVoice && styles.micActiveBtn]}
+                onPress={handleVoiceInput}
+                activeOpacity={0.7}
+              >
+                <Icon name="mic" size={16} color={isRecordingVoice ? '#EF4444' : '#5653FE'} />
+              </TouchableOpacity>
+
+              {/* Action Dropdown */}
+              <TouchableOpacity
+                style={styles.miniPill}
+                onPress={() => {
+                  setShowActionDropdown(!showActionDropdown);
+                  setShowLanguageDropdown(false);
+                }}
+              >
+                <Text style={styles.miniPillText}>{selectedAction} ▾</Text>
+              </TouchableOpacity>
+
+              {/* Language Dropdown */}
+              <TouchableOpacity
+                style={styles.miniPill}
+                onPress={() => {
+                  setShowLanguageDropdown(!showLanguageDropdown);
+                  setShowActionDropdown(false);
+                }}
+              >
+                <Text style={styles.miniPillText}>{selectedLanguage} ▾</Text>
+              </TouchableOpacity>
+
+              <View style={{ flex: 1 }} />
+
+              {/* Send Arrow */}
+              <TouchableOpacity
+                style={[styles.sendBtn, (!prompt.trim() && !attachedFile || generating) && styles.sendBtnDisabled]}
+                onPress={() => handleSendPrompt()}
+                disabled={(!prompt.trim() && !attachedFile) || generating}
+                activeOpacity={0.85}
+              >
+                {generating ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Icon name="arrow-up" size={16} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
 
       {/* HISTORY MODAL */}
-      <Modal visible={showHistoryModal} animationType="slide" transparent={false} onRequestClose={() => setShowHistoryModal(false)}>
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Code Generation History</Text>
-            <TouchableOpacity onPress={() => setShowHistoryModal(false)} style={styles.modalCloseBtn}>
-              <Text style={styles.modalCloseText}>Done</Text>
-            </TouchableOpacity>
+      <Modal visible={showHistoryModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Code History</Text>
+              <TouchableOpacity onPress={() => setShowHistoryModal(false)}>
+                <Icon name="x-circle" size={18} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 300 }}>
+              <Text style={{ textAlign: 'center', color: '#64748B', marginVertical: 16, fontSize: 13 }}>
+                All generated code snippets are saved in your chat history!
+              </Text>
+            </ScrollView>
           </View>
-
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-            {history.length === 0 ? (
-              <Text style={{ textAlign: 'center', color: '#6B7280', marginTop: 40 }}>No previous code requests.</Text>
-            ) : (
-              history.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.historyCard}
-                  onPress={() => {
-                    setPrompt(item.prompt);
-                    setGeneratedCode(item.code);
-                    setCodeExplanation(item.explanation || null);
-                    setSelectedLanguage(item.language);
-                    setSelectedAction(item.action);
-                    setShowHistoryModal(false);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text style={styles.historyLang}>{item.language}</Text>
-                    <Text style={styles.historyDate}>{item.date}</Text>
-                  </View>
-                  <Text style={styles.historyPrompt} numberOfLines={2}>
-                    {item.prompt}
-                  </Text>
-                  <Text style={styles.historySnippet} numberOfLines={3}>
-                    {item.code}
-                  </Text>
-                </TouchableOpacity>
-              ))
-            )}
-          </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -543,381 +571,329 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
     backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   backPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
   },
   backPillText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6366F1',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
     marginLeft: 4,
   },
-  historyBtn: {
-    backgroundColor: '#111827',
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  historyBlackBtn: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 14,
     paddingVertical: 7,
-    paddingHorizontal: 18,
     borderRadius: 20,
-  },
-  historyBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-  },
-  heroSection: {
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  subTag: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#6366F1',
-    letterSpacing: 2,
-    marginBottom: 6,
-  },
-  mainTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  heroDesc: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    paddingHorizontal: 16,
-    lineHeight: 20,
-  },
-  inputCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  textInput: {
-    fontSize: 15,
-    color: '#111827',
-    minHeight: 120,
-    lineHeight: 22,
-    marginBottom: 12,
-  },
-  cardToolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  attachBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#EEF2FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
   },
-  attachBtnIcon: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#6366F1',
-    marginTop: -2,
+  historyBlackBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
-  dropdownPill: {
+  chatScrollContent: {
+    padding: 16,
+    paddingBottom: 20,
+  },
+  quickPillSection: {
+    marginBottom: 12,
+  },
+  pillsScroll: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+  },
+  quickPill: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     marginRight: 8,
   },
-  dropdownPillText: {
-    fontSize: 13,
+  quickPillText: {
+    fontSize: 12,
     fontWeight: '600',
-    color: '#374151',
+    color: '#475569',
   },
-  dropdownChevron: {
-    marginLeft: 4,
+  messageWrapper: {
+    flexDirection: 'row',
+    marginBottom: 14,
   },
-  submitBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#8B5CF6',
+  userWrapper: {
+    justifyContent: 'flex-end',
+  },
+  codexWrapper: {
+    justifyContent: 'flex-start',
+  },
+  codexAvatarCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#5653FE',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 8,
+    marginTop: 2,
   },
-  submitBtnDisabled: {
-    opacity: 0.6,
+  messageBubble: {
+    maxWidth: '85%',
+    padding: 12,
+    borderRadius: 14,
   },
-  submitBtnIcon: {
-    fontSize: 20,
-    fontWeight: '700',
+  userBubble: {
+    backgroundColor: '#5653FE',
+    borderBottomRightRadius: 2,
+  },
+  codexBubble: {
+    backgroundColor: '#F8FAFC',
+    borderTopLeftRadius: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  messageText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#0F172A',
+  },
+  userMessageText: {
     color: '#FFFFFF',
-    marginTop: -2,
   },
-  inlineMenu: {
-    marginTop: 12,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+  typingText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontStyle: 'italic',
   },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+  timestampText: {
+    fontSize: 10,
+    color: '#94A3B8',
+    marginTop: 4,
+    alignSelf: 'flex-end',
   },
-  menuItemActive: {
-    backgroundColor: '#EEF2FF',
+  userTimestampText: {
+    color: '#E0E7FF',
   },
-  menuItemText: {
-    fontSize: 14,
-    color: '#374151',
-  },
-  menuItemTextActive: {
-    fontWeight: '700',
-    color: '#6366F1',
-  },
-  quickPromptsSection: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  quickPromptsLabel: {
-    fontSize: 14,
-    color: '#4B5563',
-    fontWeight: '500',
-    marginBottom: 12,
-  },
-  pillsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  promptPill: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    margin: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  promptPillText: {
-    fontSize: 13,
-    color: '#111827',
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 24,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6366F1',
-    fontWeight: '600',
-  },
-  codeOutputContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    overflow: 'hidden',
+  codeBlockCard: {
     marginTop: 8,
-    elevation: 3,
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
-  codeHeader: {
+  codeBlockHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#1E293B',
   },
-  codeHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  langBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  langBadgeText: {
+  codeLangText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6366F1',
-  },
-  codeHeaderTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
+    color: '#94A3B8',
   },
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#EEF2FF',
-    backgroundColor: '#EEF2FF',
-  },
-  copyBtnSuccess: {
-    backgroundColor: '#D1FAE5',
-    borderColor: '#D1FAE5',
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    borderRadius: 4,
+    backgroundColor: '#334155',
   },
   copyBtnText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
-    color: '#6366F1',
-    marginLeft: 4,
+    color: '#FFFFFF',
+    marginLeft: 3,
   },
-  copyBtnTextSuccess: {
-    color: '#10B981',
+  codeCodeScroll: {
+    padding: 10,
   },
-  codeTerminalScroll: {
-    backgroundColor: '#1E1E2E',
+  codeTextContent: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#38BDF8',
   },
-  codeTerminal: {
-    padding: 16,
-    minWidth: '100%',
-  },
-  codeText: {
-    fontFamily: 'Courier',
-    fontSize: 13,
-    color: '#F8FAFC',
-    lineHeight: 20,
-  },
-  explanationBox: {
-    padding: 16,
-    backgroundColor: '#F8FAFC',
+  explanationFooter: {
+    padding: 10,
+    backgroundColor: '#1E293B',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#334155',
   },
   explanationTitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#374151',
-    marginBottom: 4,
+    color: '#F8FAFC',
+    marginBottom: 2,
   },
-  explanationText: {
-    fontSize: 13,
-    color: '#4B5563',
-    lineHeight: 18,
+  explanationBody: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#CBD5E1',
   },
-  codeActions: {
+  attachedPreviewBar: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: 12,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    backgroundColor: '#EEF2FF',
   },
-  actionSecondaryBtn: {
+  attachedFileName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4338CA',
+    flex: 1,
+    marginHorizontal: 6,
+  },
+  voiceRecordingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    backgroundColor: '#FEF2F2',
+  },
+  voiceRecordingText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#EF4444',
+    marginLeft: 6,
+  },
+  dropdownMenuBox: {
+    position: 'absolute',
+    bottom: 70,
+    left: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 6,
+    zIndex: 99,
+  },
+  dropdownItem: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    marginLeft: 8,
+    borderRadius: 6,
   },
-  actionSecondaryText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
+  dropdownItemActive: {
+    backgroundColor: '#EEF2FF',
   },
-  modalContainer: {
-    flex: 1,
+  dropdownItemText: {
+    fontSize: 12,
+    color: '#0F172A',
+  },
+  dropdownItemTextActive: {
+    fontWeight: '700',
+    color: '#5653FE',
+  },
+  bottomInputBar: {
+    paddingHorizontal: 12,
+    paddingTop: 6,
     backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  inputInnerCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 8,
+  },
+  textInput: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#0F172A',
+    minHeight: 36,
+    maxHeight: 100,
+    paddingHorizontal: 4,
+  },
+  inputToolbarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 6,
+  },
+  iconCircleBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plusText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#5653FE',
+    marginTop: -2,
+  },
+  micActiveBtn: {
+    backgroundColor: '#FEF2F2',
+  },
+  miniPill: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+  },
+  miniPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  sendBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#5653FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendBtnDisabled: {
+    backgroundColor: '#CBD5E1',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
   },
   modalHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  modalCloseBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  modalCloseText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#6366F1',
-  },
-  historyCard: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 14,
-    marginBottom: 12,
-  },
-  historyLang: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6366F1',
-  },
-  historyDate: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-  historyPrompt: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 6,
-  },
-  historySnippet: {
-    fontFamily: 'Courier',
-    fontSize: 12,
-    color: '#4B5563',
-    backgroundColor: '#FFFFFF',
-    padding: 8,
-    borderRadius: 6,
+    fontWeight: '800',
+    color: '#0F172A',
   },
 });

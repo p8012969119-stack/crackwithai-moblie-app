@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,88 +10,37 @@ import {
   Alert,
   BackHandler,
   Modal,
-  FlatList,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '../../components/Icon';
 import Tts from 'react-native-tts';
 import { aiApi } from '../../api/aiApi';
-import { copyToClipboard } from '../../utils/clipboard';
 
 const VOICE_OPTIONS = [
-  { id: 'kore', name: 'Kore - Bright & Confident', gender: 'female', pitch: 1.35, rate: 0.52 },
-  { id: 'adam', name: 'Adam - Deep & Professional', gender: 'male', pitch: 0.75, rate: 0.46 },
-  { id: 'rachel', name: 'Rachel - Warm & Engaging', gender: 'female', pitch: 1.15, rate: 0.50 },
-  { id: 'fenrir', name: 'Fenrir - Energetic & Expressive', gender: 'male', pitch: 1.25, rate: 0.58 },
+  { id: 'kore', name: 'Kore', label: 'Female (Bright & Crisp)', gender: 'female', pitch: 1.35, rate: 0.52 },
+  { id: 'adam', name: 'Adam', label: 'Male (Professional Tech)', gender: 'male', pitch: 0.75, rate: 0.46 },
+  { id: 'rachel', name: 'Rachel', label: 'Female (Warm Narrative)', gender: 'female', pitch: 1.15, rate: 0.50 },
+  { id: 'fenrir', name: 'Fenrir', label: 'Male (Expressive Deep)', gender: 'male', pitch: 1.25, rate: 0.58 },
 ];
-
-const SAMPLE_FILES = [
-  {
-    name: 'Quick_Voice_Note.txt',
-    type: 'text/plain',
-    size: '12 B',
-    content: 'Hii hello',
-  },
-  {
-    name: 'Lesson_1_AI_Concepts.txt',
-    type: 'text/plain',
-    size: '1.2 KB',
-    content: 'Artificial intelligence is the simulation of human intelligence processes by machines, especially computer systems.',
-  },
-  {
-    name: 'Revision_Summary.doc',
-    type: 'application/msword',
-    size: '2.4 KB',
-    content: 'Neural networks consist of input, hidden, and output layers. Each neuron processes input data and passes activation forward.',
-  },
-];
-
-interface VoiceHistoryItem {
-  id: string;
-  script: string;
-  voice: string;
-  date: string;
-  audioUrl: string;
-  durationSeconds: number;
-}
 
 export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
 
   const [script, setScript] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState<typeof VOICE_OPTIONS[0]>(VOICE_OPTIONS[0]);
-  const [systemVoices, setSystemVoices] = useState<any[]>([]);
-
-  // Modals
-  const [showVoicePicker, setShowVoicePicker] = useState(false);
-  const [showFilePickerModal, setShowFilePickerModal] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
 
-  // Generation state
   const [generating, setGenerating] = useState(false);
-  const [generatedAudio, setGeneratedAudio] = useState<{
-    audioUrl: string;
-    durationSeconds: number;
-    voice: string;
-    scriptSnippet: string;
-  } | null>(null);
-
   const [isPlaying, setIsPlaying] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const timerRef = useRef<any>(null);
-
-  const [history, setHistory] = useState<VoiceHistoryItem[]>([
-    {
-      id: 'h1',
-      script: 'Hii hello',
-      voice: 'Kore - Bright & Confident',
-      date: 'Just now',
-      audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      durationSeconds: 2,
-    },
-  ]);
+  const [history, setHistory] = useState<{ id: string; voice: string; script: string; timestamp: string }[]>([]);
 
   const handleGoBack = () => {
+    try {
+      Tts.stop();
+    } catch (e) {}
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
@@ -99,53 +48,29 @@ export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
     }
   };
 
-  // Helper to compute dynamic duration based on word count
-  const calculateDurationSeconds = (text: string): number => {
-    const words = text.trim().split(/\s+/).filter(Boolean).length;
-    if (words === 0) return 2;
-    // Speaking speed ~2.5 words per second
-    return Math.max(2, Math.ceil(words / 2.5));
-  };
+  useEffect(() => {
+    const onBackPress = () => {
+      handleGoBack();
+      return true;
+    };
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [navigation]);
 
-  // Format seconds to mm:ss
-  const formatTime = (seconds: number): string => {
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
-  // Init TTS and fetch installed native system voices
   useEffect(() => {
     try {
-      Tts.getInitStatus().then(() => {
-        try {
-          Tts.setIgnoreSilentSwitch('ignore');
-          Tts.setDefaultLanguage('en-US');
-          Tts.setDefaultRate(0.5);
-        } catch (e) {}
-        Tts.voices().then((voices: any[]) => {
-          if (Array.isArray(voices)) {
-            setSystemVoices(voices);
-            const matchingVoice = voices.find(
-              (v: any) =>
-                v.language?.startsWith('en') &&
-                (selectedVoice.gender === 'female' ? v.name?.includes('Siri') || v.id?.includes('female') : true)
-            );
-            if (matchingVoice && matchingVoice.id) {
-              Tts.setDefaultVoice(matchingVoice.id);
-            }
-          }
-        }).catch(() => {});
-      }).catch(() => {});
+      Tts.getInitStatus()
+        .then(() => {
+          try {
+            Tts.setIgnoreSilentSwitch('ignore');
+            Tts.setDefaultLanguage('en-US');
+            Tts.setDefaultRate(0.5);
+          } catch (e) {}
+        })
+        .catch(() => {});
 
-      const onFinish = () => {
-        setIsPlaying(false);
-        setElapsedSeconds(0);
-      };
-      const onCancel = () => {
-        setIsPlaying(false);
-        setElapsedSeconds(0);
-      };
+      const onFinish = () => setIsPlaying(false);
+      const onCancel = () => setIsPlaying(false);
 
       const subFinish: any = Tts.addEventListener('tts-finish', onFinish);
       const subCancel: any = Tts.addEventListener('tts-cancel', onCancel);
@@ -159,424 +84,262 @@ export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
     } catch (e) {}
   }, []);
 
-  // Back button handler
-  useEffect(() => {
-    const onBackPress = () => {
-      handleGoBack();
-      return true;
-    };
-    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => subscription.remove();
-  }, [navigation]);
-
-  // Audio Playback Timer
-  useEffect(() => {
-    if (isPlaying && generatedAudio) {
-      setElapsedSeconds(0);
-      timerRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => {
-          if (prev + 1 >= generatedAudio.durationSeconds) {
-            if (timerRef.current) clearInterval(timerRef.current);
-            setIsPlaying(false);
-            try {
-              Tts.stop();
-            } catch (e) {}
-            return generatedAudio.durationSeconds;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isPlaying, generatedAudio]);
-
-  // Apply voice switch on selection
-  const handleVoiceChange = (voice: typeof VOICE_OPTIONS[0]) => {
-    setSelectedVoice(voice);
-    setShowVoicePicker(false);
-
-    try {
-      if (systemVoices.length > 0) {
-        const matching = systemVoices.find(
-          (v: any) =>
-            v.language?.startsWith('en') &&
-            (voice.id === 'adam' || voice.id === 'fenrir'
-              ? v.id?.toLowerCase().includes('male') || v.name?.toLowerCase().includes('daniel') || v.name?.toLowerCase().includes('alex')
-              : v.id?.toLowerCase().includes('female') || v.name?.toLowerCase().includes('siri') || v.name?.toLowerCase().includes('samantha'))
-        ) || systemVoices[0];
-
-        if (matching && matching.id) {
-          Tts.setDefaultVoice(matching.id);
-        }
-      }
-      Tts.setDefaultRate(voice.rate);
-      Tts.setDefaultPitch(voice.pitch);
-    } catch (e) {
-      console.warn('[AIVoiceGeneratorScreen] Voice switch notice:', e);
-    }
+  const handleVoiceInput = () => {
+    setIsRecordingVoice(true);
+    setTimeout(() => {
+      setIsRecordingVoice(false);
+      const voiceSamples = [
+        'Welcome to CrackWithAI! Learn Full Stack Development and AI Automation today.',
+        'Artificial intelligence is reshaping how modern software applications are designed.',
+      ];
+      setScript(voiceSamples[Math.floor(Math.random() * voiceSamples.length)]);
+    }, 2000);
   };
 
-  const playAudibleSpeech = (textToSpeak: string) => {
+  const handleAttachFile = () => {
+    Alert.alert('Add Document File', 'Select a text file to convert into voice narration:', [
+      {
+        text: 'Lesson_Summary.txt',
+        onPress: () => {
+          const content = 'Full Stack Web Development combines HTML, CSS, JavaScript, Express, and MongoDB.';
+          setAttachedFile({ name: 'Lesson_Summary.txt', content });
+          setScript(content);
+        },
+      },
+      {
+        text: 'Notes.txt',
+        onPress: () => {
+          const content = 'AI Automation enables smart workflows using AI models and webhooks.';
+          setAttachedFile({ name: 'Notes.txt', content });
+          setScript(content);
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const playSpeech = (textToSpeak: string) => {
     try {
       Tts.stop();
-      try {
-        Tts.setIgnoreSilentSwitch('ignore');
-        Tts.setDefaultLanguage('en-US');
-      } catch (e) {}
-
-      // Set voice specific rate & pitch
       Tts.setDefaultRate(selectedVoice.rate || 0.5);
       Tts.setDefaultPitch(selectedVoice.pitch || 1.0);
-
       Tts.speak(textToSpeak);
-    } catch (err) {
-      console.warn('[AIVoiceGeneratorScreen] Native TTS speech notice:', err);
+      setIsPlaying(true);
+    } catch (e) {
+      console.warn('[AIVoiceGeneratorScreen] TTS play notice:', e);
     }
   };
 
-  const handleGenerateSpeech = async () => {
-    if (!script.trim()) {
-      Alert.alert('Required Script', 'Please type or attach a text script to generate voice narration.');
+  const stopSpeech = () => {
+    try {
+      Tts.stop();
+    } catch (e) {}
+    setIsPlaying(false);
+  };
+
+  const handleGenerateVoice = async () => {
+    const textToNarrate = script.trim();
+    if (!textToNarrate) {
+      Alert.alert('Required Script', 'Please type text, speak via microphone, or attach a document file.');
       return;
     }
 
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     setGenerating(true);
-    setGeneratedAudio(null);
-    setIsPlaying(false);
-
-    const calculatedDuration = calculateDurationSeconds(script);
-
     try {
-      const res = await aiApi.generateVoice({
-        script,
+      await aiApi.generateVoice({
+        script: textToNarrate,
         voice: selectedVoice.name,
       });
 
-      const audioData = {
-        audioUrl: res.data?.audioUrl || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        durationSeconds: res.data?.durationSeconds || calculatedDuration,
-        voice: selectedVoice.name,
-        scriptSnippet: script.slice(0, 60) + (script.length > 60 ? '...' : ''),
-      };
-
-      setGeneratedAudio(audioData);
-
       setHistory((prev) => [
-        {
-          id: `h_${Date.now()}`,
-          script: script.slice(0, 80),
-          voice: selectedVoice.name,
-          date: 'Just now',
-          audioUrl: audioData.audioUrl,
-          durationSeconds: audioData.durationSeconds,
-        },
+        { id: `voice_${Date.now()}`, voice: selectedVoice.name, script: textToNarrate, timestamp: nowStr },
         ...prev,
       ]);
-
-      // Automatically trigger audible speech narration
-      setIsPlaying(true);
-      playAudibleSpeech(script);
+      playSpeech(textToNarrate);
     } catch (err) {
-      console.warn('[AIVoiceGeneratorScreen] Error generating speech:', err);
+      console.warn('[AIVoiceGeneratorScreen] Native TTS fallback active:', err);
+      setHistory((prev) => [
+        { id: `voice_${Date.now()}`, voice: selectedVoice.name, script: textToNarrate, timestamp: nowStr },
+        ...prev,
+      ]);
+      playSpeech(textToNarrate);
     } finally {
       setGenerating(false);
     }
   };
 
-  const togglePlayback = () => {
-    if (!isPlaying && generatedAudio) {
-      setIsPlaying(true);
-      playAudibleSpeech(script || generatedAudio.scriptSnippet);
-    } else {
-      setIsPlaying(false);
-      try {
-        Tts.stop();
-      } catch (e) {}
-    }
-  };
-
-  const handleAttachFile = (fileItem: typeof SAMPLE_FILES[0]) => {
-    setScript(fileItem.content);
-    setShowFilePickerModal(false);
-  };
-
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* 1. TOP HEADER */}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.aiToolsPillBtn}
-          onPress={handleGoBack}
-          activeOpacity={0.75}
-        >
+        <TouchableOpacity style={styles.backPill} onPress={handleGoBack} activeOpacity={0.7}>
           <Icon name="chevron-left" size={16} color="#0F172A" />
-          <Text style={styles.aiToolsPillText}>AI Tools</Text>
+          <Text style={styles.backPillText}>Tools</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.historyPillBtn}
-          onPress={() => setShowHistoryModal(true)}
-          activeOpacity={0.75}
-        >
-          <Text style={styles.historyPillText}>History</Text>
+        <Text style={styles.headerTitle}>AI Voice Generator</Text>
+
+        <TouchableOpacity style={styles.historyBlackBtn} onPress={() => setShowHistoryModal(true)} activeOpacity={0.8}>
+          <Text style={styles.historyBlackBtnText}>History</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* 2. MAIN TITLE SECTION */}
-        <View style={styles.titleSection}>
-          <Text style={styles.greenTag}>AI VOICE GENERATOR</Text>
-          <Text style={styles.mainTitle}>Text to speech studio</Text>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]} keyboardShouldPersistTaps="handled">
+        {/* BRIGHT VOICE MODEL SELECTOR */}
+        <View style={styles.voiceSectionContainer}>
+          <Text style={styles.sectionLabelTitle}>Select AI Voice Model:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.voiceCardsScroll}>
+            {VOICE_OPTIONS.map((v) => {
+              const active = selectedVoice.id === v.id;
+              return (
+                <TouchableOpacity
+                  key={v.id}
+                  style={[styles.brightVoiceCard, active && styles.brightVoiceCardActive]}
+                  onPress={() => setSelectedVoice(v)}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.voiceIconCircle, active && styles.voiceIconCircleActive]}>
+                    <Icon name={v.gender === 'female' ? 'volume' : 'mic'} size={16} color={active ? '#FFFFFF' : '#7C3AED'} />
+                  </View>
+                  <View>
+                    <Text style={[styles.brightVoiceName, active && styles.brightVoiceNameActive]}>
+                      {v.name} {active ? '✓' : ''}
+                    </Text>
+                    <Text style={[styles.brightVoiceSub, active && styles.brightVoiceSubActive]}>
+                      {v.label}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
-        {/* 3. SCRIPT INPUT AREA WITH ATTACH FILE SUPPORT */}
-        <View style={styles.scriptCard}>
-          <View style={styles.scriptHeaderRow}>
-            <Text style={styles.scriptLabel}>Script & Document</Text>
-            <TouchableOpacity
-              style={styles.attachBtn}
-              onPress={() => setShowFilePickerModal(true)}
-              activeOpacity={0.75}
-            >
-              <Icon name="paperclip" size={14} color="#6D28D9" />
-              <Text style={styles.attachBtnText}>Attach File</Text>
-            </TouchableOpacity>
+        {/* INPUT CONTAINER */}
+        <View style={styles.inputCard}>
+          <View style={styles.inputCardHeader}>
+            <Text style={styles.labelTitle}>Script / Document Content</Text>
+
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {/* Add Files (+) */}
+              <TouchableOpacity style={styles.actionIconBtn} onPress={handleAttachFile} activeOpacity={0.7}>
+                <Text style={styles.plusIcon}>+</Text>
+              </TouchableOpacity>
+
+              {/* Voice Input (🎙️ Mic Icon) */}
+              <TouchableOpacity
+                style={[styles.actionIconBtn, isRecordingVoice && styles.micActiveBtn]}
+                onPress={handleVoiceInput}
+                activeOpacity={0.7}
+              >
+                <Icon name="mic" size={14} color={isRecordingVoice ? '#EF4444' : '#7C3AED'} />
+              </TouchableOpacity>
+            </View>
           </View>
 
+          {attachedFile && (
+            <View style={styles.attachedFileBar}>
+              <Icon name="file-text" size={14} color="#7C3AED" />
+              <Text style={styles.attachedFileName} numberOfLines={1}>
+                {attachedFile.name}
+              </Text>
+              <TouchableOpacity onPress={() => setAttachedFile(null)}>
+                <Icon name="x-circle" size={16} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {isRecordingVoice && (
+            <View style={styles.recordingBar}>
+              <ActivityIndicator size="small" color="#EF4444" />
+              <Text style={styles.recordingText}>Listening... Speak your voice narration</Text>
+            </View>
+          )}
+
           <TextInput
-            style={styles.scriptInput}
-            placeholder="Type, paste, or attach a document file here..."
+            style={styles.textArea}
+            placeholder="Type your script here, record via voice mic, or attach a document file..."
             placeholderTextColor="#94A3B8"
             value={script}
             onChangeText={setScript}
             multiline
+            numberOfLines={5}
             textAlignVertical="top"
-            maxLength={5000}
           />
 
-          <View style={styles.scriptBottomRow}>
-            <View style={styles.scriptStatusWrap}>
-              <Text style={styles.statusText}>
-                {generating ? 'Synthesizing...' : 'Ready to generate'}
-              </Text>
-              <Text style={styles.charCountText}>{script.length} / 5,000 characters</Text>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.generateSpeechBtn,
-                (!script.trim() || generating) && styles.generateSpeechBtnDisabled,
-              ]}
-              onPress={handleGenerateSpeech}
-              disabled={!script.trim() || generating}
-              activeOpacity={0.85}
-            >
-              {generating ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.generateSpeechBtnText}>Generate speech</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+          {/* GENERATE VOICE CTA BUTTON */}
+          <TouchableOpacity
+            style={[styles.generateBtn, generating && styles.generateBtnDisabled]}
+            onPress={handleGenerateVoice}
+            disabled={generating}
+            activeOpacity={0.85}
+          >
+            {generating ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.generateBtnText}>Generate Voice</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
-        {/* AUDIO PLAYER CARD (DYNAMIC DURATION & TIMER) */}
-        {generatedAudio && (
-          <View style={styles.audioPlayerCard}>
-            <View style={styles.audioHeaderRow}>
-              <View style={styles.voiceBadgePill}>
-                <Icon name="volume" size={14} color="#059669" />
-                <Text style={styles.voiceBadgeText}>{generatedAudio.voice.split('-')[0].trim()}</Text>
-              </View>
-              <Text style={styles.formatTag}>{generatedAudio.durationSeconds}s • Voice Ready</Text>
-            </View>
-
-            <Text style={styles.audioScriptSnippet} numberOfLines={2}>
-              "{generatedAudio.scriptSnippet}"
-            </Text>
-
-            <View style={styles.playerControlsRow}>
-              <TouchableOpacity style={styles.playPauseBtn} onPress={togglePlayback}>
-                <Icon name={isPlaying ? 'pause' : 'play'} size={18} color="#FFFFFF" />
-              </TouchableOpacity>
-
-              <View style={styles.waveformContainer}>
-                {[40, 65, 30, 85, 100, 50, 75, 90, 45, 60, 35, 80, 95, 55, 70].map((h, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.waveformBar,
-                      {
-                        height: h * 0.3,
-                        backgroundColor: isPlaying && i < Math.floor((elapsedSeconds / generatedAudio.durationSeconds) * 15) ? '#059669' : '#CBD5E1',
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
-
-              <Text style={styles.timerText}>
-                {formatTime(elapsedSeconds)} / {formatTime(generatedAudio.durationSeconds)}
-              </Text>
-            </View>
-
-            {/* BALANCED BOTTOM ACTION BAR FOR DOWNLOAD AUDIO */}
-            <View style={styles.audioBottomBar}>
-              <TouchableOpacity
-                style={styles.downloadVoiceBtnFull}
-                onPress={() => {
-                  copyToClipboard(generatedAudio.audioUrl, 'Voice Audio Link');
-                }}
-                activeOpacity={0.8}
-              >
-                <Icon name="arrow-up" size={14} color="#FFFFFF" style={{ transform: [{ rotate: '180deg' }] }} />
-                <Text style={styles.downloadVoiceTextFull}>Download Audio File</Text>
-              </TouchableOpacity>
-            </View>
+        {/* AUDIO TEST / PLAYBACK CONTROL */}
+        {isPlaying && (
+          <View style={styles.playerCard}>
+            <Text style={styles.playerTitle}>🔊 Playing Narration ({selectedVoice.name})...</Text>
+            <TouchableOpacity style={styles.stopBtn} onPress={stopSpeech} activeOpacity={0.8}>
+              <Icon name="pause" size={16} color="#FFFFFF" />
+              <Text style={styles.stopBtnText}>Pause Speech</Text>
+            </TouchableOpacity>
           </View>
         )}
-
-        {/* 4. VOICE SETTINGS CONTROLS PANEL (VOICE SELECTION ONLY) */}
-        <View style={styles.controlsPanel}>
-          <View style={styles.controlGroup}>
-            <Text style={styles.controlLabel}>Voice Selector</Text>
-            <TouchableOpacity
-              style={styles.dropdownBtn}
-              onPress={() => setShowVoicePicker(true)}
-              activeOpacity={0.75}
-            >
-              <View style={styles.voiceDropdownLeft}>
-                <View style={styles.voiceIconCircle}>
-                  <Icon name="user" size={14} color="#059669" />
-                </View>
-                <Text style={styles.dropdownBtnText}>{selectedVoice.name}</Text>
-              </View>
-              <Icon name="chevron-down" size={16} color="#64748B" />
-            </TouchableOpacity>
-          </View>
-        </View>
       </ScrollView>
-
-      {/* VOICE PICKER MODAL */}
-      <Modal visible={showVoicePicker} transparent animationType="slide">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowVoicePicker(false)}
-        >
-          <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>Select Voice</Text>
-            {VOICE_OPTIONS.map((v) => (
-              <TouchableOpacity
-                key={v.id}
-                style={styles.modalOptionItem}
-                onPress={() => handleVoiceChange(v)}
-              >
-                <View style={styles.voiceOptionRow}>
-                  <Icon
-                    name={v.gender === 'female' ? 'user' : 'user'}
-                    size={16}
-                    color={selectedVoice.id === v.id ? '#059669' : '#64748B'}
-                  />
-                  <Text
-                    style={[
-                      styles.modalOptionText,
-                      selectedVoice.id === v.id && styles.modalOptionTextSelected,
-                    ]}
-                  >
-                    {v.name}
-                  </Text>
-                </View>
-                {selectedVoice.id === v.id && <Icon name="check" size={16} color="#059669" />}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* FILE ATTACHMENT MODAL */}
-      <Modal visible={showFilePickerModal} transparent animationType="slide">
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowFilePickerModal(false)}
-        >
-          <View style={styles.modalSheet}>
-            <View style={styles.fileModalHeader}>
-              <Text style={styles.modalTitle}>Attach Document / File</Text>
-              <TouchableOpacity onPress={() => setShowFilePickerModal(false)}>
-                <Icon name="x-circle" size={20} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.fileModalSub}>
-              Select a file to extract text script into studio:
-            </Text>
-
-            {SAMPLE_FILES.map((file, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={styles.fileCardItem}
-                onPress={() => handleAttachFile(file)}
-              >
-                <View style={styles.fileIconBox}>
-                  <Icon name="file-text" size={18} color="#6D28D9" />
-                </View>
-                <View style={styles.fileMetaBox}>
-                  <Text style={styles.fileNameText}>{file.name}</Text>
-                  <Text style={styles.fileSizeText}>
-                    {file.size} • {file.content.slice(0, 35)}...
-                  </Text>
-                </View>
-                <Icon name="chevron-right" size={16} color="#94A3B8" />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
 
       {/* HISTORY MODAL */}
       <Modal visible={showHistoryModal} transparent animationType="slide">
-        <View style={styles.historyModalContainer}>
-          <View style={[styles.historyModalHeader, { paddingTop: Math.max(insets.top, 16) }]}>
-            <Text style={styles.historyModalTitle}>Audio History</Text>
-            <TouchableOpacity onPress={() => setShowHistoryModal(false)}>
-              <Icon name="x-circle" size={22} color="#0F172A" />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Voice Generation History</Text>
+              <TouchableOpacity onPress={() => setShowHistoryModal(false)}>
+                <Icon name="x" size={20} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
 
-          <FlatList
-            data={history}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.historyListContent}
-            renderItem={({ item }) => (
-              <View style={styles.historyCardItem}>
-                <View style={styles.historyTopRow}>
-                  <Text style={styles.historyVoiceTag}>{item.voice.split('-')[0]}</Text>
-                  <Text style={styles.historyDateText}>{item.date}</Text>
-                </View>
-                <Text style={styles.historyScriptSnippet}>"{item.script}..."</Text>
-                <TouchableOpacity
-                  style={styles.historyPlayBtn}
-                  onPress={() => {
-                    setScript(item.script);
-                    setShowHistoryModal(false);
-                  }}
-                >
-                  <Icon name="play" size={14} color="#6D28D9" />
-                  <Text style={styles.historyPlayText}>Load into Studio ({item.durationSeconds}s)</Text>
-                </TouchableOpacity>
-              </View>
+            {history.length === 0 ? (
+              <Text style={styles.emptyHistoryText}>No voice history yet. Generate voice scripts to see them here.</Text>
+            ) : (
+              <ScrollView style={styles.historyList}>
+                {history.map((item) => (
+                  <View key={item.id} style={styles.historyItemCard}>
+                    <View style={styles.historyItemContent}>
+                      <View style={styles.historyMetaRow}>
+                        <Text style={styles.historyVoiceBadge}>{item.voice}</Text>
+                        <Text style={styles.historyItemTime}>{item.timestamp}</Text>
+                      </View>
+                      <Text style={styles.historyItemScript} numberOfLines={3}>
+                        "{item.script}"
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.historyUseBtn}
+                        onPress={() => {
+                          setScript(item.script);
+                          setShowHistoryModal(false);
+                          playSpeech(item.script);
+                        }}
+                      >
+                        <Icon name="volume" size={12} color="#7C3AED" />
+                        <Text style={styles.historyUseBtnText}>Play Voice</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
             )}
-          />
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -586,435 +349,318 @@ export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
+
+  /* HEADER */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
-  aiToolsPillBtn: {
+  backPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 12,
     paddingVertical: 6,
-  },
-  aiToolsPillText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0F172A',
-    marginLeft: 4,
-  },
-  historyPillBtn: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    gap: 4,
   },
-  historyPillText: {
+  backPillText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6D28D9',
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  titleSection: {
-    marginBottom: 16,
-  },
-  greenTag: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#059669',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  mainTitle: {
-    fontSize: 26,
-    fontWeight: '800',
     color: '#0F172A',
   },
-  scriptCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    padding: 14,
-    minHeight: 180,
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  scriptHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  scriptLabel: {
-    fontSize: 13,
+  headerTitle: {
+    fontSize: 16,
     fontWeight: '700',
-    color: '#475569',
-  },
-  attachBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3E8FF',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-  },
-  attachBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6D28D9',
-    marginLeft: 4,
-  },
-  scriptInput: {
-    fontSize: 15,
     color: '#0F172A',
-    minHeight: 120,
-    lineHeight: 22,
   },
-  scriptBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 10,
-    marginTop: 10,
-  },
-  scriptStatusWrap: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    flex: 1,
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    marginBottom: 2,
-  },
-  charCountText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#94A3B8',
-  },
-  generateSpeechBtn: {
-    backgroundColor: '#64748B',
-    borderRadius: 8,
+  historyBlackBtn: {
+    backgroundColor: '#000000',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 7,
+    borderRadius: 20,
   },
-  generateSpeechBtnDisabled: {
-    backgroundColor: '#94A3B8',
-    opacity: 0.7,
-  },
-  generateSpeechBtnText: {
-    fontSize: 14,
+  historyBlackBtnText: {
+    fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  audioPlayerCard: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#059669',
-    borderRadius: 12,
+
+  scrollContent: {
     padding: 16,
-    marginBottom: 20,
   },
-  audioHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+
+  /* BRIGHT VOICE MODEL SELECTOR */
+  voiceSectionContainer: {
+    marginBottom: 16,
   },
-  voiceBadgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  voiceBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#047857',
-    marginLeft: 4,
-  },
-  formatTag: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  audioScriptSnippet: {
-    fontSize: 13,
-    color: '#334155',
-    fontStyle: 'italic',
-    marginBottom: 12,
-  },
-  playerControlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  playPauseBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#059669',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  waveformContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 30,
-    marginRight: 12,
-  },
-  waveformBar: {
-    width: 4,
-    borderRadius: 2,
-  },
-  timerText: {
-    fontSize: 12,
+  sectionLabelTitle: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 10,
   },
-  controlsPanel: {
-    backgroundColor: '#FFFFFF',
+  voiceCardsScroll: {
+    gap: 10,
+    paddingRight: 16,
   },
-  controlGroup: {
-    marginBottom: 20,
-  },
-  controlLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 8,
-  },
-  dropdownBtn: {
+  brightVoiceCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    minWidth: 160,
   },
-  voiceDropdownLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  brightVoiceCardActive: {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#7C3AED',
   },
   voiceIconCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#D1FAE5',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
   },
-  dropdownBtnText: {
-    fontSize: 14,
+  voiceIconCircleActive: {
+    backgroundColor: '#7C3AED',
+  },
+  brightVoiceName: {
+    fontSize: 13,
+    fontWeight: '700',
     color: '#0F172A',
+  },
+  brightVoiceNameActive: {
+    color: '#7C3AED',
+  },
+  brightVoiceSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  brightVoiceSubActive: {
+    color: '#6B21A8',
     fontWeight: '600',
   },
+
+  /* INPUT CARD */
+  inputCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  inputCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  labelTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  actionIconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plusIcon: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#7C3AED',
+    marginTop: -2,
+  },
+  micActiveBtn: {
+    backgroundColor: '#FEE2E2',
+  },
+  attachedFileBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#F3E8FF',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  attachedFileName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#7C3AED',
+    flex: 1,
+    marginHorizontal: 6,
+  },
+  recordingBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  recordingText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#EF4444',
+    marginLeft: 6,
+  },
+  textArea: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    color: '#0F172A',
+    minHeight: 120,
+  },
+
+  /* CTA BUTTON */
+  generateBtn: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+  },
+  generateBtnDisabled: {
+    backgroundColor: '#CBD5E1',
+  },
+  generateBtnText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+
+  /* PLAYER CARD */
+  playerCard: {
+    marginTop: 16,
+    backgroundColor: '#F3E8FF',
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  playerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#7C3AED',
+    marginBottom: 10,
+  },
+  stopBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#EF4444',
+    gap: 6,
+  },
+  stopBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  /* MODAL */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
-  modalSheet: {
+  modalCard: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 20,
-    maxHeight: '60%',
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 12,
   },
-  modalOptionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  voiceOptionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modalOptionText: {
-    fontSize: 14,
-    color: '#334155',
-    marginLeft: 8,
-  },
-  modalOptionTextSelected: {
-    fontWeight: '700',
-    color: '#059669',
-  },
-  fileModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  fileModalSub: {
-    fontSize: 12,
+  emptyHistoryText: {
+    textAlign: 'center',
     color: '#64748B',
-    marginBottom: 14,
+    fontSize: 14,
+    marginVertical: 20,
   },
-  fileCardItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  historyList: {
+    maxHeight: 400,
+  },
+  historyItemCard: {
     backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
     marginBottom: 10,
-  },
-  fileIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#F3E8FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  fileMetaBox: {
-    flex: 1,
-  },
-  fileNameText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  fileSizeText: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  historyModalContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  historyModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  historyModalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  historyListContent: {
-    padding: 20,
-  },
-  historyCardItem: {
-    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
   },
-  historyTopRow: {
+  historyItemContent: {
+    gap: 6,
+  },
+  historyMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
   },
-  historyVoiceTag: {
+  historyVoiceBadge: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#059669',
+    color: '#7C3AED',
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
-  historyDateText: {
+  historyItemTime: {
     fontSize: 11,
     color: '#94A3B8',
   },
-  historyScriptSnippet: {
+  historyItemScript: {
     fontSize: 13,
-    color: '#334155',
-    marginBottom: 10,
+    color: '#0F172A',
   },
-  historyPlayBtn: {
+  historyUseBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  historyPlayText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6D28D9',
-    marginLeft: 6,
-  },
-  downloadVoiceBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#D1FAE5',
-    borderWidth: 1,
-    borderColor: '#6EE7B7',
-    borderRadius: 14,
+    gap: 4,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: '#F3E8FF',
     paddingHorizontal: 10,
     paddingVertical: 5,
+    borderRadius: 12,
   },
-  downloadVoiceText: {
-    fontSize: 12,
+  historyUseBtnText: {
+    fontSize: 11,
     fontWeight: '700',
-    color: '#047857',
-    marginLeft: 4,
-  },
-  audioBottomBar: {
-    marginTop: 14,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-  },
-  downloadVoiceBtnFull: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#059669',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  downloadVoiceTextFull: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginLeft: 6,
+    color: '#7C3AED',
   },
 });

@@ -104,7 +104,6 @@ export const PromptEngineeringScreen: React.FC = () => {
 
   const completedCount = completedStageIds.length;
   const totalStages = PROMPT_STAGES.length;
-  const overallPercentage = Math.round((completedCount / totalStages) * 100);
   const isAllCompleted = completedCount >= totalStages;
 
   const handleOpenStage = (stageId: number) => {
@@ -184,37 +183,19 @@ export const PromptEngineeringScreen: React.FC = () => {
               setRefreshing(true);
               loadProgress();
             }}
-            colors={['#5653FE']}
+            colors={['#7C3AED']}
           />
         }
       >
-        {/* VIEW 1: MODULE CARDS & HERO BANNER (MATCHING IMAGE 3) */}
+        {/* VIEW 1: MODULE CARDS */}
         {selectedModuleId === null ? (
           <View style={styles.viewBlock}>
-            {/* HERO OVERALL PROGRESS BANNER */}
-            <View style={styles.heroProgressCard}>
-              <View style={styles.heroLeft}>
-                <Text style={styles.heroTitle}>Great Progress! 🎉</Text>
-                <Text style={styles.heroSubtitle}>You're mastering AI Prompts.</Text>
-              </View>
-
-              <View style={styles.heroRightCircle}>
-                <Text style={styles.circlePercentageText}>{overallPercentage}%</Text>
-                <Text style={styles.circleSubLabel}>Overall Progress</Text>
-              </View>
-            </View>
-
             {/* SECTION HEADING */}
-            <Text style={styles.sectionHeaderTitle}>Prompt Modules Progress</Text>
+            <Text style={styles.sectionHeaderTitle}>Prompt Modules</Text>
 
-            {/* COMPACT WHITE MODULE CARDS */}
+            {/* COMPACT CLEAN MODULE CARDS */}
             <View style={styles.modulesStack}>
               {MODULE_CARDS.map((mod) => {
-                const completedInModule = mod.stageIds.filter((id) =>
-                  completedStageIds.includes(id)
-                ).length;
-                const modPercent = Math.round((completedInModule / mod.lessonCount) * 100);
-
                 return (
                   <TouchableOpacity
                     key={`module-card-${mod.id}`}
@@ -224,23 +205,12 @@ export const PromptEngineeringScreen: React.FC = () => {
                   >
                     <View style={styles.cardMainRow}>
                       <View style={styles.logoSquareContainer}>
-                        <Icon name={mod.icon as any} size={28} color="#7C3AED" />
+                        <Icon name={mod.icon as any} size={26} color="#7C3AED" />
                       </View>
 
                       <View style={styles.cardCenterBlock}>
-                        <View style={styles.cardTitleRow}>
-                          <Text style={styles.courseName}>{mod.title}</Text>
-                          <Text style={styles.percentText}>{modPercent}%</Text>
-                        </View>
-
-                        <View style={styles.progressTrackBar}>
-                          <View
-                            style={[
-                              styles.progressFillBar,
-                              { width: `${Math.max(4, modPercent)}%` }
-                            ]}
-                          />
-                        </View>
+                        <Text style={styles.courseName}>{mod.title}</Text>
+                        <Text style={styles.courseSubtext}>{mod.shortDesc}</Text>
                       </View>
                     </View>
 
@@ -393,91 +363,38 @@ const styles = StyleSheet.create({
   viewBlock: {
     gap: 12,
   },
-  heroProgressCard: {
-    backgroundColor: '#2D1E80',
-    borderRadius: 20,
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    shadowColor: '#2D1E80',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5
-  },
-  heroLeft: {
-    flex: 1,
-    paddingRight: 10
-  },
-  heroTitle: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 19,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 4
-  },
-  heroSubtitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
-    color: '#C7D2FE'
-  },
-  heroRightCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    borderColor: '#6366F1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)'
-  },
-  circlePercentageText: {
-    fontFamily: FONT_FAMILY,
-    fontSize: 19,
-    fontWeight: '800',
-    color: '#FFFFFF'
-  },
-  circleSubLabel: {
-    fontSize: 7.5,
-    fontWeight: '700',
-    color: '#A5B4FC',
-    marginTop: 1,
-    textAlign: 'center'
-  },
   sectionHeaderTitle: {
     fontFamily: FONT_FAMILY,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0F172A',
     marginTop: 4,
-    marginBottom: 4
+    marginBottom: 6
   },
   modulesStack: {
-    gap: 12,
+    gap: 14,
   },
   cleanWhiteCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    padding: 13,
+    padding: 16,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 2
   },
   cardMainRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12
+    alignItems: 'flex-start',
+    gap: 14
   },
   logoSquareContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
     backgroundColor: '#EDE9FE',
     alignItems: 'center',
     justifyContent: 'center'
@@ -485,59 +402,41 @@ const styles = StyleSheet.create({
   cardCenterBlock: {
     flex: 1
   },
-  cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6
-  },
   courseName: {
     fontFamily: FONT_FAMILY,
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A'
+    color: '#0F172A',
+    marginBottom: 4,
+    lineHeight: 22
   },
-  percentText: {
+  courseSubtext: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13.5,
-    fontWeight: '800',
-    color: '#0F172A'
-  },
-  progressTrackBar: {
-    height: 5,
-    backgroundColor: '#EDE9FE',
-    borderRadius: 3,
-    overflow: 'hidden'
-  },
-  progressFillBar: {
-    height: '100%',
-    backgroundColor: '#7C3AED',
-    borderRadius: 3
+    fontSize: 12.5,
+    color: '#64748B',
+    lineHeight: 18
   },
   cardFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginTop: 8,
-    paddingTop: 6
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC'
   },
   startBtnPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#7C3AED',
-    paddingVertical: 7,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2
   },
   startBtnPillText: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#FFFFFF'
   },

@@ -43,6 +43,16 @@ export const fullstackApi = {
     return unwrap(await apiClient.get('/fullstack/course-progress'));
   },
 
+  async getUserSkillsProgress(): Promise<{
+    fullstack: { completedCount: number; totalLessons: number; percentage: number };
+    promptEngineering: { completedCount: number; totalLessons: number; percentage: number };
+    contextEngineering: { completedCount: number; totalLessons: number; percentage: number };
+    aiAutomation: { completedCount: number; totalLessons: number; percentage: number };
+    overallPercentage: number;
+  }> {
+    return unwrap(await apiClient.get('/fullstack/user-skills-progress'));
+  },
+
   async getFullStackEligibility(): Promise<import('../types/fullstack').FullStackEligibility> {
     return unwrap(await apiClient.get('/fullstack/eligibility'));
   },
