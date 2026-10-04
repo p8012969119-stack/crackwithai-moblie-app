@@ -2,10 +2,16 @@ import { NativeModules, Platform } from 'react-native';
 
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
-const DEV_LAN_IP = '172.168.13.45';
+const DEV_LAN_IP = '172.168.9.185';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 
-const CANDIDATE_URLS = [LOCAL_URL, DEV_LAN_URL, 'http://172.168.10.173:5001/api', EMULATOR_URL];
+const CANDIDATE_URLS = [
+  DEV_LAN_URL,
+  LOCAL_URL,
+  'http://172.168.13.45:5001/api',
+  'http://172.168.10.173:5001/api',
+  EMULATOR_URL,
+];
 
 let dynamicApiBaseUrl: string | null = null;
 
@@ -20,7 +26,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return LOCAL_URL;
+  return DEV_LAN_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -51,7 +57,8 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  return LOCAL_URL;
+  // On physical iOS device or when running bundled JS, point to Mac's local network IP
+  return DEV_LAN_URL;
 };
 
 // Environment & App Configuration
