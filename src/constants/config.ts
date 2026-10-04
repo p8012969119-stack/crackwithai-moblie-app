@@ -1,15 +1,17 @@
 import { NativeModules, Platform } from 'react-native';
 
+const TUNNEL_URL = 'https://rugs-cooked-alfred-republican.trycloudflare.com/api';
+const USB_URL = 'http://169.254.33.184:5001/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 const DEV_LAN_IP = '172.168.9.185';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 
 const CANDIDATE_URLS = [
+  TUNNEL_URL,
   DEV_LAN_URL,
+  USB_URL,
   LOCAL_URL,
-  'http://172.168.13.45:5001/api',
-  'http://172.168.10.173:5001/api',
   EMULATOR_URL,
 ];
 
@@ -26,7 +28,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return DEV_LAN_URL;
+  return TUNNEL_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -57,8 +59,8 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  // On physical iOS device or when running bundled JS, point to Mac's local network IP
-  return DEV_LAN_URL;
+  // On physical iOS device or when running bundled JS, use HTTPS tunnel or local LAN
+  return TUNNEL_URL;
 };
 
 // Environment & App Configuration
@@ -66,7 +68,7 @@ export const CONFIG = {
   get API_BASE_URL(): string {
     return getDevApiBaseUrl();
   },
-  TIMEOUT: 4000,
+  TIMEOUT: 12000,
   STORAGE_KEYS: {
     AUTH_TOKEN: '@crackwithai_auth_token',
     USER_DATA: '@crackwithai_user_data',
