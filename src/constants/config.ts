@@ -1,6 +1,6 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://rugs-cooked-alfred-republican.trycloudflare.com/api';
+const TUNNEL_URL = 'https://bathroom-continuing-defines-grill.trycloudflare.com/api';
 const USB_URL = 'http://169.254.33.184:5001/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
