@@ -16,7 +16,7 @@ const AnimatedTabButton = ({ label, iconName, isFocused, onPress }: any) => {
   useEffect(() => {
     Animated.sequence([
       Animated.timing(bounceAnim, {
-        toValue: isFocused ? 1.15 : 0.95,
+        toValue: isFocused ? 1.12 : 0.96,
         duration: 120,
         useNativeDriver: true,
       }),
@@ -33,16 +33,22 @@ const AnimatedTabButton = ({ label, iconName, isFocused, onPress }: any) => {
     <TouchableOpacity
       accessibilityRole="tab"
       accessibilityLabel={typeof label === 'string' ? label : undefined}
-      accessibilityState={{selected: isFocused}}
-      activeOpacity={0.8}
+      accessibilityState={{ selected: isFocused }}
+      activeOpacity={0.78}
       onPress={onPress}
       style={styles.tabBtnContainer}
     >
-      <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
+      <Animated.View
+        style={[
+          styles.iconBox,
+          isFocused && styles.iconBoxFocused,
+          { transform: [{ scale: bounceAnim }] },
+        ]}
+      >
         <TabIcon
           name={iconName}
-          size={24}
-          color={isFocused ? '#6D28D9' : '#94A3B8'}
+          size={27}
+          isFocused={isFocused}
         />
       </Animated.View>
 
@@ -51,12 +57,18 @@ const AnimatedTabButton = ({ label, iconName, isFocused, onPress }: any) => {
           styles.tabLabelText,
           isFocused ? styles.tabLabelTextFocused : styles.tabLabelTextUnfocused,
         ]}
+        numberOfLines={1}
       >
         {label}
       </Text>
 
-      {/* Smooth Top Active Line Indicator */}
-      {isFocused && <View style={styles.topActiveIndicator} />}
+      {/* Modern Rounded Active Pill Indicator under active label (Image 2 style with Image 1 purple) */}
+      <View
+        style={[
+          styles.bottomActiveIndicator,
+          isFocused && styles.bottomActiveIndicatorFocused,
+        ]}
+      />
     </TouchableOpacity>
   );
 };
@@ -64,10 +76,14 @@ const AnimatedTabButton = ({ label, iconName, isFocused, onPress }: any) => {
 export const MainTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = React.useState(false);
+
   useEffect(() => {
     const show = Keyboard.addListener('keyboardWillShow', () => setKeyboardVisible(true));
     const hide = Keyboard.addListener('keyboardWillHide', () => setKeyboardVisible(false));
-    return () => {show.remove(); hide.remove();};
+    return () => {
+      show.remove();
+      hide.remove();
+    };
   }, []);
 
   return (
@@ -76,7 +92,15 @@ export const MainTabNavigator = () => {
       tabBar={({ state, descriptors, navigation }) => {
         if (keyboardVisible) return null;
         return (
-          <View style={[styles.customTabBarContainer, { height: 60 + Math.max(insets.bottom, 6), paddingBottom: Math.max(insets.bottom, 6) }]}>
+          <View
+            style={[
+              styles.customTabBarContainer,
+              {
+                height: 64 + Math.max(insets.bottom, 6),
+                paddingBottom: Math.max(insets.bottom, 6),
+              },
+            ]}
+          >
             {state.routes.map((route, index) => {
               const { options } = descriptors[route.key];
               const isFocused = state.index === index;
@@ -90,7 +114,7 @@ export const MainTabNavigator = () => {
 
               let iconName: TabIconName = 'home';
               if (route.name === 'HomeTab') iconName = 'home';
-              else if (route.name === 'FullStackTab') iconName = 'code';
+              else if (route.name === 'FullStackTab') iconName = 'learning';
               else if (route.name === 'AITab') iconName = 'workspace';
               else if (route.name === 'ToolsTab') iconName = 'tools';
 
@@ -138,7 +162,7 @@ const styles = StyleSheet.create({
     elevation: 10,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.07,
     shadowRadius: 10,
   },
   tabBtnContainer: {
@@ -146,19 +170,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    paddingTop: 6,
+    paddingTop: 5,
   },
-  topActiveIndicator: {
-    position: 'absolute',
-    top: 0,
-    width: 22,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#6D28D9',
+  iconBox: {
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  iconBoxFocused: {
+    backgroundColor: 'rgba(109, 40, 217, 0.08)',
   },
   tabLabelText: {
-    fontSize: 10.5,
-    marginTop: 5,
+    fontSize: 11,
+    marginTop: 2,
+    letterSpacing: -0.2,
   },
   tabLabelTextFocused: {
     color: '#6D28D9',
@@ -166,6 +194,16 @@ const styles = StyleSheet.create({
   },
   tabLabelTextUnfocused: {
     color: '#94A3B8',
-    fontWeight: '600',
+    fontWeight: '500',
+  },
+  bottomActiveIndicator: {
+    width: 22,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'transparent',
+    marginTop: 3,
+  },
+  bottomActiveIndicatorFocused: {
+    backgroundColor: '#6D28D9',
   },
 });
