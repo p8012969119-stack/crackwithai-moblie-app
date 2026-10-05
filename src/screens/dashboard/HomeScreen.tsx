@@ -401,22 +401,25 @@ export const HomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.coursesHorizontalRow}
           >
-            {/* TOOL CARD 1: AI Code Generator (Vibrant Bright Violet #C084FC - Exact User Reference Color!) */}
+            {/* TOOL CARD 1: AI Code Generator (Vibrant Bright Violet #C084FC) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#C084FC' }]}
+              style={[styles.toolPastelCard, { backgroundColor: '#C084FC' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AICodeGenerator')}
             >
-              <View style={styles.cardHeaderArea}>
+              <View style={styles.toolCardImageContainer}>
                 <Image
-                  source={require('../../assets/tool-logos/copilot.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
+                  source={require('../../assets/tools/ai_code_tool_cover.jpg')}
+                  style={styles.toolCardCoverImage}
+                  resizeMode="cover"
                 />
+                <View style={styles.toolCardBadge}>
+                  <Text style={styles.toolCardBadgeText}>AI CODING</Text>
+                </View>
               </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+              <View style={styles.toolCardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={1}>
                   AI Code Generator
                 </Text>
                 <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
@@ -431,20 +434,23 @@ export const HomeScreen = ({ navigation }: any) => {
 
             {/* TOOL CARD 2: AI Image Generator (Vibrant Magenta Pink #F472B6) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#F472B6' }]}
+              style={[styles.toolPastelCard, { backgroundColor: '#F472B6' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIImageGenerator')}
             >
-              <View style={styles.cardHeaderArea}>
+              <View style={styles.toolCardImageContainer}>
                 <Image
-                  source={require('../../assets/images/models/gemini.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
+                  source={require('../../assets/tools/ai_image_tool_cover.jpg')}
+                  style={styles.toolCardCoverImage}
+                  resizeMode="cover"
                 />
+                <View style={styles.toolCardBadge}>
+                  <Text style={styles.toolCardBadgeText}>AI ART</Text>
+                </View>
               </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+              <View style={styles.toolCardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={1}>
                   AI Image Generator
                 </Text>
                 <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
@@ -459,20 +465,23 @@ export const HomeScreen = ({ navigation }: any) => {
 
             {/* TOOL CARD 3: AI Email Writer (Vibrant Warm Amber Gold #FBBF24) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FBBF24' }]}
+              style={[styles.toolPastelCard, { backgroundColor: '#FBBF24' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIEmailWriter')}
             >
-              <View style={styles.cardHeaderArea}>
+              <View style={styles.toolCardImageContainer}>
                 <Image
-                  source={require('../../assets/images/models/groq.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
+                  source={require('../../assets/tools/ai_email_tool_cover.jpg')}
+                  style={styles.toolCardCoverImage}
+                  resizeMode="cover"
                 />
+                <View style={styles.toolCardBadge}>
+                  <Text style={styles.toolCardBadgeText}>AI WRITING</Text>
+                </View>
               </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+              <View style={styles.toolCardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={1}>
                   AI Email Writer
                 </Text>
                 <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
@@ -487,20 +496,23 @@ export const HomeScreen = ({ navigation }: any) => {
 
             {/* TOOL CARD 4: AI Voice Generator (Vibrant Turquoise Teal #2DD4BF) */}
             <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#2DD4BF' }]}
+              style={[styles.toolPastelCard, { backgroundColor: '#2DD4BF' }]}
               activeOpacity={0.88}
               onPress={() => navigation.navigate('AIVoiceGenerator')}
             >
-              <View style={styles.cardHeaderArea}>
+              <View style={styles.toolCardImageContainer}>
                 <Image
-                  source={require('../../assets/images/models/mistral.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
+                  source={require('../../assets/tools/ai_voice_tool_cover.jpg')}
+                  style={styles.toolCardCoverImage}
+                  resizeMode="cover"
                 />
+                <View style={styles.toolCardBadge}>
+                  <Text style={styles.toolCardBadgeText}>AI VOICE</Text>
+                </View>
               </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
+              <View style={styles.toolCardBodyContent}>
+                <Text style={styles.pastelCardTitle} numberOfLines={1}>
                   AI Voice Generator
                 </Text>
                 <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
@@ -772,6 +784,52 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 4,
+  },
+  toolPastelCard: {
+    width: 215,
+    minHeight: 285,
+    borderRadius: 22,
+    padding: 12,
+    justifyContent: 'space-between',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  toolCardImageContainer: {
+    width: '100%',
+    height: 125,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#0F172A',
+    position: 'relative',
+    marginBottom: 10,
+  },
+  toolCardCoverImage: {
+    width: '100%',
+    height: '100%',
+  },
+  toolCardBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.78)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  toolCardBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    fontFamily: SANS_SERIF_FONT,
+    fontStyle: 'normal',
+  },
+  toolCardBodyContent: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   cardHeaderArea: {
     height: 60,

@@ -49,10 +49,10 @@ export interface CardTheme {
 }
 
 const LOCAL_TOOL_IMAGES: Record<string, any> = {
-  'email': require('../../assets/tools/email_writer.png'),
-  'voice': require('../../assets/tools/voice_generator.png'),
-  'image': require('../../assets/tools/image_generator.png'),
-  'code': require('../../assets/tools/code_generator.png'),
+  'email': require('../../assets/tools/ai_email_tool_cover.jpg'),
+  'voice': require('../../assets/tools/ai_voice_tool_cover.jpg'),
+  'image': require('../../assets/tools/ai_image_tool_cover.jpg'),
+  'code': require('../../assets/tools/ai_code_tool_cover.jpg'),
 };
 
 const CARD_THEMES: Record<string, CardTheme> = {

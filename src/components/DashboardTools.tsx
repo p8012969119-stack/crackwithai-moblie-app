@@ -25,7 +25,7 @@ const DASHBOARD_4_TOOLS: TargetToolDef[] = [
     category: 'AI Writing',
     description: 'Draft professional outreach, sales proposals, and newsletter copy.',
     screen: 'AIEmailWriter',
-    asset: require('../assets/tools/email_writer.png'),
+    asset: require('../assets/tools/ai_email_tool_cover.jpg'),
   },
   {
     key: 'voice',
@@ -35,7 +35,7 @@ const DASHBOARD_4_TOOLS: TargetToolDef[] = [
     category: 'AI Voice',
     description: 'Convert text to natural human-like voice recordings.',
     screen: 'AIVoiceGenerator',
-    asset: require('../assets/tools/voice_generator.png'),
+    asset: require('../assets/tools/ai_voice_tool_cover.jpg'),
   },
   {
     key: 'code',
@@ -45,7 +45,7 @@ const DASHBOARD_4_TOOLS: TargetToolDef[] = [
     category: 'AI Coding',
     description: 'Generate production-ready code, debug, and optimize algorithms.',
     screen: 'AICodeGenerator',
-    asset: require('../assets/tools/code_generator.png'),
+    asset: require('../assets/tools/ai_code_tool_cover.jpg'),
   },
   {
     key: 'image',
@@ -55,7 +55,7 @@ const DASHBOARD_4_TOOLS: TargetToolDef[] = [
     category: 'AI Image',
     description: 'Create high quality images, artwork, and graphics from prompts.',
     screen: 'AIImageGenerator',
-    asset: require('../assets/tools/image_generator.png'),
+    asset: require('../assets/tools/ai_image_tool_cover.jpg'),
   },
 ];
 
