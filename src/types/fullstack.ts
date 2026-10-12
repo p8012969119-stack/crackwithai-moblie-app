@@ -45,12 +45,14 @@ export interface HtmlLesson {
   difficulty?: 'Beginner' | 'Intermediate' | 'Advanced' | string;
   category?: string;
   explanation?: string;
+  codeExplanation?: string;
   user_raw_idea?: string;
   engineered_prompt?: string;
   why_it_works?: string;
   description?: string;
   learningObjective?: string;
   concept?: string;
+  importantSyntax?: string;
   codeExample?: string;
   expectedOutput?: string;
   referenceExample?: string;

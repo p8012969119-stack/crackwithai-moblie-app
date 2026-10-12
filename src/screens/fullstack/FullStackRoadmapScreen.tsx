@@ -31,14 +31,20 @@ const COURSE_LOGOS: Record<string, any> = {
   capstone: require('../../assets/courses/capstone.png'),
 };
 
+import { preloadAllCourses } from '../../utils/courseNormalization';
+
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
 export const FullStackRoadmapScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const [fsProgress, setFsProgress] = useState<FullStackCourseProgress | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    preloadAllCourses();
+  }, []);
 
   const loadProgress = useCallback(async () => {
     try {
@@ -97,13 +103,9 @@ export const FullStackRoadmapScreen: React.FC = () => {
         {/* SECTION TITLE */}
         <Text style={styles.sectionHeaderTitle}>Technology Modules</Text>
 
-        {/* Loading Spinner */}
-        {loading && !refreshing ? (
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginVertical: 30 }} />
-        ) : (
-          /* COMPACT WHITE MODULE CARDS */
-          <View style={styles.coursesList}>
-            {FULLSTACK_TRACKS.map((track) => {
+        {/* COMPACT WHITE MODULE CARDS - RENDERS INSTANTLY */}
+        <View style={styles.coursesList}>
+          {FULLSTACK_TRACKS.map((track) => {
               return (
                 <TouchableOpacity
                   key={track.id}
@@ -146,9 +148,8 @@ export const FullStackRoadmapScreen: React.FC = () => {
               );
             })}
           </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
   );
 };
 

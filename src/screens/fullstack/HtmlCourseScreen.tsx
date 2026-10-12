@@ -16,6 +16,7 @@ import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/nativ
 import { fullstackApi } from '../../api/fullstackApi';
 import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress } from '../../types/fullstack';
 import { getCourseForTech, FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
+import { getFastCourse, normalizeCourse, cacheCourseData } from '../../utils/courseNormalization';
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
 import { PromptEngineeringScreen } from '../prompt/PromptEngineeringScreen';
@@ -70,9 +71,10 @@ export const HtmlCourseScreen: React.FC = () => {
     return TECH_BRAND_COLORS[tech] || DEFAULT_BRAND_COLOR;
   }, [tech]);
 
-  const [course, setCourse] = useState<HtmlCourse | null>(null);
+  // Instant normalized course data on initial mount (0ms latency)
+  const [course, setCourse] = useState<HtmlCourse>(() => getFastCourse(tech));
   const [progress, setProgress] = useState<FullStackProgress | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // Expanded state for accordion modules
@@ -90,9 +92,11 @@ export const HtmlCourseScreen: React.FC = () => {
       ]);
 
       if (courseData && courseData.modules && courseData.modules.length > 0) {
-        setCourse(courseData);
+        const normalized = normalizeCourse(courseData);
+        setCourse(normalized);
+        cacheCourseData(tech, normalized);
       } else {
-        setCourse(getCourseForTech(tech));
+        setCourse(prev => prev || getFastCourse(tech));
       }
 
       if (progressData) {
@@ -100,14 +104,14 @@ export const HtmlCourseScreen: React.FC = () => {
       }
 
       // Default expand the first module
-      const targetCourse = courseData || getCourseForTech(tech);
+      const targetCourse = courseData ? normalizeCourse(courseData) : getFastCourse(tech);
       if (targetCourse?.modules?.length) {
         const firstId = targetCourse.modules[0]._id || targetCourse.modules[0].id || '0';
         setExpandedModules(prev => ({ ...prev, [firstId]: true }));
       }
     } catch (err) {
       console.warn('Failed to load course details from database, applying fallback', err);
-      setCourse(getCourseForTech(tech));
+      setCourse(getFastCourse(tech));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -115,9 +119,9 @@ export const HtmlCourseScreen: React.FC = () => {
   }, [tech]);
 
   useEffect(() => {
-    setLoading(true);
+    setCourse(getFastCourse(tech));
     loadData();
-  }, [loadData]);
+  }, [tech, loadData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -253,7 +257,7 @@ export const HtmlCourseScreen: React.FC = () => {
         </View>
 
         {/* Loading Spinner */}
-        {loading && !refreshing ? (
+        {loading && sortedModules.length === 0 ? (
           <ActivityIndicator size="large" color={brandColor.accent} style={styles.loader} />
         ) : (
           <View style={styles.modulesContainer}>

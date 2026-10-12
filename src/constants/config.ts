@@ -1,17 +1,17 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://bathroom-continuing-defines-grill.trycloudflare.com/api';
+const TUNNEL_URL = 'https://returns-nail-rules-respected.trycloudflare.com/api';
 const USB_URL = 'http://169.254.33.184:5001/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
-const DEV_LAN_IP = '172.168.9.185';
+const DEV_LAN_IP = '172.168.15.53';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 
 const CANDIDATE_URLS = [
   TUNNEL_URL,
   DEV_LAN_URL,
-  USB_URL,
   LOCAL_URL,
+  USB_URL,
   EMULATOR_URL,
 ];
 
@@ -52,9 +52,10 @@ export const getDevApiBaseUrl = (): string => {
       const match = scriptURL.match(/^https?:\/\/([^/:]+)/i);
       if (match && match[1]) {
         const host = match[1];
-        if (host !== 'localhost' && host !== '127.0.0.1') {
-          return `http://${host}:5001/api`;
+        if (host === 'localhost' || host === '127.0.0.1') {
+          return LOCAL_URL;
         }
+        return `http://${host}:5001/api`;
       }
     } catch (_) {}
   }
