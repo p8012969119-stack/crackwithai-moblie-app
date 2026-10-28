@@ -230,8 +230,7 @@ export const ContextStageDetailScreen: React.FC = () => {
               />
 
               <TouchableOpacity style={styles.verifyBtn} onPress={handleVerifyPractice}>
-                <Icon name="check" size={16} color="#FFFFFF" />
-                <Text style={styles.verifyBtnText}>Verify Context Structure</Text>
+                <Text style={styles.verifyBtnText} numberOfLines={1}>Verify Context Structure</Text>
               </TouchableOpacity>
             </View>
 

@@ -330,7 +330,6 @@ export const PromptStageDetailScreen: React.FC = () => {
                   onPress={() => setPromptText(currentStage.engineered_prompt)}
                   style={styles.resetBtn}
                 >
-                  <Icon name="refresh-cw" size={13} color="#64748B" />
                   <Text style={styles.resetBtnText}>Reset Prompt</Text>
                 </TouchableOpacity>
               </View>
@@ -381,10 +380,7 @@ export const PromptStageDetailScreen: React.FC = () => {
                   {testing ? (
                     <ActivityIndicator size="small" color="#5653FE" />
                   ) : (
-                    <>
-                      <Icon name="search" size={15} color="#5653FE" />
-                      <Text style={styles.checkBtnText}>Run AI Check</Text>
-                    </>
+                    <Text style={styles.checkBtnText} numberOfLines={1}>Run AI Check</Text>
                   )}
                 </TouchableOpacity>
 
@@ -397,10 +393,7 @@ export const PromptStageDetailScreen: React.FC = () => {
                   {submitting ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <>
-                      <Icon name="check" size={15} color="#FFFFFF" />
-                      <Text style={styles.submitBtnText}>Mark Complete</Text>
-                    </>
+                    <Text style={styles.submitBtnText} numberOfLines={1}>Mark Complete</Text>
                   )}
                 </TouchableOpacity>
               </View>

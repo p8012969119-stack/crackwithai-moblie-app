@@ -712,7 +712,6 @@ export const HtmlLessonScreen: React.FC = () => {
               <Text style={styles.sectionHeading}>Practice Workspace</Text>
             </View>
             <TouchableOpacity onPress={handleResetCode} style={styles.resetBtn}>
-              <Icon name="refresh-cw" size={13} color="#64748B" />
               <Text style={styles.resetBtnText}>Reset</Text>
             </TouchableOpacity>
           </View>
@@ -730,13 +729,9 @@ export const HtmlLessonScreen: React.FC = () => {
               onPress={() => setShowReferenceModal(true)}
               activeOpacity={0.8}
             >
-              <View style={styles.referencePopupLeft}>
-                <Icon name="file-text" size={16} color={theme.primary} />
-                <Text style={[styles.referencePopupBtnText, { color: theme.primary }]}>
-                  💡 View Reference Code & Output
-                </Text>
-              </View>
-              <Icon name="chevron-right" size={16} color={theme.primary} />
+              <Text style={[styles.referencePopupBtnText, { color: theme.primary }]} numberOfLines={1}>
+                View Reference Code & Output
+              </Text>
             </TouchableOpacity>
           ) : null}
 
@@ -858,10 +853,7 @@ export const HtmlLessonScreen: React.FC = () => {
                     {aiSolving ? (
                       <ActivityIndicator size="small" color="#7C3AED" />
                     ) : (
-                      <>
-                        <Icon name="sparkles" size={15} color="#7C3AED" />
-                        <Text style={styles.cardSolveAiBtnText}>✨ Solve with AI (Auto-Generate Optimal Prompt)</Text>
-                      </>
+                      <Text style={styles.cardSolveAiBtnText} numberOfLines={1}>Solve with AI (Auto-Generate Optimal Prompt)</Text>
                     )}
                   </TouchableOpacity>
                 )}
@@ -951,10 +943,7 @@ export const HtmlLessonScreen: React.FC = () => {
                         {aiSolving ? (
                           <ActivityIndicator size="small" color="#7C3AED" />
                         ) : (
-                          <>
-                            <Icon name="sparkles" size={15} color="#7C3AED" />
-                            <Text style={styles.cardSolveAiBtnText}>✨ Solve with AI (Fix Code Automatically)</Text>
-                          </>
+                          <Text style={styles.cardSolveAiBtnText} numberOfLines={1}>Solve with AI (Fix Code Automatically)</Text>
                         )}
                       </TouchableOpacity>
                     )}
@@ -972,8 +961,7 @@ export const HtmlLessonScreen: React.FC = () => {
               activeOpacity={0.8}
               onPress={handleCheckCode}
             >
-              <Icon name="search" size={14} color={theme.primary} />
-              <Text style={[styles.checkCodeBtnText, { color: theme.primary }]}>
+              <Text style={[styles.checkCodeBtnText, { color: theme.primary }]} numberOfLines={1}>
                 {activeTech === 'prompt-engineering' || activeTech === 'prompt' ? 'Check Prompt' : 'Check Code'}
               </Text>
             </TouchableOpacity>
@@ -988,10 +976,7 @@ export const HtmlLessonScreen: React.FC = () => {
               {aiSolving ? (
                 <ActivityIndicator size="small" color="#7C3AED" />
               ) : (
-                <>
-                  <Icon name="sparkles" size={14} color="#7C3AED" />
-                  <Text style={styles.solveAiBtnText}>AI Fix</Text>
-                </>
+                <Text style={styles.solveAiBtnText} numberOfLines={1}>AI Fix</Text>
               )}
             </TouchableOpacity>
 
@@ -1002,12 +987,7 @@ export const HtmlLessonScreen: React.FC = () => {
                 activeOpacity={0.8}
                 onPress={() => setShowLivePreview(prev => !prev)}
               >
-                <Icon
-                  name={showLivePreview ? 'code' : 'eye'}
-                  size={14}
-                  color="#0F172A"
-                />
-                <Text style={styles.previewToggleBtnText}>
+                <Text style={styles.previewToggleBtnText} numberOfLines={1}>
                   {showLivePreview ? 'Editor' : 'Preview'}
                 </Text>
               </TouchableOpacity>
@@ -1023,10 +1003,7 @@ export const HtmlLessonScreen: React.FC = () => {
               {submitting ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <>
-                  <Icon name="check" size={15} color="#FFFFFF" />
-                  <Text style={styles.submitBtnText}>Submit</Text>
-                </>
+                <Text style={styles.submitBtnText} numberOfLines={1}>Submit</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -1130,14 +1107,12 @@ export const HtmlLessonScreen: React.FC = () => {
                     style={[styles.copyBtn, { backgroundColor: '#EFF6FF' }]}
                     onPress={() => handleApplyReferenceSolution(referenceSolution)}
                   >
-                    <Icon name="zap" size={13} color="#2563EB" />
                     <Text style={[styles.copyBtnText, { color: '#2563EB' }]}>Insert</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.copyBtn, { backgroundColor: theme.pillBg }]}
                     onPress={() => handleCopy(referenceSolution)}
                   >
-                    <Icon name="copy" size={13} color={theme.primary} />
                     <Text style={[styles.copyBtnText, { color: theme.primary }]}>
                       {copiedCode ? 'Copied!' : 'Copy'}
                     </Text>
@@ -1383,23 +1358,18 @@ const styles = StyleSheet.create({
 
   /* POPUP TRIGGER BUTTON */
   referencePopupBtn: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
+    height: 42,
+    borderRadius: 10,
     borderWidth: 1,
     marginBottom: 12
   },
-  referencePopupLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8
-  },
   referencePopupBtnText: {
     fontSize: 13,
-    fontWeight: '700'
+    fontWeight: '700',
+    textAlign: 'center'
   },
 
   /* TAG TOOLBAR */
@@ -1541,43 +1511,43 @@ const styles = StyleSheet.create({
   /* ACTION CONTROL BUTTONS */
   actionButtonsRow: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
     marginBottom: 6
   },
   checkCodeBtn: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 11,
+    height: 42,
+    paddingHorizontal: 2,
     borderRadius: 10,
     borderWidth: 1
   },
   checkCodeBtnText: {
-    fontSize: 13,
-    fontWeight: '700'
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center'
   },
   solveAiBtn: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 11,
+    height: 42,
+    paddingHorizontal: 2,
     borderRadius: 10,
     borderWidth: 1
   },
   solveAiBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#7C3AED'
+    color: '#7C3AED',
+    textAlign: 'center'
   },
   cardSolveAiBtn: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
     backgroundColor: '#F3E8FF',
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -1589,39 +1559,40 @@ const styles = StyleSheet.create({
   cardSolveAiBtnText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#7C3AED'
+    color: '#7C3AED',
+    textAlign: 'center'
   },
   previewToggleBtn: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
     backgroundColor: '#F1F5F9',
-    paddingVertical: 11,
+    height: 42,
+    paddingHorizontal: 2,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0'
   },
   previewToggleBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#0F172A'
+    color: '#0F172A',
+    textAlign: 'center'
   },
   submitBtn: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
     backgroundColor: '#10B981',
-    paddingVertical: 11,
+    height: 42,
+    paddingHorizontal: 2,
     borderRadius: 10
   },
   submitBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
-    color: '#FFFFFF'
+    color: '#FFFFFF',
+    textAlign: 'center'
   },
   feedbackBox: {
     flexDirection: 'row',
