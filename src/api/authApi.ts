@@ -1,9 +1,14 @@
 import apiClient from './client';
 import { ApiResponse, AuthResponseData, User } from '../types';
+import { probeFastestApiUrl } from '../constants/config';
 
 export const authApi = {
   login: async (credentials: { email: string; password: string }): Promise<ApiResponse<AuthResponseData>> => {
-    const response = await apiClient.post<ApiResponse<AuthResponseData>>('/auth/login', credentials);
+    // Ensure fastest reachable network host is used
+    await probeFastestApiUrl().catch(() => {});
+    const response = await apiClient.post<ApiResponse<AuthResponseData>>('/auth/login', credentials, {
+      timeout: 6000,
+    });
     return response.data;
   },
 

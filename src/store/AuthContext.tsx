@@ -62,20 +62,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response.success && response.data) {
         const { token: jwtToken, user: userData } = response.data;
         if (!jwtToken || !userData?._id) throw new Error('Login did not return a valid session. Please try again.');
-        await storage.saveToken(jwtToken);
-        await storage.saveUser(userData);
-        // The session is real and persisted. Let the login screen finish its bounded
-        // celebration before the existing authenticated navigator replaces it.
-        if (onAuthenticated) {
-          let timer: ReturnType<typeof setTimeout> | undefined;
-          try {
-            await Promise.race([onAuthenticated(), new Promise<void>(resolve => {timer = setTimeout(resolve, 2200);})]);
-          } catch {
-            // A decorative animation must never prevent a valid login.
-          } finally {if (timer) clearTimeout(timer);}
-        }
+        // Persist token and user profile in parallel for minimum latency
+        await Promise.all([
+          storage.saveToken(jwtToken),
+          storage.saveUser(userData),
+        ]);
+        // Update auth state immediately for instant navigation to dashboard
         setToken(jwtToken);
         setUser(userData);
+        // Run any decorative completion asynchronously without blocking the user
+        if (onAuthenticated) {
+          void onAuthenticated().catch(() => {});
+        }
       } else {
         throw new Error(response.message || 'Login failed');
       }

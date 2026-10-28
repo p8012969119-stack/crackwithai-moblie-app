@@ -38,7 +38,13 @@ class AppDelegate: RCTAppDelegate {
     if let bundle = Bundle.main.url(forResource: "main", withExtension: "jsbundle") {
       return bundle
     }
-    RCTBundleURLProvider.sharedSettings().jsLocation = "172.168.9.185"
+    if let ipPath = Bundle.main.path(forResource: "ip", ofType: "txt"),
+       let ip = try? String(contentsOfFile: ipPath, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines),
+       !ip.isEmpty {
+      RCTBundleURLProvider.sharedSettings().jsLocation = ip
+    } else {
+      RCTBundleURLProvider.sharedSettings().jsLocation = "172.168.2.74"
+    }
     return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
     #endif
 #else

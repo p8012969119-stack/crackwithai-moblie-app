@@ -1,9 +1,11 @@
 import React from 'react';
+import { View, TouchableOpacity, Text } from 'react-native';
 import { ParamListBase } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../store/AuthContext';
 import { LoadingView } from '../components/LoadingView';
 import { ErrorState } from '../components/ErrorState';
+import { Button } from '../components/Button';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
@@ -40,19 +42,32 @@ import { ContextEngineeringScreen } from '../screens/context/ContextEngineeringS
 import { ContextStageDetailScreen } from '../screens/context/ContextStageDetailScreen';
 import { AIAutomationScreen } from '../screens/automation/AIAutomationScreen';
 import { AIAutomationStageDetailScreen } from '../screens/automation/AIAutomationStageDetailScreen';
+import { NotificationsScreen } from '../screens/notifications/NotificationsScreen';
 
 type RootStackParams = ParamListBase;
 const Stack = createNativeStackNavigator<RootStackParams>();
 
 export const RootNavigator = () => {
-  const { isAuthenticated, isRestoringSession, sessionError, retrySession } = useAuth();
+  const { isAuthenticated, isRestoringSession, sessionError, retrySession, logout } = useAuth();
 
   if (isRestoringSession) {
     return <LoadingView message="Verifying session..." fullScreen />;
   }
 
   if (sessionError) {
-    return <SafeAreaView style={{flex: 1}}><ErrorState style={{flex: 1}} message={sessionError} onRetry={retrySession} /></SafeAreaView>;
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#0B0F19', justifyContent: 'center' }}>
+        <ErrorState style={{ flex: 1 }} message={sessionError} onRetry={retrySession} />
+        <View style={{ paddingBottom: 40, alignItems: 'center' }}>
+          <Button
+            title="Sign in with another account"
+            variant="ghost"
+            size="medium"
+            onPress={logout}
+          />
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -77,6 +92,7 @@ export const RootNavigator = () => {
           <Stack.Screen name="Quiz" component={QuizScreen} />
           <Stack.Screen name="QuizResult" component={QuizResultScreen} />
           <Stack.Screen name="Bookmarks" component={BookmarksScreen} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} />
           <Stack.Screen name="Certificates" component={CertificatesScreen} />
           <Stack.Screen name="Games" component={GamesScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />

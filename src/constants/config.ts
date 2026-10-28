@@ -1,24 +1,78 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://returns-nail-rules-respected.trycloudflare.com/api';
-const USB_URL = 'http://169.254.33.184:5001/api';
+const TUNNEL_URL = 'https://entrance-contractors-workers-baghdad.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
-const EMULATOR_URL = 'http://10.0.2.2:5001/api';
-const DEV_LAN_IP = '172.168.15.53';
+const DEV_LAN_IP = '172.168.7.189';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
+const USB_URL = 'http://169.254.33.184:5001/api';
+const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
+// Prioritize ultra-low latency local & LAN connections first, then public tunnel fallback
 const CANDIDATE_URLS = [
-  TUNNEL_URL,
-  DEV_LAN_URL,
   LOCAL_URL,
+  DEV_LAN_URL,
+  TUNNEL_URL,
   USB_URL,
   EMULATOR_URL,
 ];
 
 let dynamicApiBaseUrl: string | null = null;
+let probePromise: Promise<string> | null = null;
 
 export const setDynamicApiBaseUrl = (url: string | null) => {
   dynamicApiBaseUrl = url || null;
+};
+
+export const probeFastestApiUrl = async (): Promise<string> => {
+  if (dynamicApiBaseUrl) {
+    return dynamicApiBaseUrl;
+  }
+  if (probePromise) {
+    return probePromise;
+  }
+
+  probePromise = (async () => {
+    const probe = async (url: string, timeoutMs: number): Promise<string> => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const clean = url.replace(/\/+$/, '');
+        const res = await fetch(`${clean}/health`, {
+          method: 'GET',
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (res.ok || res.status === 200 || res.status === 404) {
+          return url;
+        }
+        throw new Error('HTTP ' + res.status);
+      } catch (err) {
+        clearTimeout(timer);
+        throw err;
+      }
+    };
+
+    // Fast probe: Test USB loopback (127.0.0.1) & LAN (172.168.7.189) with 450ms timeout
+    try {
+      const fastestLocal = await Promise.any([
+        probe(LOCAL_URL, 450),
+        probe(DEV_LAN_URL, 600),
+      ]);
+      if (fastestLocal) {
+        setDynamicApiBaseUrl(fastestLocal);
+        return fastestLocal;
+      }
+    } catch {
+      // Local network not reachable (e.g. mobile data away from computer)
+    }
+
+    setDynamicApiBaseUrl(TUNNEL_URL);
+    return TUNNEL_URL;
+  })();
+
+  const result = await probePromise;
+  probePromise = null;
+  return result;
 };
 
 export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
@@ -28,7 +82,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return TUNNEL_URL;
+  return LOCAL_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -40,7 +94,11 @@ export const getDevApiBaseUrl = (): string => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // On Android physical & emulator devices with ADB reverse, 127.0.0.1:5001 is direct, zero-latency USB loopback
+  // Pre-probe in background to detect fastest connection immediately
+  void probeFastestApiUrl();
+
+  // On Android:
+  // LOCAL_URL is instantaneous (<5ms) over ADB reverse. If unreachable, retry switches automatically.
   if (Platform.OS === 'android') {
     return LOCAL_URL;
   }

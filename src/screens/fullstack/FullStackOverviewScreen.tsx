@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -7,75 +7,81 @@ import {
   View,
   StatusBar,
   Platform,
-  Image
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Icon } from '../../components/Icon';
+import { FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
 
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
-interface CourseCardData {
-  id: string;
-  title: string;
-  image: any;
-  bgColor: string;
-  borderColor: string;
-  textColor: string;
-  buttonBg: string;
-  buttonText: string;
-  route: string;
-}
+const COURSE_LOGOS: Record<string, any> = {
+  html: require('../../assets/courses/html.png'),
+  css: require('../../assets/courses/css.png'),
+  javascript: require('../../assets/courses/javascript.png'),
+  nodejs: require('../../assets/courses/nodejs.png'),
+  expressjs: require('../../assets/courses/expressjs.png'),
+  mongodb: require('../../assets/courses/mongodb.png'),
+  restapi: require('../../assets/courses/restapi.png'),
+  auth: require('../../assets/courses/auth.png'),
+  capstone: require('../../assets/courses/capstone.png'),
+};
 
-const COURSES: CourseCardData[] = [
-  {
-    id: 'fullstack',
-    title: 'Full Stack Development',
-    image: require('../../assets/courses/fullstack_development_logo.png'),
-    bgColor: '#F0F4FF',
-    borderColor: '#C7D2FE',
-    textColor: '#1E1B4B',
-    buttonBg: '#4F46E5',
-    buttonText: '#FFFFFF',
-    route: 'FullStackRoadmap',
-  },
+const AI_TRACKS = [
   {
     id: 'prompt',
     title: 'Prompt Engineering',
+    description: 'Master 5 production prompt stages with structured system instructions, role framing, and constraint tuning.',
     image: require('../../assets/courses/prompt_engineering_logo.png'),
-    bgColor: '#F5F3FF',
-    borderColor: '#DDD6FE',
-    textColor: '#2E1065',
+    badge: 'Interactive Studio',
+    bgColor: '#FAF5FF',
+    borderColor: '#E9D5FF',
+    textColor: '#581C87',
     buttonBg: '#7C3AED',
-    buttonText: '#FFFFFF',
     route: 'PromptEngineering',
   },
   {
     id: 'context',
     title: 'Context Engineering',
+    description: 'Learn memory window design, multi-turn state preservation, and grounding architectures for AI systems.',
     image: require('../../assets/courses/context_engineering_logo.png'),
+    badge: 'Advanced RAG',
     bgColor: '#F0F9FF',
     borderColor: '#BAE6FD',
-    textColor: '#0C4A6E',
+    textColor: '#075985',
     buttonBg: '#0284C7',
-    buttonText: '#FFFFFF',
     route: 'ContextEngineering',
   },
   {
     id: 'automation',
     title: 'AI Automation',
+    description: 'Orchestrate autonomous agent pipelines, trigger automations, and connect LLMs to production tools.',
     image: require('../../assets/courses/ai_automation_logo.png'),
+    badge: 'Production Agents',
     bgColor: '#ECFDF5',
     borderColor: '#A7F3D0',
-    textColor: '#064E3B',
+    textColor: '#065F46',
     buttonBg: '#10B981',
-    buttonText: '#FFFFFF',
     route: 'AIAutomation',
   },
 ];
 
 export const FullStackOverviewScreen = () => {
   const navigation = useNavigation<any>();
+  const [activeTab, setActiveTab] = useState<'fullstack' | 'ai'>('fullstack');
+
+  const handleOpenCourse = (techId: string) => {
+    navigation.navigate('HtmlCourse', { tech: techId });
+  };
+
+  const handleGoBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('MainTabs', { screen: 'HomeTab' });
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -85,7 +91,7 @@ export const FullStackOverviewScreen = () => {
       <View style={styles.topBar}>
         <TouchableOpacity
           accessibilityRole="button"
-          onPress={() => navigation.goBack()}
+          onPress={handleGoBack}
           style={styles.backButton}
         >
           <Icon name="chevron-left" size={22} color="#0F172A" />
@@ -100,54 +106,165 @@ export const FullStackOverviewScreen = () => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* SECTION HEADING */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Learning Tracks</Text>
+        {/* SEGMENTED TAB SWITCHER */}
+        <View style={styles.tabSwitcherContainer}>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'fullstack' && styles.tabButtonActive]}
+            activeOpacity={0.8}
+            onPress={() => setActiveTab('fullstack')}
+          >
+            <Text style={[styles.tabButtonText, activeTab === 'fullstack' && styles.tabButtonTextActive]}>
+              💻 Full Stack ({FULLSTACK_TRACKS.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'ai' && styles.tabButtonActive]}
+            activeOpacity={0.8}
+            onPress={() => setActiveTab('ai')}
+          >
+            <Text style={[styles.tabButtonText, activeTab === 'ai' && styles.tabButtonTextActive]}>
+              🤖 AI Specializations ({AI_TRACKS.length})
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* 4 UNIQUE PREMIUM COURSE CARDS */}
-        <View style={styles.coursesList}>
-          {COURSES.map((course) => (
-            <TouchableOpacity
-              key={course.id}
-              style={[
-                styles.courseCard,
-                {
-                  backgroundColor: course.bgColor,
-                  borderColor: course.borderColor,
-                },
-              ]}
-              activeOpacity={0.88}
-              onPress={() => navigation.navigate(course.route)}
-            >
-              <View style={styles.cardInner}>
-                <View style={styles.logoWrapper}>
-                  <Image
-                    source={course.image}
-                    style={styles.logoImage}
-                    resizeMode="contain"
-                  />
+        {/* =========================================================
+            TAB 1: FULL STACK DEVELOPMENT (ALL 9 COURSES DIRECTLY)
+            ========================================================= */}
+        {activeTab === 'fullstack' && (
+          <View style={styles.sectionArea}>
+            {/* HERO BANNER */}
+            <View style={styles.heroBanner}>
+              <View style={styles.heroTextCol}>
+                <View style={styles.heroBadgePill}>
+                  <Text style={styles.heroBadgeText}>COMPLETE ROADMAP</Text>
                 </View>
-
-                <View style={styles.cardContent}>
-                  <Text
-                    style={[styles.courseTitle, { color: course.textColor }]}
-                    numberOfLines={2}
-                  >
-                    {course.title}
-                  </Text>
-
-                  <View style={[styles.ctaButton, { backgroundColor: course.buttonBg }]}>
-                    <Text style={[styles.ctaButtonText, { color: course.buttonText }]}>
-                      Start Learning
-                    </Text>
-                    <Icon name="arrow-right" size={13} color={course.buttonText} style={{ marginLeft: 5 }} />
-                  </View>
-                </View>
+                <Text style={styles.heroTitle}>Full Stack Development</Text>
+                <Text style={styles.heroSubtitle}>
+                  From Frontend foundations (HTML, CSS, JS) to Backend APIs, Databases & Security.
+                </Text>
               </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+              <View style={styles.heroStatsBadge}>
+                <Text style={styles.heroStatsNumber}>{FULLSTACK_TRACKS.length}</Text>
+                <Text style={styles.heroStatsLabel}>Courses</Text>
+              </View>
+            </View>
+
+            {/* LIST OF ALL 9 FULL STACK COURSES */}
+            <View style={styles.coursesList}>
+              {FULLSTACK_TRACKS.map((track, idx) => {
+                const logo = COURSE_LOGOS[track.id];
+                return (
+                  <TouchableOpacity
+                    key={track.id}
+                    style={styles.courseItemCard}
+                    activeOpacity={0.88}
+                    onPress={() => handleOpenCourse(track.id)}
+                  >
+                    <View style={styles.cardHeaderRow}>
+                      <View style={styles.logoSquare}>
+                        {logo ? (
+                          <Image
+                            source={logo}
+                            style={styles.courseLogo}
+                            resizeMode="contain"
+                          />
+                        ) : (
+                          <Icon name="code" size={26} color="#4F46E5" />
+                        )}
+                      </View>
+
+                      <View style={styles.cardMetaBlock}>
+                        <View style={styles.badgeRow}>
+                          <View style={styles.trackIndexBadge}>
+                            <Text style={styles.trackIndexText}>TRACK {idx + 1}</Text>
+                          </View>
+                          <Text style={styles.trackLevelText}>
+                            {track.level || 'Beginner'} · {track.lessonsCount || 20} Lessons
+                          </Text>
+                        </View>
+                        <Text style={styles.courseTitle}>{track.title}</Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.courseDescription} numberOfLines={2}>
+                      {track.description}
+                    </Text>
+
+                    <View style={styles.cardFooterRow}>
+                      <Text style={styles.durationText}>
+                        ⏱️ {track.duration || '3 hours'}
+                      </Text>
+
+                      <TouchableOpacity
+                        style={styles.startBtnPill}
+                        activeOpacity={0.85}
+                        onPress={() => handleOpenCourse(track.id)}
+                      >
+                        <Text style={styles.startBtnText}>Start Course</Text>
+                        <Icon name="arrow-right" size={13} color="#FFFFFF" style={{ marginLeft: 5 }} />
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* =========================================================
+            TAB 2: AI SPECIALIZATIONS (PROMPT, CONTEXT, AUTOMATION)
+            ========================================================= */}
+        {activeTab === 'ai' && (
+          <View style={styles.sectionArea}>
+            <View style={styles.aiTracksList}>
+              {AI_TRACKS.map((track) => (
+                <TouchableOpacity
+                  key={track.id}
+                  style={[
+                    styles.aiCard,
+                    {
+                      backgroundColor: track.bgColor,
+                      borderColor: track.borderColor,
+                    },
+                  ]}
+                  activeOpacity={0.88}
+                  onPress={() => navigation.navigate(track.route)}
+                >
+                  <View style={styles.aiCardInner}>
+                    <View style={styles.aiLogoWrapper}>
+                      <Image
+                        source={track.image}
+                        style={styles.aiLogoImage}
+                        resizeMode="contain"
+                      />
+                    </View>
+
+                    <View style={styles.aiCardContent}>
+                      <View style={[styles.aiPillBadge, { backgroundColor: track.borderColor }]}>
+                        <Text style={[styles.aiPillText, { color: track.textColor }]}>
+                          {track.badge}
+                        </Text>
+                      </View>
+                      <Text style={[styles.aiTrackTitle, { color: track.textColor }]}>
+                        {track.title}
+                      </Text>
+                      <Text style={styles.aiTrackDesc} numberOfLines={2}>
+                        {track.description}
+                      </Text>
+
+                      <View style={[styles.aiCtaBtn, { backgroundColor: track.buttonBg }]}>
+                        <Text style={styles.aiCtaText}>Start Learning</Text>
+                        <Icon name="arrow-right" size={13} color="#FFFFFF" style={{ marginLeft: 5 }} />
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -185,41 +302,232 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   contentContainer: {
-    padding: 18,
+    padding: 16,
     paddingBottom: 40,
   },
-  sectionHeader: {
+
+  /* TAB SWITCHER */
+  tabSwitcherContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    padding: 4,
     marginBottom: 16,
   },
-  sectionTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 22,
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  tabButtonActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  tabButtonTextActive: {
+    color: '#4F46E5',
     fontWeight: '800',
-    color: '#0F172A',
+  },
+
+  sectionArea: {
+    gap: 14,
+  },
+
+  /* HERO BANNER */
+  heroBanner: {
+    backgroundColor: '#4F46E5',
+    borderRadius: 20,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  heroTextCol: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  heroBadgePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 6,
+  },
+  heroBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  heroTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.85)',
+    lineHeight: 16,
+  },
+  heroStatsBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  heroStatsNumber: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  heroStatsLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    opacity: 0.9,
   },
 
   /* COURSES LIST */
   coursesList: {
-    gap: 16,
+    gap: 12,
   },
-  courseCard: {
+  courseItemCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  logoSquare: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 6,
+  },
+  courseLogo: {
+    width: '100%',
+    height: '100%',
+  },
+  cardMetaBlock: {
+    flex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  trackIndexBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  trackIndexText: {
+    color: '#4F46E5',
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  trackLevelText: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  courseTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  courseDescription: {
+    fontSize: 12.5,
+    color: '#475569',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  cardFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  durationText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  startBtnPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4F46E5',
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+  },
+  startBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
+  /* AI TRACKS */
+  aiTracksList: {
+    gap: 14,
+  },
+  aiCard: {
     borderRadius: 20,
     padding: 16,
     borderWidth: 1.5,
-    overflow: 'hidden',
-    position: 'relative',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 3,
   },
-  cardInner: {
+  aiCardInner: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 14,
   },
-  logoWrapper: {
+  aiLogoWrapper: {
     width: 68,
     height: 68,
     borderRadius: 16,
@@ -234,32 +542,47 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  logoImage: {
+  aiLogoImage: {
     width: '100%',
     height: '100%',
   },
-  cardContent: {
+  aiCardContent: {
     flex: 1,
-    justifyContent: 'space-between',
-    gap: 10,
+    gap: 6,
   },
-  courseTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 18,
+  aiPillBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  aiPillText: {
+    fontSize: 10,
     fontWeight: '800',
-    lineHeight: 24,
   },
-  ctaButton: {
+  aiTrackTitle: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  aiTrackDesc: {
+    fontSize: 12,
+    color: '#475569',
+    lineHeight: 16,
+  },
+  aiCtaBtn: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 7,
     paddingHorizontal: 14,
     borderRadius: 20,
+    marginTop: 4,
   },
-  ctaButtonText: {
+  aiCtaText: {
     fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
+    color: '#FFFFFF',
   },
 });

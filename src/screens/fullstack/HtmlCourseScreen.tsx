@@ -54,15 +54,18 @@ const DEFAULT_BRAND_COLOR = { bg: '#FFF4ED', border: '#FFD8C2', text: '#9A3412',
 const FONT_FAMILY = Platform.OS === 'android' ? undefined : 'System';
 
 export const HtmlCourseScreen: React.FC = () => {
-  const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  
-  // Dynamic technology parameter, defaults strictly to 'html'
   const tech = (route.params?.tech || route.params?.courseSlug || 'html').toLowerCase();
 
   if (tech === 'prompt-engineering' || tech === 'prompt' || tech === 'promptengineering') {
     return <PromptEngineeringScreen />;
   }
+
+  return <HtmlCourseMainScreen tech={tech} />;
+};
+
+const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
+  const navigation = useNavigation<any>();
   const activeTrack = useMemo(() => {
     return FULLSTACK_TRACKS.find(t => t.id === tech) || FULLSTACK_TRACKS[0];
   }, [tech]);

@@ -30,7 +30,10 @@ export const apiClient: AxiosInstance = axios.create({
 // Request Interceptor: Inject JWT token into Authorization header and ensure current baseURL
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    config.baseURL = config.baseURL || CONFIG.API_BASE_URL;
+    const retryConfig = config as (InternalAxiosRequestConfig & { _retryCount?: number });
+    if (!retryConfig._retryCount) {
+      config.baseURL = CONFIG.API_BASE_URL;
+    }
     const token = await storage.getToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -50,7 +53,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (axios.isCancel(error)) return Promise.reject(error);
 
-    // Automatic transparent retry on alternate network host (e.g. LAN IP -> localhost -> emulator IP)
+    // Automatic transparent retry on alternate network host (e.g. localhost -> LAN IP -> Tunnel)
     const config = error.config as (InternalAxiosRequestConfig & { _retryCount?: number }) | undefined;
     const isNetworkOrTimeout = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
     if (config && (!config._retryCount || config._retryCount < 3) && isNetworkOrTimeout) {
@@ -59,6 +62,8 @@ apiClient.interceptors.response.use(
       if (altBase && altBase !== currentBase) {
         config._retryCount = (config._retryCount || 0) + 1;
         config.baseURL = altBase;
+        // Fast failover timeout (3.5s) on retry so the user does not wait 12s
+        config.timeout = 3500;
         try {
           const res = await apiClient(config);
           setDynamicApiBaseUrl(altBase);

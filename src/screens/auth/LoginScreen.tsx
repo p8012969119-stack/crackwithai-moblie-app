@@ -7,6 +7,7 @@ import {Button} from '../../components/Button';
 import {Input} from '../../components/Input';
 import {AnimatedEyeToggle} from '../../components/AnimatedAuthIcons';
 import {LoginMascot, LoginMascotHandle} from '../../components/LoginMascot';
+import {probeFastestApiUrl} from '../../constants/config';
 
 const gradient = ['#EEE7FC', '#F0E9FC', '#F2ECFD', '#F4EFFD', '#F6F2FD', '#F8F5FE', '#FAF8FE', '#FCFAFF', '#FDFCFF', '#FFFFFF'];
 
@@ -29,6 +30,7 @@ export const LoginScreen = ({navigation}: {navigation: {navigate: (route: string
   useFocusEffect(useCallback(() => {setActive(true); return () => {setActive(false); mascot.current?.reset();};}, []));
   useEffect(() => {
     live.current = true;
+    void probeFastestApiUrl();
     void AccessibilityInfo.isReduceMotionEnabled().then(value => {if (live.current) setReduceMotion(value);});
     const motion = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
     const app = AppState.addEventListener('change', state => {setForeground(state === 'active'); if (state !== 'active') mascot.current?.reset();});

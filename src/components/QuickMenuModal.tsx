@@ -7,8 +7,15 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Platform,
+  Image,
 } from 'react-native';
-import { Icon } from './Icon';
+
+const MENU_ICONS = {
+  profile: require('../assets/menu-icons/profile.png'),
+  settings: require('../assets/menu-icons/settings.png'),
+  certificate: require('../assets/menu-icons/certificate.png'),
+  notification: require('../assets/menu-icons/notification.png'),
+};
 
 interface QuickMenuModalProps {
   visible: boolean;
@@ -25,7 +32,7 @@ export const QuickMenuModal: React.FC<QuickMenuModalProps> = ({
     onClose();
     setTimeout(() => {
       onNavigate(screenName);
-    }, 150);
+    }, 120);
   };
 
   return (
@@ -52,12 +59,10 @@ export const QuickMenuModal: React.FC<QuickMenuModalProps> = ({
                 {/* 1. Profile */}
                 <TouchableOpacity
                   style={styles.menuItem}
-                  activeOpacity={0.75}
+                  activeOpacity={0.72}
                   onPress={() => handleItemPress('Profile')}
                 >
-                  <View style={[styles.iconCircle, { backgroundColor: '#EEF2FF' }]}>
-                    <Icon name="user" size={18} color="#4F46E5" />
-                  </View>
+                  <Image source={MENU_ICONS.profile} style={styles.menuIconImg} resizeMode="contain" />
                   <View style={styles.itemTextCol}>
                     <Text style={styles.itemTitle}>Profile</Text>
                     <Text style={styles.itemSubtitle}>View & edit account settings</Text>
@@ -68,12 +73,10 @@ export const QuickMenuModal: React.FC<QuickMenuModalProps> = ({
                 {/* 2. Settings & Language */}
                 <TouchableOpacity
                   style={styles.menuItem}
-                  activeOpacity={0.75}
+                  activeOpacity={0.72}
                   onPress={() => handleItemPress('LanguageSelection')}
                 >
-                  <View style={[styles.iconCircle, { backgroundColor: '#FEF3C7' }]}>
-                    <Icon name="settings" size={18} color="#D97706" />
-                  </View>
+                  <Image source={MENU_ICONS.settings} style={styles.menuIconImg} resizeMode="contain" />
                   <View style={styles.itemTextCol}>
                     <Text style={styles.itemTitle}>Settings & Language</Text>
                     <Text style={styles.itemSubtitle}>App preferences & language</Text>
@@ -84,12 +87,10 @@ export const QuickMenuModal: React.FC<QuickMenuModalProps> = ({
                 {/* 3. Certificates */}
                 <TouchableOpacity
                   style={styles.menuItem}
-                  activeOpacity={0.75}
+                  activeOpacity={0.72}
                   onPress={() => handleItemPress('Certificates')}
                 >
-                  <View style={[styles.iconCircle, { backgroundColor: '#ECFDF5' }]}>
-                    <Icon name="award" size={18} color="#059669" />
-                  </View>
+                  <Image source={MENU_ICONS.certificate} style={styles.menuIconImg} resizeMode="contain" />
                   <View style={styles.itemTextCol}>
                     <Text style={styles.itemTitle}>Certificates</Text>
                     <Text style={styles.itemSubtitle}>View earned accomplishments</Text>
@@ -97,18 +98,16 @@ export const QuickMenuModal: React.FC<QuickMenuModalProps> = ({
                   <Text style={styles.chevron}>›</Text>
                 </TouchableOpacity>
 
-                {/* 4. Notifications & Bookmarks */}
+                {/* 4. Notifications */}
                 <TouchableOpacity
                   style={styles.menuItem}
-                  activeOpacity={0.75}
-                  onPress={() => handleItemPress('Bookmarks')}
+                  activeOpacity={0.72}
+                  onPress={() => handleItemPress('Notifications')}
                 >
-                  <View style={[styles.iconCircle, { backgroundColor: '#F3E8FF' }]}>
-                    <Icon name="bell" size={18} color="#9333EA" />
-                  </View>
+                  <Image source={MENU_ICONS.notification} style={styles.menuIconImg} resizeMode="contain" />
                   <View style={styles.itemTextCol}>
                     <Text style={styles.itemTitle}>Notifications</Text>
-                    <Text style={styles.itemSubtitle}>Saved items & updates</Text>
+                    <Text style={styles.itemSubtitle}>Learning alerts & updates</Text>
                   </View>
                   <Text style={styles.chevron}>›</Text>
                 </TouchableOpacity>
@@ -131,15 +130,15 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   menuContainer: {
-    width: 270,
+    width: 285,
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 18,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
+    elevation: 10,
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
@@ -173,20 +172,20 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   menuItemsList: {
-    gap: 10,
+    gap: 8,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 14,
     gap: 12,
   },
-  iconCircle: {
-    width: 38,
-    height: 38,
+  menuIconImg: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   itemTextCol: {
     flex: 1,

@@ -12,6 +12,7 @@ import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { storage } from '../../services/storage';
 import { CONFIG } from '../../constants/config';
+import { useAuth } from '../../store/AuthContext';
 
 interface LanguageOption {
   code: string;
@@ -30,6 +31,7 @@ export const LanguageSelectionScreen: React.FC<{ navigation: any; route?: any }>
   navigation,
   route,
 }) => {
+  const { isAuthenticated } = useAuth();
   const isFromProfile = route?.params?.fromProfile || false;
   const [selectedLang, setSelectedLang] = useState<string>('en');
 
@@ -44,23 +46,23 @@ export const LanguageSelectionScreen: React.FC<{ navigation: any; route?: any }>
   }, []);
 
   const handleGoBack = () => {
-    if (isFromProfile) {
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        navigation.navigate('Profile');
-      }
-    } else if (navigation.canGoBack()) {
+    if (navigation.canGoBack()) {
       navigation.goBack();
+    } else if (isAuthenticated) {
+      navigation.navigate('MainTabs');
     } else {
-      navigation.navigate('Profile');
+      navigation.navigate('Login');
     }
   };
 
   const handleContinue = async () => {
     await storage.setItem(CONFIG.STORAGE_KEYS.LANGUAGE, selectedLang);
-    if (isFromProfile) {
-      handleGoBack();
+    if (isFromProfile || isAuthenticated) {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate('MainTabs');
+      }
     } else {
       navigation.replace('Login');
     }

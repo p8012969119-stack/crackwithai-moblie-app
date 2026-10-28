@@ -596,6 +596,9 @@ export const HtmlLessonScreen: React.FC = () => {
     }
   };
 
+  const referenceSolution = useMemo(() => getLessonSolution(lesson, activeTech), [lesson, activeTech]);
+  const syntaxErrorsCount = validationResult?.errors?.length || 0;
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -632,9 +635,6 @@ export const HtmlLessonScreen: React.FC = () => {
       </SafeAreaView>
     );
   }
-
-  const referenceSolution = useMemo(() => getLessonSolution(lesson, activeTech), [lesson, activeTech]);
-  const syntaxErrorsCount = validationResult?.errors?.length || 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
