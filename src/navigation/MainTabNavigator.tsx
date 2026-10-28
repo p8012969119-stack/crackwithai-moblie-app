@@ -88,7 +88,7 @@ export const MainTabNavigator = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="FullStackTab"
+      initialRouteName="HomeTab"
       tabBar={({ state, descriptors, navigation }) => {
         if (keyboardVisible) return null;
         return (
