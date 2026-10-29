@@ -352,7 +352,6 @@ export const FullStackCertificateScreen: React.FC = () => {
                 onPress={handleCopyLink}
                 activeOpacity={0.8}
               >
-                <Icon name={copied ? 'check' : 'copy'} size={15} color="#818CF8" />
                 <Text style={styles.utilityBtnText}>
                   {copied ? 'Link Copied!' : 'Copy Verification Link'}
                 </Text>

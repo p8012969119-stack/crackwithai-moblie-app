@@ -242,11 +242,11 @@ export const HtmlPlaygroundScreen: React.FC = () => {
 
         <View style={styles.topRightActions}>
           <TouchableOpacity
-            style={styles.iconActionBtn}
+            style={[styles.iconActionBtn, { width: 'auto', paddingHorizontal: 10, borderRadius: 8 }]}
             onPress={handleCopy}
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
-            <Icon name="copy" size={16} color={COLORS.textSecondary} />
+            <Text style={{ fontSize: 12, fontWeight: '600', color: COLORS.textSecondary }} numberOfLines={1}>Copy</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

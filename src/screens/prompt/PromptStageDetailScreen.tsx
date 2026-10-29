@@ -284,9 +284,8 @@ export const PromptStageDetailScreen: React.FC = () => {
               activeOpacity={0.85}
               onPress={handleCopyPrompt}
             >
-              <Icon name={copied ? 'check' : 'copy'} size={18} color="#FFFFFF" />
               <Text style={styles.copyBtnText}>
-                {copied ? 'Copied to Clipboard! ✓' : 'Copy Prompt to Clipboard'}
+                {copied ? 'Copied to Clipboard!' : 'Copy Prompt to Clipboard'}
               </Text>
             </TouchableOpacity>
 
