@@ -74,7 +74,7 @@ export const aiApi = {
           action: action.toLowerCase(),
           currentCode: prompt.length > 50 ? prompt : undefined,
         },
-        { timeout: 8000 }
+        { timeout: 25000 }
       );
       if (response.data && response.data.success) {
         return response.data;
@@ -271,7 +271,7 @@ console.log('Result:', output);`;
         tone,
       };
 
-      const response = await apiClient.post('/ai/email', payload, { timeout: 8000 });
+      const response = await apiClient.post('/ai/email', payload, { timeout: 25000 });
       if (response.data && response.data.success) {
         const d = (response.data as any).data || {};
         let body = d.generatedEmail || d.body || d.text || '';
@@ -369,7 +369,7 @@ console.log('Result:', output);`;
         aspectRatio: options?.aspectRatio || '1:1',
         quality: options?.quality || 'medium',
         numberOfImages: options?.numImages || 1,
-      }, { timeout: 8000 });
+      }, { timeout: 25000 });
       if (response.data && response.data.success) {
         const d = (response.data as any).data || {};
         const rawImages = d.images || [];
@@ -451,7 +451,7 @@ console.log('Result:', output);`;
         const response = await apiClient.post('/ai/voice', {
           text: payload.script,
           ...payload,
-        }, { timeout: 8000 });
+        }, { timeout: 25000 });
         if (response.data && response.data.success) {
           const d = (response.data as any).data || {};
           return {

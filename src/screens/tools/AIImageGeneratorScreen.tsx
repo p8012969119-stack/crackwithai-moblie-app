@@ -125,7 +125,7 @@ export const AIImageGeneratorScreen = ({ navigation }: any) => {
     const ratioObj = ASPECT_RATIO_OPTIONS.find((r) => r.id === selectedRatio) || ASPECT_RATIO_OPTIONS[0];
     const seed = Math.floor(Math.random() * 1000000);
 
-    const fallbackImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${ratioObj.width}&height=${ratioObj.height}&seed=${seed}&nologo=true&model=flux`;
+    const fallbackImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${ratioObj.width}&height=${ratioObj.height}&seed=${seed}&nologo=true`;
 
     try {
       const res = await aiApi.generateImage(enhancedPrompt, {
