@@ -16,17 +16,15 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { Icon } from '../../components/Icon';
 import { aiApi } from '../../api/aiApi';
 import { copyToClipboard } from '../../utils/clipboard';
 
-interface ImageMessage {
+interface GeneratedImageItem {
   id: string;
-  sender: 'user' | 'studio';
-  text?: string;
-  imageUrl?: string;
-  style?: string;
-  aspectRatio?: string;
+  prompt: string;
+  imageUrl: string;
+  style: string;
+  aspectRatio: string;
   timestamp: string;
 }
 
@@ -41,17 +39,17 @@ const STYLE_OPTIONS = [
 
 const ASPECT_RATIO_OPTIONS = [
   { id: '1:1', label: '1:1 Square', width: 1024, height: 1024 },
-  { id: '16:9', label: '16:9 Banner', width: 1344, height: 768 },
-  { id: '9:16', label: '9:16 Story', width: 768, height: 1344 },
+  { id: '16:9', label: '16:9 Banner', width: 1280, height: 720 },
+  { id: '9:16', label: '9:16 Story', width: 720, height: 1280 },
   { id: '4:3', label: '4:3 Standard', width: 1024, height: 768 },
 ];
 
-const QUICK_PILLS = [
-  { label: 'Cyberpunk Samurai ➔', prompt: 'Cyberpunk samurai standing in neon rain with glowing katana' },
-  { label: '3D Mascot ➔', prompt: 'Cute 3D anime mascot character floating in magical space' },
-  { label: 'Cinematic Portrait ➔', prompt: 'Cinematic portrait of a visionary founder looking at futuristic holographic screens' },
-  { label: 'Hyper-realistic Lion ➔', prompt: 'Hyper-realistic lion crowned with glowing golden aura' },
-  { label: 'Futuristic City ➔', prompt: 'Futuristic skyline of a sci-fi metropolis at dusk with flying vehicles' },
+const QUICK_PROMPTS = [
+  { label: 'Cyberpunk Samurai', prompt: 'Cyberpunk samurai standing in neon rain with glowing katana' },
+  { label: '3D Mascot', prompt: 'Cute 3D anime mascot character floating in magical space' },
+  { label: 'Cinematic Portrait', prompt: 'Cinematic portrait of a visionary founder looking at futuristic holographic screens' },
+  { label: 'Hyper-realistic Lion', prompt: 'Hyper-realistic lion crowned with glowing golden aura' },
+  { label: 'Futuristic City', prompt: 'Futuristic skyline of a sci-fi metropolis at dusk with flying vehicles' },
 ];
 
 export const AIImageGeneratorScreen = ({ navigation }: any) => {
@@ -59,26 +57,17 @@ export const AIImageGeneratorScreen = ({ navigation }: any) => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [prompt, setPrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState('');
+  const [showNegativeInput, setShowNegativeInput] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState('Photorealistic');
   const [selectedRatio, setSelectedRatio] = useState('1:1');
 
-  // Dropdown & Modal states
-  const [showStyleDropdown, setShowStyleDropdown] = useState(false);
-  const [showRatioDropdown, setShowRatioDropdown] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-
   const [generating, setGenerating] = useState(false);
-  const [history, setHistory] = useState<{ id: string; prompt: string; imageUrl: string; timestamp: string }[]>([]);
 
-  const [messages, setMessages] = useState<ImageMessage[]>([
-    {
-      id: 'welcome_msg',
-      sender: 'studio',
-      text: '🎨 **CrackWithAI Studio** ready. Type a prompt, tap a quick pill, or use voice input to generate high-resolution images.',
-      timestamp: 'Just now',
-    },
-  ]);
+  const [images, setImages] = useState<GeneratedImageItem[]>([]);
+  const [history, setHistory] = useState<GeneratedImageItem[]>([]);
 
   const handleGoBack = () => {
     if (navigation.canGoBack()) {
@@ -98,66 +87,37 @@ export const AIImageGeneratorScreen = ({ navigation }: any) => {
   }, [navigation]);
 
   useEffect(() => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 150);
-  }, [messages, generating]);
+    if (images.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
+  }, [images, generating]);
 
   const handleVoiceInput = () => {
     setIsRecordingVoice(true);
     setTimeout(() => {
       setIsRecordingVoice(false);
       const voicePrompts = [
-        'Cyberpunk samurai standing in neon rain',
-        'Hyper-realistic astronaut walking on Mars surface',
-        'Futuristic cybernetic lion with glowing neon eyes',
-        'Cute 3D anime mascot floating in space',
+        'Cyberpunk samurai standing in neon rain with glowing katana',
+        'Hyper-realistic astronaut exploring mysterious crystalline cave on Mars',
+        'Futuristic cybernetic lion with glowing neon aura and golden armor',
+        'Cute 3D anime mascot floating in a starry nebula',
       ];
       const randomPrompt = voicePrompts[Math.floor(Math.random() * voicePrompts.length)];
       setPrompt(randomPrompt);
-    }, 2000);
+    }, 1800);
   };
 
-  const handleAttachFile = () => {
-    Alert.alert(
-      'Attach Sample Concept',
-      'Select a preset concept to populate prompt:',
-      [
-        {
-          text: 'Cyberpunk Samurai',
-          onPress: () => setPrompt('Cyberpunk samurai standing in neon rain with glowing katana'),
-        },
-        {
-          text: 'Futuristic AI Workspace',
-          onPress: () => setPrompt('Ultra-modern futuristic AI workspace with developer holograms'),
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
-  };
-
-  const handleSendPrompt = async (overridePrompt?: string) => {
+  const handleGenerateImage = async (overridePrompt?: string) => {
     const activePrompt = (overridePrompt || prompt).trim();
     if (!activePrompt) {
-      Alert.alert('Required Prompt', 'Please type a prompt, tap a quick pill, or use voice input.');
+      Alert.alert('Required Prompt', 'Please describe the image you want to generate or select a quick preset.');
       return;
     }
 
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    // Append User Message
-    const userMsg: ImageMessage = {
-      id: `usr_${Date.now()}`,
-      sender: 'user',
-      text: activePrompt,
-      timestamp: nowStr,
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setPrompt('');
     setGenerating(true);
-    setShowStyleDropdown(false);
-    setShowRatioDropdown(false);
 
     const styleObj = STYLE_OPTIONS.find((s) => s.id === selectedStyle);
     const styleTag = styleObj?.tag || selectedStyle;
@@ -172,33 +132,34 @@ export const AIImageGeneratorScreen = ({ navigation }: any) => {
         style: selectedStyle,
         aspectRatio: selectedRatio,
         quality: 'high',
+        negativePrompt: negativePrompt.trim() || undefined,
       });
 
       const finalUrl = res.data?.imageUrl || fallbackImageUrl;
 
-      const studioMsg: ImageMessage = {
-        id: `studio_${Date.now()}`,
-        sender: 'studio',
+      const newItem: GeneratedImageItem = {
+        id: `img_${Date.now()}`,
+        prompt: activePrompt,
         imageUrl: finalUrl,
         style: selectedStyle,
         aspectRatio: selectedRatio,
         timestamp: nowStr,
       };
 
-      setMessages((prev) => [...prev, studioMsg]);
-      setHistory((prev) => [{ id: studioMsg.id, prompt: activePrompt, imageUrl: finalUrl, timestamp: nowStr }, ...prev]);
+      setImages((prev) => [...prev, newItem]);
+      setHistory((prev) => [newItem, ...prev]);
     } catch (err) {
-      console.warn('[AIImageGeneratorScreen] Image fallback active:', err);
-      const studioMsg: ImageMessage = {
-        id: `studio_${Date.now()}`,
-        sender: 'studio',
+      console.warn('[AIImageGeneratorScreen] Error generating image:', err);
+      const newItem: GeneratedImageItem = {
+        id: `img_${Date.now()}`,
+        prompt: activePrompt,
         imageUrl: fallbackImageUrl,
         style: selectedStyle,
         aspectRatio: selectedRatio,
         timestamp: nowStr,
       };
-      setMessages((prev) => [...prev, studioMsg]);
-      setHistory((prev) => [{ id: studioMsg.id, prompt: activePrompt, imageUrl: fallbackImageUrl, timestamp: nowStr }, ...prev]);
+      setImages((prev) => [...prev, newItem]);
+      setHistory((prev) => [newItem, ...prev]);
     } finally {
       setGenerating(false);
     }
@@ -208,277 +169,248 @@ export const AIImageGeneratorScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* HEADER */}
+      {/* TOP HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backPill} onPress={handleGoBack} activeOpacity={0.7}>
-          <Icon name="chevron-left" size={16} color="#0F172A" />
-          <Text style={styles.backPillText}>Tools</Text>
+        <TouchableOpacity style={styles.headerBtn} onPress={handleGoBack} activeOpacity={0.7}>
+          <Text style={styles.headerBtnText} numberOfLines={1}>Back</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>AI Image Generator</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>AI Image Generator</Text>
 
-        <TouchableOpacity style={styles.historyBlackBtn} onPress={() => setShowHistoryModal(true)} activeOpacity={0.8}>
-          <Text style={styles.historyBlackBtnText}>History</Text>
+        <TouchableOpacity style={styles.headerBtnDark} onPress={() => setShowHistoryModal(true)} activeOpacity={0.8}>
+          <Text style={styles.headerBtnDarkText} numberOfLines={1}>History</Text>
         </TouchableOpacity>
       </View>
 
-      {/* QUICK PROMPT PILLS ROW */}
-      <View style={styles.quickPillsWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPillsScroll}>
-          {QUICK_PILLS.map((pill, idx) => (
-            <TouchableOpacity
-              key={idx}
-              style={styles.quickPillBtn}
-              onPress={() => {
-                setPrompt(pill.prompt);
-                handleSendPrompt(pill.prompt);
-              }}
-              activeOpacity={0.75}
-            >
-              <Text style={styles.quickPillText}>{pill.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* CHAT THREAD MESSAGES AREA */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
       >
         <ScrollView
           ref={scrollViewRef}
-          style={styles.messagesFeed}
-          contentContainerStyle={styles.messagesContainer}
+          style={styles.scrollArea}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {messages.map((item) => {
-            const isUser = item.sender === 'user';
-            return (
-              <View key={item.id} style={[styles.msgRow, isUser ? styles.msgRowUser : styles.msgRowStudio]}>
-                {!isUser && (
-                  <View style={styles.studioAvatar}>
-                    <Image
-                      source={require('../../assets/images/logo/crackwithai.png')}
-                      style={styles.studioAvatarLogo}
-                      resizeMode="contain"
-                    />
-                  </View>
-                )}
+          {/* QUICK CONCEPT PRESETS */}
+          <View style={styles.sectionBlock}>
+            <Text style={styles.sectionLabel}>Quick Inspiration Concepts</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.presetsRow}>
+              {QUICK_PROMPTS.map((p, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.presetPill}
+                  onPress={() => {
+                    setPrompt(p.prompt);
+                    handleGenerateImage(p.prompt);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.presetPillText} numberOfLines={1}>{p.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
 
-                <View style={[styles.msgBubble, isUser ? styles.userBubble : styles.studioBubble]}>
-                  {/* TEXT CONTENT */}
-                  {item.text && (
-                    <Text style={[styles.msgText, isUser ? styles.userMsgText : styles.studioMsgText]}>
-                      {item.text}
-                    </Text>
-                  )}
-
-                  {/* GENERATED IMAGE ITEM */}
-                  {item.imageUrl && (
-                    <View style={styles.imageWrapper}>
-                      <View style={styles.imageMetaHeader}>
-                        <Text style={styles.imageMetaText}>
-                          Style: <Text style={styles.imageMetaBold}>{item.style}</Text> | Aspect: <Text style={styles.imageMetaBold}>{item.aspectRatio}</Text>
-                        </Text>
-                      </View>
-
-                      <Image
-                        source={{ uri: item.imageUrl }}
-                        style={styles.generatedImage}
-                        resizeMode="cover"
-                      />
-
-                      {/* IMAGE ACTION BUTTONS */}
-                      <View style={styles.imageActionBar}>
-                        <TouchableOpacity
-                          style={styles.actionBtn}
-                          onPress={() => copyToClipboard(item.imageUrl!, 'Image Link')}
-                          activeOpacity={0.8}
-                        >
-                          <Icon name="copy" size={13} color="#7C3AED" />
-                          <Text style={styles.actionBtnText}>Copy Link</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          style={styles.downloadBtn}
-                          onPress={() => Alert.alert('Image Saved 🎉', 'High resolution image downloaded to gallery!')}
-                          activeOpacity={0.85}
-                        >
-                          <Icon name="download" size={13} color="#FFFFFF" />
-                          <Text style={styles.downloadBtnText}>Download</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  )}
-
-                  <Text style={[styles.msgTimestamp, isUser ? styles.userMsgTimestamp : styles.studioMsgTimestamp]}>
-                    {item.timestamp}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
-
-          {/* GENERATING LOADING CARD */}
-          {generating && (
-            <View style={[styles.msgRow, styles.msgRowStudio]}>
-              <View style={styles.studioAvatar}>
-                <Image
-                  source={require('../../assets/images/logo/crackwithai.png')}
-                  style={styles.studioAvatarLogo}
-                  resizeMode="contain"
-                />
-              </View>
-              <View style={[styles.msgBubble, styles.studioBubble, styles.loadingBubble]}>
-                <ActivityIndicator color="#7C3AED" size="small" />
-                <Text style={styles.loadingBubbleText}>Generating HD Image...</Text>
-              </View>
+          {/* MAIN PROMPT INPUT AREA */}
+          <View style={styles.inputCard}>
+            <View style={styles.inputHeaderRow}>
+              <Text style={styles.inputCardLabel}>Describe Your Image</Text>
+              <TouchableOpacity
+                style={[styles.voiceBtn, isRecordingVoice && styles.voiceBtnActive]}
+                onPress={handleVoiceInput}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.voiceBtnText, isRecordingVoice && styles.voiceBtnTextActive]} numberOfLines={1}>
+                  {isRecordingVoice ? 'Listening...' : 'Voice Input'}
+                </Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </ScrollView>
 
-        {/* DROPDOWN OVERLAYS */}
-        {showStyleDropdown && (
-          <View style={[styles.dropdownMenuBox, { left: 80 }]}>
-            {STYLE_OPTIONS.map((style) => (
-              <TouchableOpacity
-                key={style.id}
-                style={[styles.dropdownItem, selectedStyle === style.id && styles.dropdownItemActive]}
-                onPress={() => {
-                  setSelectedStyle(style.id);
-                  setShowStyleDropdown(false);
-                }}
-              >
-                <Text style={[styles.dropdownItemText, selectedStyle === style.id && styles.dropdownItemTextActive]}>
-                  {style.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {showRatioDropdown && (
-          <View style={[styles.dropdownMenuBox, { left: 160 }]}>
-            {ASPECT_RATIO_OPTIONS.map((ratio) => (
-              <TouchableOpacity
-                key={ratio.id}
-                style={[styles.dropdownItem, selectedRatio === ratio.id && styles.dropdownItemActive]}
-                onPress={() => {
-                  setSelectedRatio(ratio.id);
-                  setShowRatioDropdown(false);
-                }}
-              >
-                <Text style={[styles.dropdownItemText, selectedRatio === ratio.id && styles.dropdownItemTextActive]}>
-                  {ratio.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* BOTTOM INPUT COMPOSER CARD */}
-        <View style={[styles.bottomInputBar, { paddingBottom: Math.max(10, insets.bottom) }]}>
-          <View style={styles.inputInnerCard}>
             <TextInput
-              style={styles.textInput}
+              style={styles.promptInput}
               multiline
-              placeholder="Describe the image you want to create..."
+              numberOfLines={3}
+              placeholder="e.g. Ultra-detailed cyberpunk street in Tokyo with glowing neon signs and rainy reflections..."
               placeholderTextColor="#94A3B8"
               value={prompt}
               onChangeText={setPrompt}
             />
 
-            <View style={styles.inputToolbarRow}>
-              {/* Add Presets / Ideas (+) */}
-              <TouchableOpacity style={styles.iconCircleBtn} onPress={handleAttachFile} activeOpacity={0.7}>
-                <Text style={styles.plusText}>+</Text>
-              </TouchableOpacity>
+            {/* STYLE SELECTOR */}
+            <Text style={[styles.controlLabel, { marginTop: 12 }]}>Art Style</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.controlPillsRow}>
+              {STYLE_OPTIONS.map((style) => {
+                const isSelected = selectedStyle === style.id;
+                return (
+                  <TouchableOpacity
+                    key={style.id}
+                    style={[styles.stylePill, isSelected && styles.stylePillActive]}
+                    onPress={() => setSelectedStyle(style.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.stylePillText, isSelected && styles.stylePillTextActive]} numberOfLines={1}>
+                      {style.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
-              {/* Clean Microphone Icon Button */}
-              <TouchableOpacity
-                style={[styles.iconCircleBtn, isRecordingVoice && styles.micActiveBtn]}
-                onPress={handleVoiceInput}
-                activeOpacity={0.7}
-              >
-                <Icon name="mic" size={16} color={isRecordingVoice ? '#EF4444' : '#7C3AED'} />
-              </TouchableOpacity>
-
-              {/* Style Dropdown Pill */}
-              <TouchableOpacity
-                style={styles.miniPill}
-                onPress={() => {
-                  setShowStyleDropdown(!showStyleDropdown);
-                  setShowRatioDropdown(false);
-                }}
-              >
-                <Text style={styles.miniPillText}>{selectedStyle} ▾</Text>
-              </TouchableOpacity>
-
-              {/* Aspect Ratio Dropdown Pill */}
-              <TouchableOpacity
-                style={styles.miniPill}
-                onPress={() => {
-                  setShowRatioDropdown(!showRatioDropdown);
-                  setShowStyleDropdown(false);
-                }}
-              >
-                <Text style={styles.miniPillText}>{selectedRatio} ▾</Text>
-              </TouchableOpacity>
-
-              <View style={{ flex: 1 }} />
-
-              {/* Send Arrow Button */}
-              <TouchableOpacity
-                style={[styles.sendBtn, (!prompt.trim() || generating) && styles.sendBtnDisabled]}
-                onPress={() => handleSendPrompt()}
-                disabled={!prompt.trim() || generating}
-                activeOpacity={0.85}
-              >
-                {generating ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Icon name="arrow-up" size={16} color="#FFFFFF" />
-                )}
-              </TouchableOpacity>
+            {/* ASPECT RATIO SELECTOR */}
+            <Text style={[styles.controlLabel, { marginTop: 12 }]}>Aspect Ratio</Text>
+            <View style={styles.ratioRow}>
+              {ASPECT_RATIO_OPTIONS.map((ratio) => {
+                const isSelected = selectedRatio === ratio.id;
+                return (
+                  <TouchableOpacity
+                    key={ratio.id}
+                    style={[styles.ratioPill, isSelected && styles.ratioPillActive]}
+                    onPress={() => setSelectedRatio(ratio.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.ratioPillText, isSelected && styles.ratioPillTextActive]} numberOfLines={1}>
+                      {ratio.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+
+            {/* NEGATIVE PROMPT TOGGLE */}
+            <TouchableOpacity
+              style={styles.negativeToggleBtn}
+              onPress={() => setShowNegativeInput(!showNegativeInput)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.negativeToggleText} numberOfLines={1}>
+                {showNegativeInput ? 'Hide Negative Prompt' : 'Add Negative Prompt (Optional)'}
+              </Text>
+            </TouchableOpacity>
+
+            {showNegativeInput && (
+              <TextInput
+                style={styles.negativeInput}
+                placeholder="e.g. blurry, distorted anatomy, low resolution, bad lighting"
+                placeholderTextColor="#94A3B8"
+                value={negativePrompt}
+                onChangeText={setNegativePrompt}
+              />
+            )}
+
+            {/* GENERATE ACTION BUTTON - TEXT ONLY, NO ICONS */}
+            <TouchableOpacity
+              style={[styles.generateBtn, generating && styles.generateBtnDisabled]}
+              onPress={() => handleGenerateImage()}
+              disabled={generating}
+              activeOpacity={0.85}
+            >
+              {generating ? (
+                <View style={styles.btnLoadingRow}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.generateBtnText} numberOfLines={1}>Generating HD Image...</Text>
+                </View>
+              ) : (
+                <Text style={styles.generateBtnText} numberOfLines={1}>Generate Image</Text>
+              )}
+            </TouchableOpacity>
           </View>
-        </View>
+
+          {/* GENERATED IMAGES FEED */}
+          {images.length > 0 && (
+            <View style={styles.outputSection}>
+              <Text style={styles.outputSectionTitle}>Generated Images</Text>
+              {images.map((item) => (
+                <View key={item.id} style={styles.imageCard}>
+                  <View style={styles.imageCardHeader}>
+                    <Text style={styles.imagePromptText} numberOfLines={2}>{item.prompt}</Text>
+                    <View style={styles.imageMetaBadge}>
+                      <Text style={styles.imageMetaText} numberOfLines={1}>
+                        {item.style} · {item.aspectRatio}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.imageContainer}>
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={styles.previewImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+
+                  {/* ACTION BUTTONS ROW - TEXT ONLY, NO ICONS */}
+                  <View style={styles.imageActionsRow}>
+                    <TouchableOpacity
+                      style={styles.actionBtnOutline}
+                      onPress={() => copyToClipboard(item.imageUrl, 'Image Link')}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.actionBtnOutlineText} numberOfLines={1}>Copy Link</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.actionBtnFilled}
+                      onPress={() => Alert.alert('Image Saved', 'High resolution image downloaded to your gallery!')}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.actionBtnFilledText} numberOfLines={1}>Download Image</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.actionBtnSecondary}
+                      onPress={() => handleGenerateImage(item.prompt)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.actionBtnSecondaryText} numberOfLines={1}>Regenerate</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* HISTORY MODAL */}
       <Modal visible={showHistoryModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Image Generation History</Text>
-              <TouchableOpacity onPress={() => setShowHistoryModal(false)}>
-                <Icon name="x" size={20} color="#0F172A" />
+              <Text style={styles.modalTitle} numberOfLines={1}>Image History</Text>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => setShowHistoryModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCloseBtnText} numberOfLines={1}>Close</Text>
               </TouchableOpacity>
             </View>
 
             {history.length === 0 ? (
-              <Text style={styles.emptyHistoryText}>No image history yet. Generate images to see them here.</Text>
+              <View style={styles.emptyHistoryBox}>
+                <Text style={styles.emptyHistoryText}>No generated images yet. Start creating above!</Text>
+              </View>
             ) : (
-              <ScrollView style={styles.historyList}>
+              <ScrollView style={styles.historyList} showsVerticalScrollIndicator={false}>
                 {history.map((item) => (
-                  <View key={item.id} style={styles.historyItemCard}>
+                  <View key={item.id} style={styles.historyCard}>
                     <Image source={{ uri: item.imageUrl }} style={styles.historyThumb} resizeMode="cover" />
-                    <View style={styles.historyItemContent}>
-                      <Text style={styles.historyItemPrompt} numberOfLines={2}>
-                        {item.prompt}
-                      </Text>
-                      <Text style={styles.historyItemTime}>{item.timestamp}</Text>
+                    <View style={styles.historyInfo}>
+                      <Text style={styles.historyPrompt} numberOfLines={2}>{item.prompt}</Text>
+                      <Text style={styles.historyTime}>{item.style} · {item.timestamp}</Text>
                       <TouchableOpacity
                         style={styles.historyUseBtn}
                         onPress={() => {
                           setPrompt(item.prompt);
+                          setSelectedStyle(item.style);
+                          setSelectedRatio(item.aspectRatio);
                           setShowHistoryModal(false);
                         }}
+                        activeOpacity={0.8}
                       >
-                        <Text style={styles.historyUseBtnText}>Use Prompt</Text>
+                        <Text style={styles.historyUseBtnText} numberOfLines={1}>Use Prompt</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -497,341 +429,364 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-
-  /* HEADER */
   header: {
+    height: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
-  backPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+  headerBtn: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 4,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  backPillText: {
+  headerBtnText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#0F172A',
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: '#0F172A',
   },
-  historyBlackBtn: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
+  headerBtnDark: {
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  historyBlackBtnText: {
+  headerBtnDarkText: {
     fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
   },
-
-  /* QUICK PILLS */
-  quickPillsWrapper: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+  scrollArea: {
+    flex: 1,
   },
-  quickPillsScroll: {
-    paddingHorizontal: 16,
+  scrollContent: {
+    padding: 16,
+    gap: 16,
+  },
+
+  /* SECTION PRESETS */
+  sectionBlock: {
     gap: 8,
   },
-  quickPillBtn: {
-    backgroundColor: '#F8FAFC',
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  presetsRow: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  presetPill: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: 20,
   },
-  quickPillText: {
-    fontSize: 12,
-    fontWeight: '600',
+  presetPillText: {
+    fontSize: 12.5,
+    fontWeight: '700',
     color: '#334155',
   },
 
-  /* CHAT MESSAGES FEED */
-  messagesFeed: {
-    flex: 1,
-  },
-  messagesContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 16,
-  },
-  msgRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    marginVertical: 4,
-  },
-  msgRowUser: {
-    justifyContent: 'flex-end',
-  },
-  msgRowStudio: {
-    justifyContent: 'flex-start',
-  },
-  studioAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  studioAvatarLogo: {
-    width: 22,
-    height: 22,
-  },
-  msgBubble: {
-    maxWidth: '85%',
-    borderRadius: 16,
-    padding: 12,
-  },
-  userBubble: {
-    backgroundColor: '#7C3AED',
-    borderBottomRightRadius: 4,
-  },
-  studioBubble: {
+  /* INPUT CARD */
+  inputCard: {
     backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderBottomLeftRadius: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  msgText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  userMsgText: {
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  studioMsgText: {
-    color: '#0F172A',
-  },
-  msgTimestamp: {
-    fontSize: 10,
-    marginTop: 6,
-    alignSelf: 'flex-end',
-  },
-  userMsgTimestamp: {
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  studioMsgTimestamp: {
-    color: '#94A3B8',
-  },
-
-  /* GENERATED IMAGE ITEM IN MESSAGES */
-  imageWrapper: {
-    marginTop: 6,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  imageMetaHeader: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#F1F5F9',
-  },
-  imageMetaText: {
-    fontSize: 11,
-    color: '#64748B',
-  },
-  imageMetaBold: {
-    fontWeight: '700',
-    color: '#7C3AED',
-  },
-  generatedImage: {
-    width: '100%',
-    height: 240,
-    backgroundColor: '#E2E8F0',
-  },
-  imageActionBar: {
+  inputHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 8,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    gap: 8,
+    marginBottom: 8,
   },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#F3E8FF',
+  inputCardLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  voiceBtn: {
+    backgroundColor: '#EDE9FE',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  actionBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#7C3AED',
-  },
-  downloadBtn: {
-    flexDirection: 'row',
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#7C3AED',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
+    justifyContent: 'center',
   },
-  downloadBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  voiceBtnActive: {
+    backgroundColor: '#FEE2E2',
   },
-
-  /* LOADING BUBBLE */
-  loadingBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  loadingBubbleText: {
-    fontSize: 13,
-    fontWeight: '600',
+  voiceBtnText: {
+    fontSize: 11.5,
+    fontWeight: '800',
     color: '#7C3AED',
   },
-
-  /* DROPDOWNS */
-  dropdownMenuBox: {
-    position: 'absolute',
-    bottom: 85,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 8,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    zIndex: 99,
-    minWidth: 150,
+  voiceBtnTextActive: {
+    color: '#EF4444',
   },
-  dropdownItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  dropdownItemActive: {
-    backgroundColor: '#F3E8FF',
-  },
-  dropdownItemText: {
-    fontSize: 13,
-    color: '#334155',
-  },
-  dropdownItemTextActive: {
-    fontWeight: '700',
-    color: '#7C3AED',
-  },
-
-  /* BOTTOM COMPOSER CARD */
-  bottomInputBar: {
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-  },
-  inputInnerCard: {
+  promptInput: {
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 16,
-    padding: 10,
-  },
-  textInput: {
+    borderRadius: 12,
+    padding: 12,
     fontSize: 14,
     color: '#0F172A',
-    maxHeight: 100,
-    minHeight: 40,
-    paddingHorizontal: 6,
-    paddingTop: 4,
+    minHeight: 76,
     textAlignVertical: 'top',
   },
-  inputToolbarRow: {
+
+  controlLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+    marginBottom: 6,
+  },
+  controlPillsRow: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  stylePill: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  stylePillActive: {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#7C3AED',
+  },
+  stylePillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  stylePillTextActive: {
+    color: '#7C3AED',
+  },
+
+  ratioRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  ratioPill: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratioPillActive: {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#7C3AED',
+  },
+  ratioPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  ratioPillTextActive: {
+    color: '#7C3AED',
+  },
+
+  negativeToggleBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    paddingVertical: 4,
+  },
+  negativeToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#7C3AED',
+  },
+  negativeInput: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 12.5,
+    color: '#0F172A',
+    marginTop: 6,
+  },
+
+  generateBtn: {
+    backgroundColor: '#7C3AED',
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  generateBtnDisabled: {
+    backgroundColor: '#C4B5FD',
+  },
+  btnLoadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 8,
   },
-  iconCircleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  generateBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+
+  /* OUTPUT SECTION */
+  outputSection: {
+    gap: 14,
+  },
+  outputSectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  imageCard: {
     backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    gap: 12,
+  },
+  imageCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  imagePromptText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    lineHeight: 18,
+  },
+  imageMetaBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  imageMetaText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  imageContainer: {
+    width: '100%',
+    height: 240,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#E2E8F0',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  imageActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionBtnOutline: {
+    flex: 1,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 4,
   },
-  micActiveBtn: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#EF4444',
-  },
-  plusText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#7C3AED',
-    marginTop: -2,
-  },
-  miniPill: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-  },
-  miniPillText: {
+  actionBtnOutlineText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#334155',
+    textAlign: 'center',
   },
-  sendBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  actionBtnFilled: {
+    flex: 1.2,
+    height: 38,
+    borderRadius: 10,
     backgroundColor: '#7C3AED',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 4,
   },
-  sendBtnDisabled: {
-    backgroundColor: '#CBD5E1',
+  actionBtnFilledText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  actionBtnSecondary: {
+    flex: 1,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  actionBtnSecondaryText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0F172A',
+    textAlign: 'center',
   },
 
   /* MODAL */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
     justifyContent: 'flex-end',
   },
-  modalCard: {
+  modalSheet: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -845,55 +800,70 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  modalCloseBtn: {
+    paddingHorizontal: 12,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseBtnText: {
+    fontSize: 12,
     fontWeight: '700',
     color: '#0F172A',
   },
+  emptyHistoryBox: {
+    paddingVertical: 30,
+    alignItems: 'center',
+  },
   emptyHistoryText: {
-    textAlign: 'center',
+    fontSize: 13,
     color: '#64748B',
-    fontSize: 14,
-    marginVertical: 20,
   },
   historyList: {
     maxHeight: 400,
   },
-  historyItemCard: {
+  historyCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   historyThumb: {
     width: 60,
     height: 60,
-    borderRadius: 8,
-    backgroundColor: '#CBD5E1',
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
   },
-  historyItemContent: {
+  historyInfo: {
     flex: 1,
+    gap: 4,
   },
-  historyItemPrompt: {
-    fontSize: 13,
-    fontWeight: '600',
+  historyPrompt: {
+    fontSize: 12.5,
+    fontWeight: '700',
     color: '#0F172A',
   },
-  historyItemTime: {
+  historyTime: {
     fontSize: 11,
-    color: '#94A3B8',
-    marginTop: 2,
+    color: '#64748B',
   },
   historyUseBtn: {
-    marginTop: 6,
     alignSelf: 'flex-start',
     backgroundColor: '#F3E8FF',
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    height: 28,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
   },
   historyUseBtnText: {
     fontSize: 11,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,31 +11,66 @@ import {
   BackHandler,
   Modal,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { Icon } from '../../components/Icon';
 import Tts from 'react-native-tts';
 import { aiApi } from '../../api/aiApi';
+import { copyToClipboard } from '../../utils/clipboard';
 
-const VOICE_OPTIONS = [
-  { id: 'kore', name: 'Kore', label: 'Female (Bright & Crisp)', gender: 'female', pitch: 1.35, rate: 0.52 },
-  { id: 'adam', name: 'Adam', label: 'Male (Professional Tech)', gender: 'male', pitch: 0.75, rate: 0.46 },
-  { id: 'rachel', name: 'Rachel', label: 'Female (Warm Narrative)', gender: 'female', pitch: 1.15, rate: 0.50 },
-  { id: 'fenrir', name: 'Fenrir', label: 'Male (Expressive Deep)', gender: 'male', pitch: 1.25, rate: 0.58 },
+export interface VoiceOption {
+  id: string;
+  name: string;
+  label: string;
+  gender: 'female' | 'male';
+  pitch: number;
+  rate: number;
+}
+
+const VOICE_OPTIONS: VoiceOption[] = [
+  { id: 'kore', name: 'Kore', label: 'Female · Bright & Crisp', gender: 'female', pitch: 1.35, rate: 0.52 },
+  { id: 'adam', name: 'Adam', label: 'Male · Professional Tech', gender: 'male', pitch: 0.75, rate: 0.46 },
+  { id: 'rachel', name: 'Rachel', label: 'Female · Warm Narrative', gender: 'female', pitch: 1.15, rate: 0.50 },
+  { id: 'fenrir', name: 'Fenrir', label: 'Male · Deep & Expressive', gender: 'male', pitch: 1.25, rate: 0.58 },
 ];
+
+const SPEED_OPTIONS = [
+  { id: '0.8', label: '0.8x Calm', rate: 0.40 },
+  { id: '1.0', label: '1.0x Normal', rate: 0.50 },
+  { id: '1.2', label: '1.2x Dynamic', rate: 0.60 },
+];
+
+const SCRIPT_PRESETS = [
+  { label: 'Welcome Script', text: 'Welcome to CrackWithAI. Build high-performance mobile applications and master modern AI technology.' },
+  { label: 'Tech Intro', text: 'Full Stack Development combines responsive interfaces, scalable backend APIs, and modern database architecture.' },
+  { label: 'AI Overview', text: 'Autonomous agent pipelines allow developers to trigger actions, process documents, and automate complex workflows.' },
+];
+
+interface GeneratedOutput {
+  id: string;
+  voice: string;
+  speed: string;
+  script: string;
+  timestamp: string;
+}
 
 export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [script, setScript] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0]);
+  const [selectedVoice, setSelectedVoice] = useState<VoiceOption>(VOICE_OPTIONS[0]);
+  const [selectedSpeed, setSelectedSpeed] = useState('1.0');
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-  const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
 
   const [generating, setGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [history, setHistory] = useState<{ id: string; voice: string; script: string; timestamp: string }[]>([]);
+  const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
+
+  const [outputs, setOutputs] = useState<GeneratedOutput[]>([]);
+  const [history, setHistory] = useState<GeneratedOutput[]>([]);
 
   const handleGoBack = () => {
     try {
@@ -69,8 +104,14 @@ export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
         })
         .catch(() => {});
 
-      const onFinish = () => setIsPlaying(false);
-      const onCancel = () => setIsPlaying(false);
+      const onFinish = () => {
+        setIsPlaying(false);
+        setCurrentPlayingId(null);
+      };
+      const onCancel = () => {
+        setIsPlaying(false);
+        setCurrentPlayingId(null);
+      };
 
       const subFinish: any = Tts.addEventListener('tts-finish', onFinish);
       const subCancel: any = Tts.addEventListener('tts-cancel', onCancel);
@@ -84,49 +125,44 @@ export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
     } catch (e) {}
   }, []);
 
+  useEffect(() => {
+    if (outputs.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
+  }, [outputs, generating]);
+
   const handleVoiceInput = () => {
     setIsRecordingVoice(true);
     setTimeout(() => {
       setIsRecordingVoice(false);
       const voiceSamples = [
-        'Welcome to CrackWithAI! Learn Full Stack Development and AI Automation today.',
-        'Artificial intelligence is reshaping how modern software applications are designed.',
+        'Welcome to CrackWithAI. Learn Full Stack Development and AI Automation with expert interactive lessons.',
+        'Artificial intelligence enables smarter modern mobile workflows and seamless user experiences.',
+        'Transform your code into scalable production-grade applications with CrackWithAI.',
       ];
-      setScript(voiceSamples[Math.floor(Math.random() * voiceSamples.length)]);
-    }, 2000);
+      const picked = voiceSamples[Math.floor(Math.random() * voiceSamples.length)];
+      setScript((prev) => (prev.trim() ? `${prev.trim()} ${picked}` : picked));
+    }, 1800);
   };
 
-  const handleAttachFile = () => {
-    Alert.alert('Add Document File', 'Select a text file to convert into voice narration:', [
-      {
-        text: 'Lesson_Summary.txt',
-        onPress: () => {
-          const content = 'Full Stack Web Development combines HTML, CSS, JavaScript, Express, and MongoDB.';
-          setAttachedFile({ name: 'Lesson_Summary.txt', content });
-          setScript(content);
-        },
-      },
-      {
-        text: 'Notes.txt',
-        onPress: () => {
-          const content = 'AI Automation enables smart workflows using AI models and webhooks.';
-          setAttachedFile({ name: 'Notes.txt', content });
-          setScript(content);
-        },
-      },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  };
-
-  const playSpeech = (textToSpeak: string) => {
+  const playSpeech = (textToSpeak: string, itemId: string, voiceOpt: VoiceOption) => {
     try {
       Tts.stop();
-      Tts.setDefaultRate(selectedVoice.rate || 0.5);
-      Tts.setDefaultPitch(selectedVoice.pitch || 1.0);
-      Tts.speak(textToSpeak);
       setIsPlaying(true);
+      setCurrentPlayingId(itemId);
+
+      const speedObj = SPEED_OPTIONS.find((s) => s.id === selectedSpeed);
+      const speedRate = speedObj?.rate || voiceOpt.rate;
+
+      Tts.setDefaultPitch(voiceOpt.pitch);
+      Tts.setDefaultRate(speedRate);
+      Tts.speak(textToSpeak);
     } catch (e) {
-      console.warn('[AIVoiceGeneratorScreen] TTS play notice:', e);
+      console.warn('TTS playback error', e);
+      setIsPlaying(false);
+      setCurrentPlayingId(null);
     }
   };
 
@@ -135,36 +171,51 @@ export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
       Tts.stop();
     } catch (e) {}
     setIsPlaying(false);
+    setCurrentPlayingId(null);
   };
 
   const handleGenerateVoice = async () => {
-    const textToNarrate = script.trim();
-    if (!textToNarrate) {
-      Alert.alert('Required Script', 'Please type text, speak via microphone, or attach a document file.');
+    if (!script.trim()) {
+      Alert.alert('Required Script', 'Please enter or speak the script text for your voiceover narration.');
       return;
     }
 
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
     setGenerating(true);
+
     try {
+      const speedVal = parseFloat(selectedSpeed) || 1.0;
       await aiApi.generateVoice({
-        script: textToNarrate,
+        script: script.trim(),
         voice: selectedVoice.name,
+        speed: speedVal,
       });
 
-      setHistory((prev) => [
-        { id: `voice_${Date.now()}`, voice: selectedVoice.name, script: textToNarrate, timestamp: nowStr },
-        ...prev,
-      ]);
-      playSpeech(textToNarrate);
+      const newOutput: GeneratedOutput = {
+        id: `voice_${Date.now()}`,
+        voice: selectedVoice.name,
+        speed: `${selectedSpeed}x`,
+        script: script.trim(),
+        timestamp: nowStr,
+      };
+
+      setOutputs((prev) => [...prev, newOutput]);
+      setHistory((prev) => [newOutput, ...prev]);
+
+      // Auto start playback
+      playSpeech(script.trim(), newOutput.id, selectedVoice);
     } catch (err) {
-      console.warn('[AIVoiceGeneratorScreen] Native TTS fallback active:', err);
-      setHistory((prev) => [
-        { id: `voice_${Date.now()}`, voice: selectedVoice.name, script: textToNarrate, timestamp: nowStr },
-        ...prev,
-      ]);
-      playSpeech(textToNarrate);
+      console.warn('[AIVoiceGeneratorScreen] Error generating speech:', err);
+      const newOutput: GeneratedOutput = {
+        id: `voice_${Date.now()}`,
+        voice: selectedVoice.name,
+        speed: `${selectedSpeed}x`,
+        script: script.trim(),
+        timestamp: nowStr,
+      };
+      setOutputs((prev) => [...prev, newOutput]);
+      setHistory((prev) => [newOutput, ...prev]);
+      playSpeech(script.trim(), newOutput.id, selectedVoice);
     } finally {
       setGenerating(false);
     }
@@ -174,165 +225,233 @@ export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* HEADER */}
+      {/* TOP HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backPill} onPress={handleGoBack} activeOpacity={0.7}>
-          <Icon name="chevron-left" size={16} color="#0F172A" />
-          <Text style={styles.backPillText}>Tools</Text>
+        <TouchableOpacity style={styles.headerBtn} onPress={handleGoBack} activeOpacity={0.7}>
+          <Text style={styles.headerBtnText} numberOfLines={1}>Back</Text>
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>AI Voice Generator</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>AI Voice Generator</Text>
 
-        <TouchableOpacity style={styles.historyBlackBtn} onPress={() => setShowHistoryModal(true)} activeOpacity={0.8}>
-          <Text style={styles.historyBlackBtnText}>History</Text>
+        <TouchableOpacity style={styles.headerBtnDark} onPress={() => setShowHistoryModal(true)} activeOpacity={0.8}>
+          <Text style={styles.headerBtnDarkText} numberOfLines={1}>History</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 30 }]} keyboardShouldPersistTaps="handled">
-        {/* BRIGHT VOICE MODEL SELECTOR */}
-        <View style={styles.voiceSectionContainer}>
-          <Text style={styles.sectionLabelTitle}>Select AI Voice Model:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.voiceCardsScroll}>
-            {VOICE_OPTIONS.map((v) => {
-              const active = selectedVoice.id === v.id;
-              return (
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.scrollArea}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* QUICK SCRIPT PRESETS */}
+          <View style={styles.sectionBlock}>
+            <Text style={styles.sectionLabel}>Quick Script Presets</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.presetsRow}>
+              {SCRIPT_PRESETS.map((p, idx) => (
                 <TouchableOpacity
-                  key={v.id}
-                  style={[styles.brightVoiceCard, active && styles.brightVoiceCardActive]}
-                  onPress={() => setSelectedVoice(v)}
-                  activeOpacity={0.8}
+                  key={idx}
+                  style={styles.presetPill}
+                  onPress={() => setScript(p.text)}
+                  activeOpacity={0.75}
                 >
-                  <View style={[styles.voiceIconCircle, active && styles.voiceIconCircleActive]}>
-                    <Icon name={v.gender === 'female' ? 'volume' : 'mic'} size={16} color={active ? '#FFFFFF' : '#7C3AED'} />
-                  </View>
-                  <View>
-                    <Text style={[styles.brightVoiceName, active && styles.brightVoiceNameActive]}>
-                      {v.name} {active ? '✓' : ''}
-                    </Text>
-                    <Text style={[styles.brightVoiceSub, active && styles.brightVoiceSubActive]}>
-                      {v.label}
-                    </Text>
-                  </View>
+                  <Text style={styles.presetPillText} numberOfLines={1}>{p.label}</Text>
                 </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+              ))}
+            </ScrollView>
+          </View>
 
-        {/* INPUT CONTAINER */}
-        <View style={styles.inputCard}>
-          <View style={styles.inputCardHeader}>
-            <Text style={styles.labelTitle}>Script / Document Content</Text>
+          {/* INPUT FORM CARD */}
+          <View style={styles.inputCard}>
+            {/* VOICE MODEL SELECTION */}
+            <Text style={styles.controlLabel}>Select Voice Model</Text>
+            <View style={styles.voiceOptionsGrid}>
+              {VOICE_OPTIONS.map((voice) => {
+                const isSelected = selectedVoice.id === voice.id;
+                return (
+                  <TouchableOpacity
+                    key={voice.id}
+                    style={[styles.voiceCard, isSelected && styles.voiceCardActive]}
+                    onPress={() => setSelectedVoice(voice)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.voiceCardHeader}>
+                      <Text style={[styles.voiceName, isSelected && styles.voiceNameActive]} numberOfLines={1}>
+                        {voice.name}
+                      </Text>
+                      <View style={[styles.genderBadge, isSelected && styles.genderBadgeActive]}>
+                        <Text style={[styles.genderBadgeText, isSelected && styles.genderBadgeTextActive]} numberOfLines={1}>
+                          {voice.gender.toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.voiceDesc} numberOfLines={1}>{voice.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              {/* Add Files (+) */}
-              <TouchableOpacity style={styles.actionIconBtn} onPress={handleAttachFile} activeOpacity={0.7}>
-                <Text style={styles.plusIcon}>+</Text>
-              </TouchableOpacity>
+            {/* SPEED CONTROLS */}
+            <Text style={[styles.controlLabel, { marginTop: 12 }]}>Speaking Pace</Text>
+            <View style={styles.speedRow}>
+              {SPEED_OPTIONS.map((speed) => {
+                const isSelected = selectedSpeed === speed.id;
+                return (
+                  <TouchableOpacity
+                    key={speed.id}
+                    style={[styles.speedPill, isSelected && styles.speedPillActive]}
+                    onPress={() => setSelectedSpeed(speed.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.speedPillText, isSelected && styles.speedPillTextActive]} numberOfLines={1}>
+                      {speed.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-              {/* Voice Input (🎙️ Mic Icon) */}
+            {/* SCRIPT INPUT AREA */}
+            <View style={styles.promptHeaderRow}>
+              <Text style={[styles.controlLabel, { marginTop: 12, marginBottom: 0 }]}>Script to Narrate</Text>
               <TouchableOpacity
-                style={[styles.actionIconBtn, isRecordingVoice && styles.micActiveBtn]}
+                style={[styles.voiceBtn, isRecordingVoice && styles.voiceBtnActive]}
                 onPress={handleVoiceInput}
                 activeOpacity={0.7}
               >
-                <Icon name="mic" size={14} color={isRecordingVoice ? '#EF4444' : '#7C3AED'} />
+                <Text style={[styles.voiceBtnText, isRecordingVoice && styles.voiceBtnTextActive]} numberOfLines={1}>
+                  {isRecordingVoice ? 'Listening...' : 'Voice Input'}
+                </Text>
               </TouchableOpacity>
             </View>
-          </View>
 
-          {attachedFile && (
-            <View style={styles.attachedFileBar}>
-              <Icon name="file-text" size={14} color="#7C3AED" />
-              <Text style={styles.attachedFileName} numberOfLines={1}>
-                {attachedFile.name}
-              </Text>
-              <TouchableOpacity onPress={() => setAttachedFile(null)}>
-                <Icon name="x-circle" size={16} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-          )}
+            <TextInput
+              style={styles.scriptInput}
+              multiline
+              numberOfLines={4}
+              placeholder="Enter your voiceover text, lecture script, or explanation to convert to natural AI speech..."
+              placeholderTextColor="#94A3B8"
+              value={script}
+              onChangeText={setScript}
+            />
 
-          {isRecordingVoice && (
-            <View style={styles.recordingBar}>
-              <ActivityIndicator size="small" color="#EF4444" />
-              <Text style={styles.recordingText}>Listening... Speak your voice narration</Text>
-            </View>
-          )}
-
-          <TextInput
-            style={styles.textArea}
-            placeholder="Type your script here, record via voice mic, or attach a document file..."
-            placeholderTextColor="#94A3B8"
-            value={script}
-            onChangeText={setScript}
-            multiline
-            numberOfLines={5}
-            textAlignVertical="top"
-          />
-
-          {/* GENERATE VOICE CTA BUTTON */}
-          <TouchableOpacity
-            style={[styles.generateBtn, generating && styles.generateBtnDisabled]}
-            onPress={handleGenerateVoice}
-            disabled={generating}
-            activeOpacity={0.85}
-          >
-            {generating ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.generateBtnText}>Generate Voice</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* AUDIO TEST / PLAYBACK CONTROL */}
-        {isPlaying && (
-          <View style={styles.playerCard}>
-            <Text style={styles.playerTitle}>🔊 Playing Narration ({selectedVoice.name})...</Text>
-            <TouchableOpacity style={styles.stopBtn} onPress={stopSpeech} activeOpacity={0.8}>
-              <Icon name="pause" size={16} color="#FFFFFF" />
-              <Text style={styles.stopBtnText}>Pause Speech</Text>
+            {/* GENERATE CTA BUTTON - TEXT ONLY, NO ICONS */}
+            <TouchableOpacity
+              style={[styles.generateBtn, generating && styles.generateBtnDisabled]}
+              onPress={handleGenerateVoice}
+              disabled={generating}
+              activeOpacity={0.85}
+            >
+              {generating ? (
+                <View style={styles.btnLoadingRow}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.generateBtnText} numberOfLines={1}>Generating Voice Audio...</Text>
+                </View>
+              ) : (
+                <Text style={styles.generateBtnText} numberOfLines={1}>Generate Voice</Text>
+              )}
             </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
+
+          {/* GENERATED AUDIO OUTPUTS */}
+          {outputs.length > 0 && (
+            <View style={styles.outputSection}>
+              <Text style={styles.outputSectionTitle}>Audio Narrations</Text>
+              {outputs.map((item) => {
+                const isItemPlaying = isPlaying && currentPlayingId === item.id;
+                return (
+                  <View key={item.id} style={styles.audioCard}>
+                    <View style={styles.audioCardHeader}>
+                      <View style={styles.voiceBadge}>
+                        <Text style={styles.voiceBadgeText} numberOfLines={1}>{item.voice} ({item.speed})</Text>
+                      </View>
+                      <Text style={styles.timestampText} numberOfLines={1}>{item.timestamp}</Text>
+                    </View>
+
+                    <Text style={styles.scriptOutputText}>{item.script}</Text>
+
+                    {/* ACTION BUTTONS ROW - TEXT ONLY, NO ICONS */}
+                    <View style={styles.audioActionsRow}>
+                      {isItemPlaying ? (
+                        <TouchableOpacity style={styles.actionBtnPause} onPress={stopSpeech} activeOpacity={0.8}>
+                          <Text style={styles.actionBtnPauseText} numberOfLines={1}>Pause Audio</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.actionBtnPlay}
+                          onPress={() => {
+                            const matchedVoice = VOICE_OPTIONS.find((v) => v.name === item.voice) || selectedVoice;
+                            playSpeech(item.script, item.id, matchedVoice);
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.actionBtnPlayText} numberOfLines={1}>Play Narration</Text>
+                        </TouchableOpacity>
+                      )}
+
+                      <TouchableOpacity style={styles.actionBtnSecondary} onPress={stopSpeech} activeOpacity={0.8}>
+                        <Text style={styles.actionBtnSecondaryText} numberOfLines={1}>Stop</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.actionBtnOutline}
+                        onPress={() => copyToClipboard(item.script, 'Script')}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.actionBtnOutlineText} numberOfLines={1}>Copy Script</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* HISTORY MODAL */}
       <Modal visible={showHistoryModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Voice Generation History</Text>
-              <TouchableOpacity onPress={() => setShowHistoryModal(false)}>
-                <Icon name="x" size={20} color="#0F172A" />
+              <Text style={styles.modalTitle} numberOfLines={1}>Voice History</Text>
+              <TouchableOpacity
+                style={styles.modalCloseBtn}
+                onPress={() => setShowHistoryModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCloseBtnText} numberOfLines={1}>Close</Text>
               </TouchableOpacity>
             </View>
 
             {history.length === 0 ? (
-              <Text style={styles.emptyHistoryText}>No voice history yet. Generate voice scripts to see them here.</Text>
+              <View style={styles.emptyHistoryBox}>
+                <Text style={styles.emptyHistoryText}>No voice recordings yet. Generate audio above!</Text>
+              </View>
             ) : (
-              <ScrollView style={styles.historyList}>
+              <ScrollView style={styles.historyList} showsVerticalScrollIndicator={false}>
                 {history.map((item) => (
-                  <View key={item.id} style={styles.historyItemCard}>
-                    <View style={styles.historyItemContent}>
+                  <View key={item.id} style={styles.historyCard}>
+                    <View style={styles.historyInfo}>
                       <View style={styles.historyMetaRow}>
-                        <Text style={styles.historyVoiceBadge}>{item.voice}</Text>
-                        <Text style={styles.historyItemTime}>{item.timestamp}</Text>
+                        <Text style={styles.historyVoiceName} numberOfLines={1}>{item.voice}</Text>
+                        <Text style={styles.historyTime} numberOfLines={1}>{item.timestamp}</Text>
                       </View>
-                      <Text style={styles.historyItemScript} numberOfLines={3}>
-                        "{item.script}"
-                      </Text>
+                      <Text style={styles.historyScriptText} numberOfLines={2}>{item.script}</Text>
                       <TouchableOpacity
                         style={styles.historyUseBtn}
                         onPress={() => {
                           setScript(item.script);
                           setShowHistoryModal(false);
-                          playSpeech(item.script);
                         }}
+                        activeOpacity={0.8}
                       >
-                        <Icon name="volume" size={12} color="#7C3AED" />
-                        <Text style={styles.historyUseBtnText}>Play Voice</Text>
+                        <Text style={styles.historyUseBtnText} numberOfLines={1}>Use Script</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -351,243 +470,372 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-
-  /* HEADER */
   header: {
+    height: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
-  backPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+  headerBtn: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 4,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  backPillText: {
+  headerBtnText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#0F172A',
-  },
-  headerTitle: {
-    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
   },
-  historyBlackBtn: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  historyBlackBtnText: {
+  headerBtnDark: {
+    paddingHorizontal: 14,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerBtnDarkText: {
     fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
   },
-
+  scrollArea: {
+    flex: 1,
+  },
   scrollContent: {
     padding: 16,
+    gap: 16,
   },
 
-  /* BRIGHT VOICE MODEL SELECTOR */
-  voiceSectionContainer: {
-    marginBottom: 16,
+  /* PRESETS */
+  sectionBlock: {
+    gap: 8,
   },
-  sectionLabelTitle: {
-    fontSize: 14,
+  sectionLabel: {
+    fontSize: 12,
     fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 10,
-  },
-  voiceCardsScroll: {
-    gap: 10,
-    paddingRight: 16,
-  },
-  brightVoiceCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    minWidth: 160,
-  },
-  brightVoiceCardActive: {
-    backgroundColor: '#F3E8FF',
-    borderColor: '#7C3AED',
-  },
-  voiceIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  voiceIconCircleActive: {
-    backgroundColor: '#7C3AED',
-  },
-  brightVoiceName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  brightVoiceNameActive: {
-    color: '#7C3AED',
-  },
-  brightVoiceSub: {
-    fontSize: 11,
     color: '#64748B',
-    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  brightVoiceSubActive: {
-    color: '#6B21A8',
-    fontWeight: '600',
+  presetsRow: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  presetPill: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  presetPillText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#334155',
   },
 
   /* INPUT CARD */
   inputCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 18,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  inputCardHeader: {
+  controlLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+    marginBottom: 8,
+  },
+  voiceOptionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  voiceCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 10,
+    gap: 4,
+  },
+  voiceCardActive: {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#7C3AED',
+  },
+  voiceCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
   },
-  labelTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+  voiceName: {
+    fontSize: 13.5,
+    fontWeight: '800',
     color: '#0F172A',
   },
-  actionIconBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#F3E8FF',
+  voiceNameActive: {
+    color: '#7C3AED',
+  },
+  genderBadge: {
+    backgroundColor: '#E2E8F0',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  genderBadgeActive: {
+    backgroundColor: '#DDD6FE',
+  },
+  genderBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#475569',
+  },
+  genderBadgeTextActive: {
+    color: '#7C3AED',
+  },
+  voiceDesc: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+
+  speedRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  speedPill: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 8,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plusIcon: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#7C3AED',
-    marginTop: -2,
+  speedPillActive: {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#7C3AED',
   },
-  micActiveBtn: {
+  speedPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  speedPillTextActive: {
+    color: '#7C3AED',
+  },
+
+  promptHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  voiceBtn: {
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 10,
+    height: 28,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceBtnActive: {
     backgroundColor: '#FEE2E2',
   },
-  attachedFileBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#F3E8FF',
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  attachedFileName: {
-    fontSize: 12,
-    fontWeight: '700',
+  voiceBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
     color: '#7C3AED',
-    flex: 1,
-    marginHorizontal: 6,
   },
-  recordingBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    marginBottom: 8,
-  },
-  recordingText: {
-    fontSize: 12,
-    fontWeight: '700',
+  voiceBtnTextActive: {
     color: '#EF4444',
-    marginLeft: 6,
   },
-  textArea: {
+
+  scriptInput: {
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 12,
     padding: 12,
-    fontSize: 14,
+    fontSize: 13.5,
     color: '#0F172A',
-    minHeight: 120,
+    minHeight: 88,
+    textAlignVertical: 'top',
   },
 
-  /* CTA BUTTON */
   generateBtn: {
     backgroundColor: '#7C3AED',
+    height: 44,
     borderRadius: 12,
-    paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 14,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   generateBtnDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: '#C4B5FD',
   },
-  generateBtnText: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-
-  /* PLAYER CARD */
-  playerCard: {
-    marginTop: 16,
-    backgroundColor: '#F3E8FF',
-    borderRadius: 14,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E9D5FF',
-  },
-  playerTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#7C3AED',
-    marginBottom: 10,
-  },
-  stopBtn: {
+  btnLoadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#EF4444',
-    gap: 6,
+    gap: 8,
   },
-  stopBtnText: {
+  generateBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+
+  /* OUTPUT SECTION */
+  outputSection: {
+    gap: 12,
+  },
+  outputSectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  audioCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 10,
+  },
+  audioCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  voiceBadge: {
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  voiceBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#7C3AED',
+  },
+  timestampText: {
+    fontSize: 11,
+    color: '#94A3B8',
+  },
+  scriptOutputText: {
+    fontSize: 13,
+    color: '#1E293B',
+    lineHeight: 19,
+  },
+
+  audioActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  actionBtnPlay: {
+    flex: 1.2,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#7C3AED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  actionBtnPlayText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  actionBtnPause: {
+    flex: 1.2,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  actionBtnPauseText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  actionBtnSecondary: {
+    flex: 0.8,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  actionBtnSecondaryText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#0F172A',
+    textAlign: 'center',
+  },
+  actionBtnOutline: {
+    flex: 1,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  actionBtnOutlineText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+    textAlign: 'center',
   },
 
   /* MODAL */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
     justifyContent: 'flex-end',
   },
-  modalCard: {
+  modalSheet: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -601,62 +849,70 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  modalCloseBtn: {
+    paddingHorizontal: 12,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseBtnText: {
+    fontSize: 12,
     fontWeight: '700',
     color: '#0F172A',
   },
+  emptyHistoryBox: {
+    paddingVertical: 30,
+    alignItems: 'center',
+  },
   emptyHistoryText: {
-    textAlign: 'center',
+    fontSize: 13,
     color: '#64748B',
-    fontSize: 14,
-    marginVertical: 20,
   },
   historyList: {
     maxHeight: 400,
   },
-  historyItemCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  historyCard: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  historyItemContent: {
-    gap: 6,
+  historyInfo: {
+    gap: 4,
   },
   historyMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  historyVoiceBadge: {
-    fontSize: 12,
-    fontWeight: '700',
+  historyVoiceName: {
+    fontSize: 13,
+    fontWeight: '800',
     color: '#7C3AED',
-    backgroundColor: '#F3E8FF',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
   },
-  historyItemTime: {
+  historyTime: {
     fontSize: 11,
     color: '#94A3B8',
   },
-  historyItemScript: {
-    fontSize: 13,
-    color: '#0F172A',
+  historyScriptText: {
+    fontSize: 12.5,
+    color: '#334155',
+    lineHeight: 17,
   },
   historyUseBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
     alignSelf: 'flex-start',
     backgroundColor: '#F3E8FF',
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+    height: 28,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
   historyUseBtnText: {
     fontSize: 11,

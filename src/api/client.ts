@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
-import { CONFIG, getDevApiBaseUrl, getAlternateApiBaseUrl, setDynamicApiBaseUrl } from '../constants/config';
+import { CONFIG, getDevApiBaseUrl, getAlternateApiBaseUrl, setDynamicApiBaseUrl, CANDIDATE_URLS } from '../constants/config';
 import { storage } from '../services/storage';
 
 type UnauthorizedCallback = () => void;
@@ -30,8 +30,8 @@ export const apiClient: AxiosInstance = axios.create({
 // Request Interceptor: Inject JWT token into Authorization header and ensure current baseURL
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const retryConfig = config as (InternalAxiosRequestConfig & { _retryCount?: number });
-    if (!retryConfig._retryCount) {
+    const retryConfig = config as (InternalAxiosRequestConfig & { _retryAttempted?: boolean });
+    if (!retryConfig._retryAttempted) {
       config.baseURL = CONFIG.API_BASE_URL;
     }
     const token = await storage.getToken();
@@ -53,24 +53,23 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (axios.isCancel(error)) return Promise.reject(error);
 
-    // Automatic transparent retry on alternate network host (e.g. localhost -> LAN IP -> Tunnel)
-    const config = error.config as (InternalAxiosRequestConfig & { _retryCount?: number }) | undefined;
+    // Automatic transparent failover on alternate network hosts (e.g. Tunnel -> LAN IP -> Localhost)
+    const config = error.config as (InternalAxiosRequestConfig & { _retryAttempted?: boolean }) | undefined;
     const isNetworkOrTimeout = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
-    if (config && (!config._retryCount || config._retryCount < 3) && isNetworkOrTimeout) {
-      const currentBase = config.baseURL || CONFIG.API_BASE_URL;
-      const altBase = getAlternateApiBaseUrl(currentBase);
-      if (altBase && altBase !== currentBase) {
-        config._retryCount = (config._retryCount || 0) + 1;
+    if (config && !config._retryAttempted && isNetworkOrTimeout) {
+      config._retryAttempted = true;
+      const currentBase = (config.baseURL || CONFIG.API_BASE_URL || '').replace(/\/+$/, '');
+      const candidates = CANDIDATE_URLS.map(u => u.replace(/\/+$/, '')).filter(u => u && u !== currentBase);
+
+      for (const altBase of candidates) {
         config.baseURL = altBase;
-        // Fast failover timeout (3.5s) on retry so the user does not wait 12s
-        config.timeout = 3500;
+        config.timeout = 4000;
         try {
-          const res = await apiClient(config);
+          const res = await axios(config);
           setDynamicApiBaseUrl(altBase);
           return res;
-        } catch (retryErr) {
-          // Alternate retry failed; continue cycling candidate URLs
-          setDynamicApiBaseUrl('');
+        } catch {
+          // Continue cycling through next candidate
         }
       }
     }
@@ -105,13 +104,11 @@ apiClient.interceptors.response.use(
         responseSuccess: typeof error.response?.data?.success === 'boolean' ? error.response.data.success : undefined,
         responseMessagePresent: typeof error.response?.data?.message === 'string',
         hint: !error.response && !timedOut
-          ? 'Check the API listener on port 5001. Simulator loopback reaches this Mac; a physical iPhone needs the Mac LAN address and local-network permission.'
+          ? 'Check the API listener on port 5001 or Cloudflare tunnel status.'
           : undefined,
       });
     }
-    const networkErrorMessage = Platform.OS === 'android'
-      ? 'Unable to connect to CrackWithAI. Please check that the backend server is running on port 5001 and ADB connection is active.'
-      : 'Unable to connect to CrackWithAI. Ensure your iPhone and Mac are on the same Wi-Fi network and Local Network permission is enabled in iPhone Settings > Privacy & Security > Local Network > CrackWithAI.';
+    const networkErrorMessage = 'Unable to connect to CrackWithAI. Please check your internet connection or verify the backend server is running.';
 
     const message = timedOut ? 'The server took too long to respond. Please try again.' :
       error.response?.data?.message ||

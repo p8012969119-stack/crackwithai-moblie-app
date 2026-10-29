@@ -245,7 +245,7 @@ const AnimatedToolCard: React.FC<{
               activeOpacity={0.85}
             >
               <Text style={styles.blackActionBtnText} numberOfLines={1}>
-                {tool.actionText} ↗
+                {tool.actionText}
               </Text>
             </TouchableOpacity>
           </View>
@@ -356,7 +356,7 @@ export const ToolsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             }}
             activeOpacity={0.7}
           >
-            <Icon name="chevron-left" size={20} color="#0F172A" />
+            <Text style={styles.backBtnText} numberOfLines={1}>Back</Text>
           </TouchableOpacity>
 
           <View style={styles.headerTitleCol}>
@@ -460,15 +460,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+  },
+  backBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   headerTitleCol: {
     flex: 1,

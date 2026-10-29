@@ -1,17 +1,17 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://entrance-contractors-workers-baghdad.trycloudflare.com/api';
+const TUNNEL_URL = 'https://incorporated-political-related-pioneer.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const DEV_LAN_IP = '172.168.7.189';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 const USB_URL = 'http://169.254.33.184:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
-// Prioritize ultra-low latency local & LAN connections first, then public tunnel fallback
-const CANDIDATE_URLS = [
-  LOCAL_URL,
-  DEV_LAN_URL,
+// Prioritize public tunnel and LAN connections for seamless cellular & Wi-Fi support
+export const CANDIDATE_URLS = [
   TUNNEL_URL,
+  DEV_LAN_URL,
+  LOCAL_URL,
   USB_URL,
   EMULATOR_URL,
 ];
@@ -52,18 +52,19 @@ export const probeFastestApiUrl = async (): Promise<string> => {
       }
     };
 
-    // Fast probe: Test USB loopback (127.0.0.1) & LAN (172.168.7.189) with 450ms timeout
+    // Fast probe: Test Local, LAN, and Tunnel in parallel
     try {
-      const fastestLocal = await Promise.any([
-        probe(LOCAL_URL, 450),
-        probe(DEV_LAN_URL, 600),
+      const fastest = await Promise.any([
+        probe(LOCAL_URL, 350),
+        probe(DEV_LAN_URL, 500),
+        probe(TUNNEL_URL, 1200),
       ]);
-      if (fastestLocal) {
-        setDynamicApiBaseUrl(fastestLocal);
-        return fastestLocal;
+      if (fastest) {
+        setDynamicApiBaseUrl(fastest);
+        return fastest;
       }
     } catch {
-      // Local network not reachable (e.g. mobile data away from computer)
+      // Probing failed; fallback to tunnel
     }
 
     setDynamicApiBaseUrl(TUNNEL_URL);
@@ -82,7 +83,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return LOCAL_URL;
+  return TUNNEL_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
