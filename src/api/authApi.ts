@@ -21,6 +21,7 @@ export const authApi = {
   },
 
   getProfile: async (): Promise<ApiResponse<User>> => {
+    await probeFastestApiUrl().catch(() => {});
     const response = await apiClient.get<ApiResponse<User>>('/auth/profile');
     return response.data;
   },

@@ -1,8 +1,8 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://incorporated-political-related-pioneer.trycloudflare.com/api';
+const TUNNEL_URL = 'https://bytes-ion-hours-competitions.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
-const DEV_LAN_IP = '172.168.7.189';
+const DEV_LAN_IP = '172.168.2.75';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 const USB_URL = 'http://169.254.33.184:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
@@ -97,12 +97,6 @@ export const getDevApiBaseUrl = (): string => {
 
   // Pre-probe in background to detect fastest connection immediately
   void probeFastestApiUrl();
-
-  // On Android:
-  // LOCAL_URL is instantaneous (<5ms) over ADB reverse. If unreachable, retry switches automatically.
-  if (Platform.OS === 'android') {
-    return LOCAL_URL;
-  }
 
   // Extract host IP from Metro bundle URL if on iOS
   const scriptURL = typeof NativeModules !== 'undefined' ? NativeModules?.SourceCode?.scriptURL : undefined;

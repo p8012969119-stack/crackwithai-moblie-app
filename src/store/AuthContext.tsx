@@ -36,7 +36,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setToken(session?.token ?? null);
       setUser(session?.user ?? null);
     } catch (error: any) {
-      setSessionError(error.message || 'Unable to verify your session. Please try again.');
+      const cachedUser = await storage.getUser();
+      const cachedToken = await storage.getToken();
+      if (cachedUser && cachedToken) {
+        setToken(cachedToken);
+        setUser(cachedUser);
+      } else {
+        setSessionError(error.message || 'Unable to verify your session. Please try again.');
+      }
     } finally {
       setIsRestoringSession(false);
       setIsLoading(false);

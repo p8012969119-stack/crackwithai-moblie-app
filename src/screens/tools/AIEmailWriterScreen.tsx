@@ -16,41 +16,30 @@ import {
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { aiApi } from '../../api/aiApi';
 import { copyToClipboard } from '../../utils/clipboard';
+import { useSpeechToText } from '../../hooks/useSpeechToText';
 
-const TONE_OPTIONS = [
-  { id: 'professional', label: 'Professional' },
-  { id: 'formal', label: 'Formal' },
-  { id: 'friendly', label: 'Friendly' },
-  { id: 'urgent', label: 'Urgent' },
-  { id: 'persuasive', label: 'Persuasive' },
-];
-
-const EMAIL_PRESETS = [
-  { label: 'Sick Leave', topic: 'Sick Leave Request', notes: 'Need sick leave today due to sudden fever, doctor visit scheduled at 2pm, handover completed' },
-  { label: 'Project Update', topic: 'Weekly Project Milestone', notes: 'Completed backend API integration, frontend UI testing in progress, delivery on track for Friday' },
-  { label: 'Salary Review', topic: 'Performance & Compensation Review', notes: 'Requesting a brief discussion regarding performance achievements and compensation review after 1 year' },
-  { label: 'Client Follow-Up', topic: 'Follow-Up on Partnership Proposal', notes: 'Checking in on our proposal discussed last week, available for any technical clarifications' },
-];
+const TONES = ['Professional', 'Friendly', 'Urgent'];
 
 export const AIEmailWriterScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const [mode, setMode] = useState<'write' | 'correct'>('write');
-  const [recipient, setRecipient] = useState('');
-  const [topic, setTopic] = useState('');
-  const [selectedTone, setSelectedTone] = useState('professional');
-  const [keyNotesOrDraft, setKeyNotesOrDraft] = useState('');
-  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-
+  const [prompt, setPrompt] = useState('');
+  const [selectedTone, setSelectedTone] = useState('Professional');
   const [generating, setGenerating] = useState(false);
   const [generatedEmail, setGeneratedEmail] = useState<{
     subject: string;
     body: string;
-    to?: string;
   } | null>(null);
 
+  // Real Speech-To-Text hook: listens to user voice and types into input bar in real time
+  const { isListening, toggleListening, stopListening } = useSpeechToText({
+    getCurrentText: () => prompt,
+    onTextReceived: (text) => setPrompt(text),
+  });
+
   const handleGoBack = () => {
+    stopListening();
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
@@ -73,74 +62,13 @@ export const AIEmailWriterScreen = ({ navigation }: any) => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 150);
     }
-  }, [generatedEmail, generating]);
-
-  const handleVoiceInput = () => {
-    setIsRecordingVoice(true);
-    setTimeout(() => {
-      setIsRecordingVoice(false);
-      const voiceSamples = [
-        'Need sick leave today due to high fever and doctor consultation scheduled at 2pm',
-        'Requesting salary review meeting after 1 year of project deliverables and team milestones',
-        'Project update: backend APIs completed, mobile UI integration proceeding on schedule',
-      ];
-      const sample = voiceSamples[Math.floor(Math.random() * voiceSamples.length)];
-      setKeyNotesOrDraft(sample);
-    }, 1800);
-  };
-
-  const generateToneFallback = () => {
-    const recName = recipient
-      ? recipient.includes('@')
-        ? recipient.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-        : recipient
-      : 'Team';
-
-    const textInput = keyNotesOrDraft.trim() || topic.trim() || 'Project status update and next steps.';
-
-    let subjectLine = topic.trim() || 'Important Update & Next Steps';
-    if (!topic.trim()) {
-      if (textInput.toLowerCase().includes('sick') || textInput.toLowerCase().includes('fever') || textInput.toLowerCase().includes('leave')) {
-        subjectLine = 'Application for Sick Leave';
-      } else if (textInput.toLowerCase().includes('salary') || textInput.toLowerCase().includes('hike') || textInput.toLowerCase().includes('review')) {
-        subjectLine = 'Request for Compensation Review';
-      }
-    }
-
-    let greeting = `Hi ${recName},`;
-    let content = '';
-    let signOff = `Best regards,\n[Your Name]`;
-
-    if (mode === 'correct') {
-      content = `Here is the revised and professionally polished email draft:\n\n${textInput}\n\nAll grammar, tone, and formatting have been optimized for clarity and professional impact.`;
-    } else if (selectedTone === 'formal') {
-      greeting = `Dear ${recName},`;
-      content = `I am writing to formally communicate regarding the following matter:\n\n${textInput}\n\nPlease advise if any further information or documentation is required from my side.`;
-      signOff = `Sincerely,\n[Your Name]`;
-    } else if (selectedTone === 'friendly') {
-      greeting = `Hey ${recName},`;
-      content = `Hope you're having a great week!\n\nQuick note regarding ${textInput}.\n\nLet me know your thoughts whenever you have a moment!`;
-      signOff = `Cheers,\n[Your Name]`;
-    } else if (selectedTone === 'urgent') {
-      greeting = `Hi ${recName},`;
-      content = `Please note this urgent priority update:\n\n${textInput}\n\nYour prompt attention to this matter would be greatly appreciated.`;
-      signOff = `Kind regards,\n[Your Name]`;
-    } else {
-      greeting = `Hi ${recName},`;
-      content = `I hope this email finds you well.\n\nI am reaching out regarding ${textInput}.\n\nPlease let me know if we can schedule a brief discussion on this topic.`;
-      signOff = `Best regards,\n[Your Name]`;
-    }
-
-    return {
-      subject: subjectLine,
-      body: `${greeting}\n\n${content}\n\n${signOff}`,
-      to: recipient || undefined,
-    };
-  };
+  }, [generatedEmail]);
 
   const handleGenerateEmail = async () => {
-    if (!keyNotesOrDraft.trim() && !topic.trim()) {
-      Alert.alert('Required Input', 'Please enter a topic or type/speak your email points.');
+    stopListening();
+    const cleanPrompt = prompt.trim();
+    if (!cleanPrompt) {
+      Alert.alert('Input Required', 'Please type or speak the details of the email you want to write.');
       return;
     }
 
@@ -148,30 +76,33 @@ export const AIEmailWriterScreen = ({ navigation }: any) => {
     setGeneratedEmail(null);
 
     try {
-      const fullPrompt = `Mode: ${mode}\nRecipient: ${recipient || 'Recipient'}\nTopic: ${topic}\nTone: ${selectedTone}\nContent: ${keyNotesOrDraft}`;
       const res = await aiApi.generateEmail(
         {
-          to: recipient,
-          subject: topic,
-          reason: fullPrompt,
-          body: fullPrompt,
-          prompt: fullPrompt,
+          reason: cleanPrompt,
+          prompt: cleanPrompt,
+          body: cleanPrompt,
         },
         selectedTone
       );
 
       if (res.success && res.data && res.data.body) {
         setGeneratedEmail({
-          subject: res.data.subject || topic || 'Email Draft',
+          subject: res.data.subject || 'Email Update',
           body: res.data.body.replace(/CrackWithAI Team/gi, '[Your Name]'),
-          to: recipient || undefined,
         });
       } else {
-        setGeneratedEmail(generateToneFallback());
+        // Fallback
+        setGeneratedEmail({
+          subject: `Regarding: ${cleanPrompt.slice(0, 35)}`,
+          body: `Dear Recipient,\n\nI am writing to communicate regarding: ${cleanPrompt}.\n\nPlease let me know if you need any additional details.\n\nBest regards,\n[Your Name]`,
+        });
       }
-    } catch (err) {
-      console.warn('[AIEmailWriterScreen] Error generating email:', err);
-      setGeneratedEmail(generateToneFallback());
+    } catch (err: any) {
+      console.warn('[AIEmailWriterScreen] Error generating email:', err?.message || err);
+      setGeneratedEmail({
+        subject: `Regarding: ${cleanPrompt.slice(0, 35)}`,
+        body: `Dear Recipient,\n\nI am writing to follow up regarding: ${cleanPrompt}.\n\nPlease let me know if any further details are required.\n\nBest regards,\n[Your Name]`,
+      });
     } finally {
       setGenerating(false);
     }
@@ -192,12 +123,11 @@ export const AIEmailWriterScreen = ({ navigation }: any) => {
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={() => {
-            setRecipient('');
-            setTopic('');
-            setKeyNotesOrDraft('');
+            stopListening();
+            setPrompt('');
             setGeneratedEmail(null);
           }}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
         >
           <Text style={styles.headerBtnText} numberOfLines={1}>Reset</Text>
         </TouchableOpacity>
@@ -210,192 +140,122 @@ export const AIEmailWriterScreen = ({ navigation }: any) => {
         <ScrollView
           ref={scrollViewRef}
           style={styles.scrollArea}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* QUICK EMAIL PRESETS */}
-          <View style={styles.sectionBlock}>
-            <Text style={styles.sectionLabel}>Quick Email Scenarios</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.presetsRow}>
-              {EMAIL_PRESETS.map((p, idx) => (
+          {/* TONE SELECTION ROW */}
+          <View style={styles.toneRow}>
+            {TONES.map((tone) => {
+              const isSelected = selectedTone === tone;
+              return (
                 <TouchableOpacity
-                  key={idx}
-                  style={styles.presetPill}
-                  onPress={() => {
-                    setTopic(p.topic);
-                    setKeyNotesOrDraft(p.notes);
-                  }}
-                  activeOpacity={0.75}
+                  key={tone}
+                  style={[styles.toneChip, isSelected && styles.toneChipActive]}
+                  onPress={() => setSelectedTone(tone)}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.presetPillText} numberOfLines={1}>{p.label}</Text>
+                  <Text style={[styles.toneChipText, isSelected && styles.toneChipTextActive]} numberOfLines={1}>
+                    {tone}
+                  </Text>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+              );
+            })}
           </View>
 
-          {/* INPUT FORM CARD */}
-          <View style={styles.inputCard}>
-            {/* MODE SWITCHER */}
-            <Text style={styles.controlLabel}>Select Writing Mode</Text>
-            <View style={styles.modeToggleRow}>
-              <TouchableOpacity
-                style={[styles.modeTab, mode === 'write' && styles.modeTabActive]}
-                onPress={() => setMode('write')}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.modeTabText, mode === 'write' && styles.modeTabTextActive]} numberOfLines={1}>
-                  Write New Email
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modeTab, mode === 'correct' && styles.modeTabActive]}
-                onPress={() => setMode('correct')}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.modeTabText, mode === 'correct' && styles.modeTabTextActive]} numberOfLines={1}>
-                  Correct & Polish Draft
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* RECIPIENT INPUT */}
-            <Text style={[styles.controlLabel, { marginTop: 12 }]}>Recipient (Optional)</Text>
+          {/* SINGLE CLEAN INPUT AREA */}
+          <View style={styles.inputContainer}>
             <TextInput
-              style={styles.singleLineInput}
-              placeholder="e.g. manager@company.com or Client Name"
-              placeholderTextColor="#94A3B8"
-              value={recipient}
-              onChangeText={setRecipient}
-            />
-
-            {/* TOPIC / SUBJECT INPUT */}
-            <Text style={[styles.controlLabel, { marginTop: 12 }]}>Topic or Subject</Text>
-            <TextInput
-              style={styles.singleLineInput}
-              placeholder="e.g. Leave Request, Project Update, Milestone Delivery"
-              placeholderTextColor="#94A3B8"
-              value={topic}
-              onChangeText={setTopic}
-            />
-
-            {/* TONE SELECTOR */}
-            <Text style={[styles.controlLabel, { marginTop: 12 }]}>Format & Tone</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.controlPillsRow}>
-              {TONE_OPTIONS.map((t) => {
-                const isSelected = selectedTone === t.id;
-                return (
-                  <TouchableOpacity
-                    key={t.id}
-                    style={[styles.tonePill, isSelected && styles.tonePillActive]}
-                    onPress={() => setSelectedTone(t.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.tonePillText, isSelected && styles.tonePillTextActive]} numberOfLines={1}>
-                      {t.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            {/* KEY POINTS / DRAFT TEXTAREA */}
-            <View style={styles.promptHeaderRow}>
-              <Text style={[styles.controlLabel, { marginTop: 12, marginBottom: 0 }]}>
-                {mode === 'write' ? 'Key Points / Notes' : 'Existing Draft to Correct'}
-              </Text>
-              <TouchableOpacity
-                style={[styles.voiceBtn, isRecordingVoice && styles.voiceBtnActive]}
-                onPress={handleVoiceInput}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.voiceBtnText, isRecordingVoice && styles.voiceBtnTextActive]} numberOfLines={1}>
-                  {isRecordingVoice ? 'Listening...' : 'Voice Input'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={styles.notesInput}
+              style={styles.mainInput}
               multiline
               numberOfLines={4}
-              placeholder={
-                mode === 'write'
-                  ? 'e.g. sick today, sudden fever, doctor visit scheduled at 2pm, handover completed to Rahul'
-                  : 'Paste your draft email here to fix grammar, enhance tone, and refine flow...'
-              }
+              placeholder="Describe your email requirement or speak below (e.g., Leave request for 2 days fever to manager Alex, or paste an email to polish)..."
               placeholderTextColor="#94A3B8"
-              value={keyNotesOrDraft}
-              onChangeText={setKeyNotesOrDraft}
+              value={prompt}
+              onChangeText={setPrompt}
             />
 
-            {/* GENERATE CTA BUTTON - TEXT ONLY, NO ICONS */}
-            <TouchableOpacity
-              style={[styles.generateBtn, generating && styles.generateBtnDisabled]}
-              onPress={handleGenerateEmail}
-              disabled={generating}
-              activeOpacity={0.85}
-            >
-              {generating ? (
-                <View style={styles.btnLoadingRow}>
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                  <Text style={styles.generateBtnText} numberOfLines={1}>Drafting Professional Email...</Text>
-                </View>
-              ) : (
-                <Text style={styles.generateBtnText} numberOfLines={1}>
-                  {mode === 'write' ? 'Generate Email' : 'Correct & Polish Draft'}
+            {/* ACTION ROW INSIDE INPUT */}
+            <View style={styles.inputBottomRow}>
+              <TouchableOpacity
+                style={[styles.voiceBtn, isListening && styles.voiceBtnActive]}
+                onPress={toggleListening}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.voiceBtnText, isListening && styles.voiceBtnTextActive]} numberOfLines={1}>
+                  {isListening ? 'Listening... Tap to stop' : 'Voice Input'}
                 </Text>
+              </TouchableOpacity>
+
+              {prompt.trim().length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearInputBtn}
+                  onPress={() => setPrompt('')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.clearInputBtnText} numberOfLines={1}>Clear</Text>
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
+            </View>
           </View>
+
+          {/* MAIN GENERATE CTA BUTTON */}
+          <TouchableOpacity
+            style={[styles.generateBtn, generating && styles.generateBtnDisabled]}
+            onPress={handleGenerateEmail}
+            disabled={generating}
+            activeOpacity={0.85}
+          >
+            {generating ? (
+              <View style={styles.btnLoadingRow}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text style={styles.generateBtnText} numberOfLines={1}>Generating Email...</Text>
+              </View>
+            ) : (
+              <Text style={styles.generateBtnText} numberOfLines={1}>Generate Email</Text>
+            )}
+          </TouchableOpacity>
 
           {/* GENERATED EMAIL RESULT */}
           {generatedEmail && (
-            <View style={styles.outputSection}>
-              <Text style={styles.outputSectionTitle}>Generated Email</Text>
-              <View style={styles.emailResultCard}>
-                <View style={styles.subjectBox}>
-                  <Text style={styles.subjectLabel}>Subject:</Text>
-                  <Text style={styles.subjectValueText}>{generatedEmail.subject}</Text>
-                </View>
+            <View style={styles.resultContainer}>
+              <View style={styles.subjectBox}>
+                <Text style={styles.subjectLabel}>Subject:</Text>
+                <Text style={styles.subjectText} selectable>{generatedEmail.subject}</Text>
+              </View>
 
-                <View style={styles.bodyBox}>
-                  <Text style={styles.bodyValueText}>{generatedEmail.body}</Text>
-                </View>
+              <View style={styles.bodyBox}>
+                <Text style={styles.bodyText} selectable>{generatedEmail.body}</Text>
+              </View>
 
-                {/* ACTION BUTTONS ROW - TEXT ONLY, NO ICONS */}
-                <View style={styles.emailActionsRow}>
-                  <TouchableOpacity
-                    style={styles.actionBtnOutline}
-                    onPress={() => copyToClipboard(generatedEmail.subject, 'Subject')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.actionBtnOutlineText} numberOfLines={1}>Copy Subject</Text>
-                  </TouchableOpacity>
+              {/* ACTION BUTTONS ROW - TEXT ONLY, NO ICONS */}
+              <View style={styles.resultActionsRow}>
+                <TouchableOpacity
+                  style={styles.actionBtnPrimary}
+                  onPress={() => {
+                    const full = `Subject: ${generatedEmail.subject}\n\n${generatedEmail.body}`;
+                    copyToClipboard(full, 'Email');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.actionBtnPrimaryText} numberOfLines={1}>Copy Full Email</Text>
+                </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.actionBtnFilled}
-                    onPress={() => {
-                      const fullEmail = `Subject: ${generatedEmail.subject}\n\n${generatedEmail.body}`;
-                      copyToClipboard(fullEmail, 'Email');
-                      Alert.alert('Email Copied', 'Full email copied to clipboard!');
-                    }}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.actionBtnFilledText} numberOfLines={1}>Copy Full Email</Text>
-                  </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionBtnSecondary}
+                  onPress={() => copyToClipboard(generatedEmail.subject, 'Subject')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.actionBtnSecondaryText} numberOfLines={1}>Copy Subject</Text>
+                </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.actionBtnSecondary}
-                    onPress={() => {
-                      setTopic(generatedEmail.subject);
-                      setKeyNotesOrDraft(generatedEmail.body);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.actionBtnSecondaryText} numberOfLines={1}>Edit Draft</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={styles.actionBtnSecondary}
+                  onPress={() => setGeneratedEmail(null)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.actionBtnSecondaryText} numberOfLines={1}>Clear</Text>
+                </TouchableOpacity>
               </View>
             </View>
           )}
@@ -408,10 +268,10 @@ export const AIEmailWriterScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
-    height: 54,
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -422,313 +282,201 @@ const styles = StyleSheet.create({
   },
   headerBtn: {
     paddingHorizontal: 12,
-    height: 36,
-    borderRadius: 10,
+    height: 34,
+    borderRadius: 8,
     backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerBtnText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#0F172A',
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#0F172A',
   },
+
   scrollArea: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
-    gap: 16,
   },
 
-  /* PRESETS */
-  sectionBlock: {
-    gap: 8,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748B',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  presetsRow: {
-    gap: 8,
-    paddingRight: 8,
-  },
-  presetPill: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  presetPillText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#334155',
-  },
-
-  /* INPUT CARD */
-  inputCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  controlLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748B',
-    marginBottom: 6,
-  },
-  modeToggleRow: {
+  toneRow: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    padding: 3,
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
   },
-  modeTab: {
+  toneChip: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 9,
   },
-  modeTabActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+  toneChipActive: {
+    backgroundColor: '#0F172A',
+    borderColor: '#0F172A',
   },
-  modeTabText: {
+  toneChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  toneChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+  inputContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 14,
+    marginBottom: 14,
+  },
+  mainInput: {
+    fontSize: 15,
+    color: '#0F172A',
+    minHeight: 120,
+    textAlignVertical: 'top',
+    lineHeight: 22,
+    padding: 0,
+  },
+  inputBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  voiceBtn: {
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#EEF2FF',
+  },
+  voiceBtnActive: {
+    backgroundColor: '#DC2626',
+  },
+  voiceBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4F46E5',
+  },
+  voiceBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  clearInputBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  clearInputBtnText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
   },
-  modeTabTextActive: {
-    fontWeight: '800',
-    color: '#059669',
-  },
-
-  singleLineInput: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    fontSize: 13.5,
-    color: '#0F172A',
-  },
-
-  controlPillsRow: {
-    gap: 8,
-    paddingRight: 8,
-  },
-  tonePill: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-  },
-  tonePillActive: {
-    backgroundColor: '#D1FAE5',
-    borderColor: '#059669',
-  },
-  tonePillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#64748B',
-  },
-  tonePillTextActive: {
-    color: '#059669',
-  },
-
-  promptHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    marginBottom: 6,
-  },
-  voiceBtn: {
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 10,
-    height: 28,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  voiceBtnActive: {
-    backgroundColor: '#FEE2E2',
-  },
-  voiceBtnText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#059669',
-  },
-  voiceBtnTextActive: {
-    color: '#EF4444',
-  },
-
-  notesInput: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 13.5,
-    color: '#0F172A',
-    minHeight: 88,
-    textAlignVertical: 'top',
-  },
 
   generateBtn: {
-    backgroundColor: '#059669',
-    height: 44,
+    height: 48,
     borderRadius: 12,
+    backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 14,
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    marginBottom: 20,
   },
   generateBtnDisabled: {
-    backgroundColor: '#6EE7B7',
+    opacity: 0.65,
+  },
+  generateBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   btnLoadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  generateBtnText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
 
-  /* OUTPUT SECTION */
-  outputSection: {
-    gap: 12,
-  },
-  outputSectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  emailResultCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
+  resultContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    gap: 12,
+    padding: 16,
   },
   subjectBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    marginBottom: 12,
   },
   subjectLabel: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#64748B',
-    marginBottom: 2,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
-  subjectValueText: {
-    fontSize: 14,
+  subjectText: {
+    fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
-  },
-  bodyBox: {
-    backgroundColor: '#FAFAFA',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  bodyValueText: {
-    fontSize: 13.5,
-    color: '#1E293B',
     lineHeight: 21,
   },
+  bodyBox: {
+    marginBottom: 16,
+  },
+  bodyText: {
+    fontSize: 14,
+    color: '#1E293B',
+    lineHeight: 22,
+  },
 
-  emailActionsRow: {
+  resultActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  actionBtnOutline: {
-    flex: 1,
-    height: 38,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  actionBtnOutlineText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
-    textAlign: 'center',
-  },
-  actionBtnFilled: {
+  actionBtnPrimary: {
     flex: 1.2,
-    height: 38,
+    height: 40,
     borderRadius: 10,
-    backgroundColor: '#059669',
+    backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
   },
-  actionBtnFilledText: {
-    fontSize: 12,
-    fontWeight: '800',
+  actionBtnPrimaryText: {
+    fontSize: 13,
+    fontWeight: '700',
     color: '#FFFFFF',
-    textAlign: 'center',
   },
   actionBtnSecondary: {
-    flex: 0.8,
-    height: 38,
+    flex: 0.9,
+    height: 40,
     borderRadius: 10,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
   },
   actionBtnSecondaryText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0F172A',
-    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
   },
 });
