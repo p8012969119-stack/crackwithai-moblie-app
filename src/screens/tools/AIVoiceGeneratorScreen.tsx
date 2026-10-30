@@ -129,33 +129,23 @@ export const AIVoiceGeneratorScreen = ({ navigation }: any) => {
     setGenerating(true);
     setGeneratedVoice(null);
 
-    try {
-      const speedVal = parseFloat(selectedSpeed) || 1.0;
-      await aiApi.generateVoice({
-        script: cleanScript,
-        voice: selectedVoice.name,
-        speed: speedVal,
-      });
+    const speedVal = parseFloat(selectedSpeed) || 1.0;
+    const output = {
+      script: cleanScript,
+      voice: selectedVoice.name,
+      speed: `${selectedSpeed}x`,
+    };
 
-      const output = {
-        script: cleanScript,
-        voice: selectedVoice.name,
-        speed: `${selectedSpeed}x`,
-      };
-      setGeneratedVoice(output);
-      playSpeech(cleanScript);
-    } catch (err: any) {
-      console.warn('[AIVoiceGeneratorScreen] Error generating speech:', err?.message || err);
-      const output = {
-        script: cleanScript,
-        voice: selectedVoice.name,
-        speed: `${selectedSpeed}x`,
-      };
-      setGeneratedVoice(output);
-      playSpeech(cleanScript);
-    } finally {
-      setGenerating(false);
-    }
+    setGeneratedVoice(output);
+    playSpeech(cleanScript);
+    setGenerating(false);
+
+    // Background server audio persistence without blocking user playback
+    void aiApi.generateVoice({
+      script: cleanScript,
+      voice: selectedVoice.name,
+      speed: speedVal,
+    }).catch(() => {});
   };
 
   return (
