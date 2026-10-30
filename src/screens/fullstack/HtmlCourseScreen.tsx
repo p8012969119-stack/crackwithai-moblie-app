@@ -249,6 +249,44 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
               <View style={[styles.progressBarFill, { width: `${Math.max(4, percent)}%`, backgroundColor: '#10B981' }]} />
             </View>
           </View>
+
+          {/* Course Completed 100% Celebration Card */}
+          {percent >= 100 && (
+            <View style={styles.completedCelebrationCard}>
+              <View style={styles.celebrationTopRow}>
+                <Image
+                  source={require('../../assets/brand/certificate_rosette.png')}
+                  style={styles.celebrationRosette}
+                  resizeMode="contain"
+                />
+                <View style={styles.celebrationTextCol}>
+                  <View style={styles.celebrationBadge}>
+                    <Text style={styles.celebrationBadgeText}>100% COMPLETED</Text>
+                  </View>
+                  <Text style={styles.celebrationTitle}>Course Completed! 🎉</Text>
+                  <Text style={styles.celebrationSubtitle}>
+                    You have successfully finished all {totalLessonsCount} lessons. Your official certificate is unlocked!
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.celebrationCertBtn}
+                activeOpacity={0.85}
+                onPress={() => {
+                  if (tech === 'fullstack') {
+                    navigation.navigate('FullStackCertificate');
+                  } else {
+                    navigation.navigate('Certificates');
+                  }
+                }}
+              >
+                <Text style={styles.celebrationCertBtnText} numberOfLines={1}>
+                  View Official Certificate ➔
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Modules Section Header */}
@@ -340,14 +378,9 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
                                 <Text style={[
                                   styles.startBadgeText,
                                   isCompleted ? styles.startBadgeTextCompleted : { color: brandColor.pillText }
-                                ]}>
-                                  {isCompleted ? 'Done' : 'Start'}
+                                ]} numberOfLines={1}>
+                                  {isCompleted ? 'Done' : 'Start ➔'}
                                 </Text>
-                                <Icon
-                                  name={isCompleted ? 'check' : 'arrow-right'}
-                                  size={12}
-                                  color={isCompleted ? '#10B981' : brandColor.pillText}
-                                />
                               </View>
                             </View>
                           </TouchableOpacity>
@@ -664,5 +697,68 @@ const styles = StyleSheet.create({
   },
   startBadgeTextCompleted: {
     color: '#10B981'
+  },
+  completedCelebrationCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 14,
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  celebrationTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
+  },
+  celebrationRosette: {
+    width: 54,
+    height: 54,
+  },
+  celebrationTextCol: {
+    flex: 1,
+  },
+  celebrationBadge: {
+    backgroundColor: '#DCFCE7',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  celebrationBadgeText: {
+    color: '#059669',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  celebrationTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  celebrationSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 16,
+  },
+  celebrationCertBtn: {
+    backgroundColor: '#0F172A',
+    paddingVertical: 11,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  celebrationCertBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
   }
 });

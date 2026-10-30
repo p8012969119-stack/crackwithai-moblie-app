@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -111,9 +111,111 @@ export const HomeScreen = ({ navigation }: any) => {
   const rawName = user?.fullName || user?.name || 'Prakash';
   const firstName = rawName.split(' ')[0];
 
-  const progressPercent = typeof fullstackProgress?.overallPercentage === 'number'
-    ? Math.min(100, Math.max(0, fullstackProgress.overallPercentage))
-    : 0;
+  // Map module progress by tech slug
+  const courseProgressMap = useMemo(() => {
+    const map: Record<string, { completed: number; total: number; percent: number; isCompleted: boolean }> = {};
+    if (fullstackProgress?.modules) {
+      for (const mod of fullstackProgress.modules) {
+        const key = mod.id?.toLowerCase() || '';
+        map[key] = {
+          completed: mod.completedLessons || 0,
+          total: mod.totalLessons || 0,
+          percent: mod.progressPercentage || 0,
+          isCompleted: Boolean(mod.isCompleted || (mod.totalLessons > 0 && mod.completedLessons >= mod.totalLessons)),
+        };
+      }
+    }
+    return map;
+  }, [fullstackProgress?.modules]);
+
+  const totalLessonsCount = fullstackProgress?.totalLessons || dashboardData?.totalLessonsCount || 171;
+  const completedLessonsCount = fullstackProgress?.completedLessons ?? dashboardData?.completedLessonsCount ?? 0;
+  const progressPercent = totalLessonsCount > 0
+    ? Math.min(100, Math.round((completedLessonsCount / totalLessonsCount) * 100))
+    : (typeof fullstackProgress?.overallPercentage === 'number'
+        ? Math.min(100, Math.max(0, fullstackProgress.overallPercentage))
+        : 0);
+
+  // Aggregated list of earned certificates
+  const earnedCertificates = useMemo(() => {
+    const list: Array<{
+      id: string;
+      title: string;
+      recipientName: string;
+      certificateNumber: string;
+      date: string;
+      percentage: number;
+      isFullStack: boolean;
+    }> = [];
+
+    // 1. Full Stack Certificate if available
+    if (fullstackProgress?.certificate) {
+      list.push({
+        id: fullstackProgress.certificate.certificateId || 'fullstack-cert',
+        title: fullstackProgress.certificate.courseName || 'Full Stack Web Development',
+        recipientName: fullstackProgress.certificate.recipientName || rawName,
+        certificateNumber: fullstackProgress.certificate.verificationCode || fullstackProgress.certificate.certificateNumber || 'CWA-FS',
+        date: fullstackProgress.certificate.issuedAt ? new Date(fullstackProgress.certificate.issuedAt).toLocaleDateString() : 'Issued',
+        percentage: fullstackProgress.certificate.percentage || 100,
+        isFullStack: true,
+      });
+    }
+
+    // 2. Certificates from dashboardData
+    if (Array.isArray(dashboardData?.certificates)) {
+      for (const rawCert of dashboardData.certificates) {
+        const cert = rawCert as any;
+        const id = cert._id || cert.certificateId || cert.certificateNumber;
+        if (id && !list.some(c => c.id === id || c.certificateNumber === cert.certificateNumber)) {
+          const courseObj = typeof cert.course === 'object' ? cert.course : null;
+          const courseSlug = courseObj?.slug || cert.slug || '';
+          const certTitle = cert.title || courseObj?.title || cert.courseName || 'CrackWithAI Course';
+          const isFs = courseSlug.toLowerCase().includes('fullstack') ||
+            certTitle.toLowerCase().includes('full stack');
+          const issueDate = cert.issuedDate || cert.issueDate || cert.issuedAt;
+          list.push({
+            id,
+            title: certTitle,
+            recipientName: cert.recipientName || cert.userName || rawName,
+            certificateNumber: cert.certificateNumber || cert.verificationCode || id,
+            date: issueDate ? new Date(issueDate).toLocaleDateString() : 'Issued',
+            percentage: cert.percentage ?? 100,
+            isFullStack: isFs,
+          });
+        }
+      }
+    }
+
+    // 3. Fallback: If 100% complete or any module is 100% complete but cert not in list yet
+    if (list.length === 0) {
+      if (fullstackProgress?.courseCompleted || progressPercent >= 100) {
+        list.push({
+          id: 'fs-completed',
+          title: 'Full Stack Web Development',
+          recipientName: rawName,
+          certificateNumber: 'CWA-FS-VERIFIED',
+          date: 'Completed Today',
+          percentage: 100,
+          isFullStack: true,
+        });
+      } else if (fullstackProgress?.modules) {
+        const completedMod = fullstackProgress.modules.find(m => m.isCompleted || m.progressPercentage >= 100);
+        if (completedMod) {
+          list.push({
+            id: `mod-${completedMod.id}`,
+            title: `${completedMod.title} Course`,
+            recipientName: rawName,
+            certificateNumber: `CWA-${completedMod.id.toUpperCase()}-VERIFIED`,
+            date: 'Completed Today',
+            percentage: 100,
+            isFullStack: false,
+          });
+        }
+      }
+    }
+
+    return list;
+  }, [fullstackProgress, dashboardData?.certificates, rawName, progressPercent]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -176,6 +278,76 @@ export const HomeScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
+          {/* EARNED CERTIFICATES SECTION (PROMINENT CELEBRATION WHEN USER COMPLETES COURSE) */}
+          {earnedCertificates.length > 0 && (
+            <View style={styles.certSectionBlock}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={styles.sectionTitle}>Earned Certificates</Text>
+                  <View style={styles.certPillBadge}>
+                    <Text style={styles.certPillBadgeText}>{earnedCertificates.length}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Certificates')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.viewAllText}>View All</Text>
+                </TouchableOpacity>
+              </View>
+
+              {earnedCertificates.slice(0, 1).map((cert, idx) => (
+                <View key={cert.id || idx} style={styles.certBannerCard}>
+                  <View style={styles.certBannerTopRow}>
+                    <Image
+                      source={require('../../assets/brand/certificate_rosette.png')}
+                      style={styles.certBannerRosette}
+                      resizeMode="contain"
+                    />
+                    <View style={styles.certBannerInfoCol}>
+                      <View style={styles.certVerifiedTag}>
+                        <Text style={styles.certVerifiedTagText}>OFFICIAL 100% COMPLETION</Text>
+                      </View>
+                      <Text style={styles.certBannerCourseName} numberOfLines={1}>
+                        {cert.title}
+                      </Text>
+                      <Text style={styles.certBannerStudentName} numberOfLines={1}>
+                        Awarded to {cert.recipientName} · {cert.date}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.certBannerDivider} />
+
+                  <View style={styles.certBannerBottomRow}>
+                    <View style={styles.certBannerCodeCol}>
+                      <Text style={styles.certBannerCodeLabel}>CREDENTIAL ID</Text>
+                      <Text style={styles.certBannerCodeValue} numberOfLines={1}>
+                        {cert.certificateNumber}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.certBannerActionBtn}
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        if (cert.isFullStack) {
+                          navigation.navigate('FullStackCertificate');
+                        } else {
+                          navigation.navigate('Certificates', { certificateId: cert.id });
+                        }
+                      }}
+                    >
+                      <Text style={styles.certBannerActionBtnText} numberOfLines={1}>
+                        View Certificate ➔
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* CONTINUE LEARNING SECTION */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Continue Learning</Text>
@@ -190,11 +362,21 @@ export const HomeScreen = ({ navigation }: any) => {
           <TouchableOpacity
             style={styles.continueCard}
             activeOpacity={0.88}
-            onPress={() => navigation.navigate('FullStackOverview')}
+            onPress={() => navigation.navigate(progressPercent >= 100 ? 'FullStackCertificate' : 'FullStackOverview')}
           >
             <View style={styles.continueLeftCol}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Text style={[styles.continueBadgeText, progressPercent >= 100 && styles.continueBadgeTextCompleted]}>
+                  {progressPercent >= 100 ? 'CURRICULUM COMPLETED 🏆' : 'FULL STACK TRACK'}
+                </Text>
+              </View>
+
               <Text style={styles.continueCourseTitle}>
                 Full Stack Development{'\n'}with AI
+              </Text>
+
+              <Text style={styles.continueLessonsSub}>
+                {completedLessonsCount} of {totalLessonsCount} Lessons Completed ({progressPercent}%)
               </Text>
 
               {/* Real Progress Bar & Percentage */}
@@ -206,12 +388,23 @@ export const HomeScreen = ({ navigation }: any) => {
                       {
                         width: `${progressPercent}%`,
                         minWidth: progressPercent > 0 ? 8 : 0,
+                        backgroundColor: progressPercent >= 100 ? '#10B981' : '#5653FE',
                       },
                     ]}
                   />
                 </View>
-                <Text style={styles.progressPercentText}>{progressPercent}%</Text>
+                <Text style={[styles.progressPercentText, progressPercent >= 100 && { color: '#10B981', fontWeight: '800' }]}>
+                  {progressPercent}%
+                </Text>
               </View>
+
+              {progressPercent >= 100 && (
+                <View style={styles.continueCertReadyPill}>
+                  <Text style={styles.continueCertReadyPillText} numberOfLines={1}>
+                    Certificate Unlocked · Tap to View ➔
+                  </Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.continueRightCol}>
@@ -236,144 +429,264 @@ export const HomeScreen = ({ navigation }: any) => {
             contentContainerStyle={styles.coursesHorizontalRow}
           >
             {/* COURSE CARD 1: JavaScript (Vibrant Golden Yellow #FCD34D) */}
-            <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FCD34D' }]}
-              activeOpacity={0.88}
-              onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
-            >
-              <View style={styles.cardHeaderArea}>
-                <Image
-                  source={require('../../assets/tool-logos/javascript.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
-                />
-              </View>
+            {(() => {
+              const prog = courseProgressMap['javascript'];
+              const isComp = prog?.isCompleted || (prog?.percent ?? 0) >= 100;
+              return (
+                <TouchableOpacity
+                  style={[styles.pastelCard, { backgroundColor: '#FCD34D' }]}
+                  activeOpacity={0.88}
+                  onPress={() => navigation.navigate('HtmlCourse', { tech: 'javascript' })}
+                >
+                  <View style={styles.cardHeaderArea}>
+                    <Image
+                      source={require('../../assets/tool-logos/javascript.png')}
+                      style={styles.officialBrandLogoImage}
+                      resizeMode="contain"
+                    />
+                    {isComp && (
+                      <View style={styles.cardCompletedBadge}>
+                        <Text style={styles.cardCompletedBadgeText}>100% DONE</Text>
+                      </View>
+                    )}
+                  </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
-                  JavaScript for Beginners
-                </Text>
-                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
-                  Master modern ES6+, DOM manipulation & async code.
-                </Text>
+                  <View style={styles.cardBodyContent}>
+                    <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                      JavaScript for Beginners
+                    </Text>
+                    <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                      {isComp
+                        ? `Completed all ${prog?.total || 20} lessons and exercises.`
+                        : prog && prog.percent > 0
+                        ? `${prog.completed} of ${prog.total} lessons finished (${prog.percent}%).`
+                        : 'Master modern ES6+, DOM manipulation & async code.'}
+                    </Text>
 
-                <View style={styles.darkPillButton}>
-                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                    {/* Mini Course Progress Bar */}
+                    {prog && prog.percent > 0 && !isComp && (
+                      <View style={styles.cardMiniProgressTrack}>
+                        <View style={[styles.cardMiniProgressFill, { width: `${prog.percent}%` }]} />
+                      </View>
+                    )}
+
+                    <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
+                      <Text style={styles.darkPillButtonText} numberOfLines={1}>
+                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })()}
 
             {/* COURSE CARD 2: CSS3 & Layouts (Vibrant Electric Sky Blue #38BDF8) */}
-            <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#38BDF8' }]}
-              activeOpacity={0.88}
-              onPress={() => navigation.navigate('HtmlCourse', { tech: 'css' })}
-            >
-              <View style={styles.cardHeaderArea}>
-                <Image
-                  source={require('../../assets/tool-logos/css.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
-                />
-              </View>
+            {(() => {
+              const prog = courseProgressMap['css'];
+              const isComp = prog?.isCompleted || (prog?.percent ?? 0) >= 100;
+              return (
+                <TouchableOpacity
+                  style={[styles.pastelCard, { backgroundColor: '#38BDF8' }]}
+                  activeOpacity={0.88}
+                  onPress={() => navigation.navigate('HtmlCourse', { tech: 'css' })}
+                >
+                  <View style={styles.cardHeaderArea}>
+                    <Image
+                      source={require('../../assets/tool-logos/css.png')}
+                      style={styles.officialBrandLogoImage}
+                      resizeMode="contain"
+                    />
+                    {isComp && (
+                      <View style={styles.cardCompletedBadge}>
+                        <Text style={styles.cardCompletedBadgeText}>100% DONE</Text>
+                      </View>
+                    )}
+                  </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
-                  CSS3 & Web Layouts
-                </Text>
-                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
-                  Flexbox, CSS Grid, animations & responsive design.
-                </Text>
+                  <View style={styles.cardBodyContent}>
+                    <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                      CSS3 & Web Layouts
+                    </Text>
+                    <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                      {isComp
+                        ? `Completed all ${prog?.total || 20} lessons and exercises.`
+                        : prog && prog.percent > 0
+                        ? `${prog.completed} of ${prog.total} lessons finished (${prog.percent}%).`
+                        : 'Flexbox, CSS Grid, animations & responsive design.'}
+                    </Text>
 
-                <View style={styles.darkPillButton}>
-                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                    {/* Mini Course Progress Bar */}
+                    {prog && prog.percent > 0 && !isComp && (
+                      <View style={styles.cardMiniProgressTrack}>
+                        <View style={[styles.cardMiniProgressFill, { width: `${prog.percent}%` }]} />
+                      </View>
+                    )}
+
+                    <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
+                      <Text style={styles.darkPillButtonText} numberOfLines={1}>
+                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })()}
 
             {/* COURSE CARD 3: Node.js (Vibrant Node Green #4ADE80) */}
-            <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#4ADE80' }]}
-              activeOpacity={0.88}
-              onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
-            >
-              <View style={styles.cardHeaderArea}>
-                <Image
-                  source={require('../../assets/tool-logos/node.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
-                />
-              </View>
+            {(() => {
+              const prog = courseProgressMap['nodejs'];
+              const isComp = prog?.isCompleted || (prog?.percent ?? 0) >= 100;
+              return (
+                <TouchableOpacity
+                  style={[styles.pastelCard, { backgroundColor: '#4ADE80' }]}
+                  activeOpacity={0.88}
+                  onPress={() => navigation.navigate('HtmlCourse', { tech: 'nodejs' })}
+                >
+                  <View style={styles.cardHeaderArea}>
+                    <Image
+                      source={require('../../assets/tool-logos/node.png')}
+                      style={styles.officialBrandLogoImage}
+                      resizeMode="contain"
+                    />
+                    {isComp && (
+                      <View style={styles.cardCompletedBadge}>
+                        <Text style={styles.cardCompletedBadgeText}>100% DONE</Text>
+                      </View>
+                    )}
+                  </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
-                  Node.js Backend
-                </Text>
-                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
-                  Create scalable REST APIs & Express servers.
-                </Text>
+                  <View style={styles.cardBodyContent}>
+                    <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                      Node.js Backend
+                    </Text>
+                    <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                      {isComp
+                        ? `Completed all ${prog?.total || 20} lessons and exercises.`
+                        : prog && prog.percent > 0
+                        ? `${prog.completed} of ${prog.total} lessons finished (${prog.percent}%).`
+                        : 'Create scalable REST APIs & Express servers.'}
+                    </Text>
 
-                <View style={styles.darkPillButton}>
-                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                    {/* Mini Course Progress Bar */}
+                    {prog && prog.percent > 0 && !isComp && (
+                      <View style={styles.cardMiniProgressTrack}>
+                        <View style={[styles.cardMiniProgressFill, { width: `${prog.percent}%` }]} />
+                      </View>
+                    )}
+
+                    <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
+                      <Text style={styles.darkPillButtonText} numberOfLines={1}>
+                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })()}
 
             {/* COURSE CARD 4: HTML5 (Vibrant Coral Orange #FB923C) */}
-            <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#FB923C' }]}
-              activeOpacity={0.88}
-              onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
-            >
-              <View style={styles.cardHeaderArea}>
-                <Image
-                  source={require('../../assets/tool-logos/html.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
-                />
-              </View>
+            {(() => {
+              const prog = courseProgressMap['html'];
+              const isComp = prog?.isCompleted || (prog?.percent ?? 0) >= 100;
+              return (
+                <TouchableOpacity
+                  style={[styles.pastelCard, { backgroundColor: '#FB923C' }]}
+                  activeOpacity={0.88}
+                  onPress={() => navigation.navigate('HtmlCourse', { tech: 'html' })}
+                >
+                  <View style={styles.cardHeaderArea}>
+                    <Image
+                      source={require('../../assets/tool-logos/html.png')}
+                      style={styles.officialBrandLogoImage}
+                      resizeMode="contain"
+                    />
+                    {isComp && (
+                      <View style={styles.cardCompletedBadge}>
+                        <Text style={styles.cardCompletedBadgeText}>100% DONE</Text>
+                      </View>
+                    )}
+                  </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
-                  HTML5 & Web Basics
-                </Text>
-                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
-                  Learn semantic tags & web document layouts.
-                </Text>
+                  <View style={styles.cardBodyContent}>
+                    <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                      HTML5 & Web Basics
+                    </Text>
+                    <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                      {isComp
+                        ? `Completed all ${prog?.total || 25} lessons and exercises.`
+                        : prog && prog.percent > 0
+                        ? `${prog.completed} of ${prog.total} lessons finished (${prog.percent}%).`
+                        : 'Learn semantic tags & web document layouts.'}
+                    </Text>
 
-                <View style={styles.darkPillButton}>
-                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                    {/* Mini Course Progress Bar */}
+                    {prog && prog.percent > 0 && !isComp && (
+                      <View style={styles.cardMiniProgressTrack}>
+                        <View style={[styles.cardMiniProgressFill, { width: `${prog.percent}%` }]} />
+                      </View>
+                    )}
+
+                    <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
+                      <Text style={styles.darkPillButtonText} numberOfLines={1}>
+                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })()}
 
             {/* COURSE CARD 5: MongoDB (Vibrant Emerald Mint #34D399) */}
-            <TouchableOpacity
-              style={[styles.pastelCard, { backgroundColor: '#34D399' }]}
-              activeOpacity={0.88}
-              onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
-            >
-              <View style={styles.cardHeaderArea}>
-                <Image
-                  source={require('../../assets/tool-logos/mongodb.png')}
-                  style={styles.officialBrandLogoImage}
-                  resizeMode="contain"
-                />
-              </View>
+            {(() => {
+              const prog = courseProgressMap['mongodb'];
+              const isComp = prog?.isCompleted || (prog?.percent ?? 0) >= 100;
+              return (
+                <TouchableOpacity
+                  style={[styles.pastelCard, { backgroundColor: '#34D399' }]}
+                  activeOpacity={0.88}
+                  onPress={() => navigation.navigate('HtmlCourse', { tech: 'mongodb' })}
+                >
+                  <View style={styles.cardHeaderArea}>
+                    <Image
+                      source={require('../../assets/tool-logos/mongodb.png')}
+                      style={styles.officialBrandLogoImage}
+                      resizeMode="contain"
+                    />
+                    {isComp && (
+                      <View style={styles.cardCompletedBadge}>
+                        <Text style={styles.cardCompletedBadgeText}>100% DONE</Text>
+                      </View>
+                    )}
+                  </View>
 
-              <View style={styles.cardBodyContent}>
-                <Text style={styles.pastelCardTitle} numberOfLines={2}>
-                  MongoDB & Databases
-                </Text>
-                <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
-                  NoSQL database modeling & Mongoose ODM.
-                </Text>
+                  <View style={styles.cardBodyContent}>
+                    <Text style={styles.pastelCardTitle} numberOfLines={2}>
+                      MongoDB & Databases
+                    </Text>
+                    <Text style={styles.pastelCardSubtitle} numberOfLines={2}>
+                      {isComp
+                        ? `Completed all ${prog?.total || 20} lessons and exercises.`
+                        : prog && prog.percent > 0
+                        ? `${prog.completed} of ${prog.total} lessons finished (${prog.percent}%).`
+                        : 'NoSQL database modeling & Mongoose ODM.'}
+                    </Text>
 
-                <View style={styles.darkPillButton}>
-                  <Text style={styles.darkPillButtonText}>Start Course ↗</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                    {/* Mini Course Progress Bar */}
+                    {prog && prog.percent > 0 && !isComp && (
+                      <View style={styles.cardMiniProgressTrack}>
+                        <View style={[styles.cardMiniProgressFill, { width: `${prog.percent}%` }]} />
+                      </View>
+                    )}
+
+                    <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
+                      <Text style={styles.darkPillButtonText} numberOfLines={1}>
+                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })()}
           </ScrollView>
 
           {/* FULL-WIDTH EXPLORE ALL COURSES CTA BUTTON */}
@@ -926,6 +1239,9 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
+  darkPillButtonCompleted: {
+    backgroundColor: '#059669',
+  },
   darkPillButtonText: {
     color: '#FFFFFF',
     fontSize: 11.5,
@@ -933,6 +1249,193 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
     fontFamily: SANS_SERIF_FONT,
     fontStyle: 'normal',
+  },
+
+  /* EARNED CERTIFICATE CELEBRATION BLOCK */
+  certSectionBlock: {
+    marginBottom: 28,
+  },
+  certPillBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  certPillBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#4F46E5',
+    fontFamily: SANS_SERIF_FONT,
+  },
+  certBannerCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  certBannerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  certBannerRosette: {
+    width: 62,
+    height: 62,
+  },
+  certBannerInfoCol: {
+    flex: 1,
+  },
+  certVerifiedTag: {
+    backgroundColor: '#ECFDF5',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  certVerifiedTagText: {
+    color: '#059669',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    fontFamily: SANS_SERIF_FONT,
+  },
+  certBannerCourseName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.2,
+    marginBottom: 2,
+    fontFamily: SANS_SERIF_FONT,
+  },
+  certBannerStudentName: {
+    fontSize: 12.5,
+    color: '#64748B',
+    fontWeight: '500',
+    fontFamily: SANS_SERIF_FONT,
+  },
+  certBannerDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 14,
+  },
+  certBannerBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  certBannerCodeCol: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  certBannerCodeLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+    fontFamily: SANS_SERIF_FONT,
+  },
+  certBannerCodeValue: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0F172A',
+    fontFamily: SANS_SERIF_FONT,
+    marginTop: 2,
+  },
+  certBannerActionBtn: {
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  certBannerActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '800',
+    fontFamily: SANS_SERIF_FONT,
+  },
+
+  /* CONTINUE CARD PROGRESS ENHANCEMENTS */
+  continueBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#5653FE',
+    letterSpacing: 0.5,
+    fontFamily: SANS_SERIF_FONT,
+  },
+  continueBadgeTextCompleted: {
+    color: '#10B981',
+  },
+  continueLessonsSub: {
+    fontSize: 12.5,
+    color: '#64748B',
+    fontWeight: '500',
+    marginBottom: 10,
+    fontFamily: SANS_SERIF_FONT,
+  },
+  continueCertReadyPill: {
+    marginTop: 10,
+    backgroundColor: '#ECFDF5',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  continueCertReadyPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#059669',
+    fontFamily: SANS_SERIF_FONT,
+  },
+
+  /* CARD STATUS & MINI PROGRESS BAR FOR COURSE CARDS */
+  cardCompletedBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#059669',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  cardCompletedBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    fontFamily: SANS_SERIF_FONT,
+  },
+  cardMiniProgressTrack: {
+    width: '100%',
+    height: 5,
+    backgroundColor: 'rgba(15, 23, 42, 0.15)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  cardMiniProgressFill: {
+    height: '100%',
+    backgroundColor: '#0F172A',
+    borderRadius: 3,
   },
 
   /* FULL-WIDTH CTA BUTTONS */

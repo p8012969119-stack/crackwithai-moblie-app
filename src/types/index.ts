@@ -244,6 +244,7 @@ export interface DashboardData {
   completedCoursesCount?: number;
   completedLessonsCount?: number;
   certificatesCount?: number;
+  certificates?: Certificate[];
   bookmarksCount?: number;
   currentCourse?: Course;
   continueLearningLesson?: Lesson;

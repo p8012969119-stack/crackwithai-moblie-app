@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -10,9 +10,11 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Icon } from '../../components/Icon';
 import { FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
+import { fullstackApi } from '../../api/fullstackApi';
+import { FullStackCourseProgress } from '../../types/fullstack';
 
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
 
@@ -72,6 +74,21 @@ export const FullStackRoadmapScreen: React.FC = () => {
   const route = useRoute<any>();
   const initialTab = route.params?.tab === 'ai' ? 'ai' : 'fullstack';
   const [activeTab, setActiveTab] = useState<'fullstack' | 'ai'>(initialTab);
+  const [fullstackProgress, setFullstackProgress] = useState<FullStackCourseProgress | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isSubscribed = true;
+      fullstackApi.getFullStackProgress()
+        .then((res) => {
+          if (isSubscribed && res) setFullstackProgress(res);
+        })
+        .catch(() => null);
+      return () => {
+        isSubscribed = false;
+      };
+    }, [])
+  );
 
   const handleOpenCourse = (techId: string) => {
     navigation.navigate('HtmlCourse', { tech: techId });
@@ -157,6 +174,16 @@ export const FullStackRoadmapScreen: React.FC = () => {
             <View style={styles.coursesList}>
               {FULLSTACK_TRACKS.map((track, idx) => {
                 const logo = COURSE_LOGOS[track.id];
+                const modProg = fullstackProgress?.modules?.find(
+                  m => m.id?.toLowerCase() === track.id.toLowerCase() ||
+                       m.primaryCourseSlug?.toLowerCase().includes(track.id.toLowerCase())
+                );
+                const isCompleted = Boolean(
+                  modProg?.isCompleted ||
+                  (modProg && modProg.totalLessons > 0 && modProg.completedLessons >= modProg.totalLessons)
+                );
+                const percent = modProg?.progressPercentage || 0;
+
                 return (
                   <TouchableOpacity
                     key={track.id}
@@ -182,9 +209,19 @@ export const FullStackRoadmapScreen: React.FC = () => {
                           <View style={styles.trackIndexBadge}>
                             <Text style={styles.trackIndexText}>TRACK {idx + 1}</Text>
                           </View>
-                          <Text style={styles.trackLevelText}>
-                            {track.level || 'Beginner'} · {track.lessonsCount || 20} Lessons
-                          </Text>
+                          {isCompleted ? (
+                            <View style={{ backgroundColor: '#ECFDF5', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
+                              <Text style={{ color: '#059669', fontSize: 11, fontWeight: '800' }}>100% COMPLETED ✓</Text>
+                            </View>
+                          ) : percent > 0 ? (
+                            <Text style={styles.trackLevelText}>
+                              {modProg?.completedLessons}/{modProg?.totalLessons} Lessons ({percent}%)
+                            </Text>
+                          ) : (
+                            <Text style={styles.trackLevelText}>
+                              {track.level || 'Beginner'} · {track.lessonsCount || 20} Lessons
+                            </Text>
+                          )}
                         </View>
                         <Text style={styles.courseTitle}>{track.title}</Text>
                       </View>
@@ -200,12 +237,13 @@ export const FullStackRoadmapScreen: React.FC = () => {
                       </Text>
 
                       <TouchableOpacity
-                        style={styles.startBtnPill}
+                        style={[styles.startBtnPill, isCompleted && { backgroundColor: '#059669' }]}
                         activeOpacity={0.85}
                         onPress={() => handleOpenCourse(track.id)}
                       >
-                        <Text style={styles.startBtnText}>Start Course</Text>
-                        <Icon name="arrow-right" size={13} color="#FFFFFF" style={{ marginLeft: 5 }} />
+                        <Text style={styles.startBtnText} numberOfLines={1}>
+                          {isCompleted ? 'View Certificate ➔' : percent > 0 ? `Continue (${percent}%) ➔` : 'Start Course ➔'}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </TouchableOpacity>

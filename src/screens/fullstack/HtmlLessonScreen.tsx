@@ -1042,7 +1042,6 @@ export const HtmlLessonScreen: React.FC = () => {
               style={styles.siblingNavBtn}
               onPress={() => navigateToSiblingLesson(prevLesson)}
             >
-              <Icon name="arrow-left" size={15} color="#64748B" />
               <Text style={styles.siblingNavText} numberOfLines={1}>Previous</Text>
             </TouchableOpacity>
           ) : <View style={{ flex: 1 }} />}
@@ -1053,8 +1052,7 @@ export const HtmlLessonScreen: React.FC = () => {
               onPress={() => navigateToSiblingLesson(nextLesson)}
               activeOpacity={0.85}
             >
-              <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Next Lesson</Text>
-              <Icon name="arrow-right" size={16} color="#FFFFFF" />
+              <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Next Lesson ➔</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -1062,7 +1060,7 @@ export const HtmlLessonScreen: React.FC = () => {
               onPress={() => navigation.goBack()}
               activeOpacity={0.85}
             >
-              <Text style={styles.nextLessonDarkBtnText}>Back to Course</Text>
+              <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Back to Course ➔</Text>
             </TouchableOpacity>
           )}
         </View>
