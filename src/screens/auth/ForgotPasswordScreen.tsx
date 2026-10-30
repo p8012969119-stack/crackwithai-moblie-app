@@ -8,20 +8,24 @@ import {
   Platform,
   TouchableOpacity,
   Image,
+  TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { authApi } from '../../api/authApi';
 import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
-import { Icon } from '../../components/Icon';
-import { COLORS, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/theme';
+
+const gradient = ['#EEE7FC', '#F0E9FC', '#F2ECFD', '#F4EFFD', '#F6F2FD', '#F8F5FE', '#FAF8FE', '#FCFAFF', '#FDFCFF', '#FFFFFF'];
 
 export const ForgotPasswordScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
+  const [emailFocused, setEmailFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const clearError = () => setErrorMessage(null);
+
   const handleContinue = async () => {
-    setErrorMessage(null);
+    clearError();
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
       setErrorMessage('Please enter your email address.');
@@ -36,10 +40,7 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
 
     try {
       setLoading(true);
-      // Dispatch reset OTP via backend API
       await authApi.forgotPassword(trimmedEmail);
-
-      // Navigate to OTP verification section on success
       navigation.navigate('OtpVerification', { email: trimmedEmail, fromForgot: true });
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to send reset code. Please try again.');
@@ -49,156 +50,204 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Brand Header with Official CrackWithAI Logo */}
-        <View style={styles.brandContainer}>
-          <Image
-            source={require('../../assets/images/logo/crackwithai.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <Text style={styles.brandSubtitle}>Master Tech & AI Skills on Mobile</Text>
-        </View>
+    <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
+      {/* Soft Violet Gradient Background Overlay matching Login */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        {gradient.map((color) => (
+          <View key={color} style={{ flex: 1, backgroundColor: color }} />
+        ))}
+      </View>
 
-        {/* Card Form */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Forgot Password?</Text>
-          <Text style={styles.cardSubtitle}>
-            Enter your email address to receive a reset OTP and regain access to your account.
-          </Text>
+      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={s.content}
+        >
+          {/* Official CrackWithAI Brand Header */}
+          <View style={s.brand}>
+            <Image
+              source={require('../../assets/images/logo/crackwithai.png')}
+              style={s.logo}
+              resizeMode="contain"
+            />
+            <Text style={s.heading}>Forgot Password</Text>
+            <Text style={s.subtitle}>Enter your email to receive a secure recovery code.</Text>
+          </View>
 
-          {errorMessage ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
+          {/* Form Container */}
+          <View style={s.form}>
+            {/* Email Field Box matching Login */}
+            <View style={[s.fieldBox, emailFocused && s.fieldFocused]}>
+              <Text style={s.fieldLabel}>Email Address</Text>
+              <TextInput
+                placeholder="you@example.com"
+                placeholderTextColor="#A094B3"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="username"
+                autoComplete="email"
+                value={email}
+                editable={!loading}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
+                onChangeText={(val) => {
+                  clearError();
+                  setEmail(val);
+                }}
+                style={s.fieldInput}
+              />
             </View>
-          ) : null}
 
-          <Input
-            label="Email Address"
-            placeholder="Enter your email address"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={(text) => {
-              setErrorMessage(null);
-              setEmail(text);
-            }}
-            leftIcon={<Icon name="mail" size={18} color="#5653fe" />}
-          />
+            {/* Error Alert */}
+            {!!errorMessage && (
+              <View accessibilityLiveRegion="polite" style={s.errorBox}>
+                <Text style={s.errorText}>{errorMessage}</Text>
+              </View>
+            )}
 
-          <Button
-            title={loading ? 'Sending OTP...' : 'Continue'}
-            variant="primary"
-            size="large"
-            onPress={handleContinue}
-            loading={loading}
-            disabled={loading}
-            style={styles.submitBtn}
-            textStyle={styles.submitBtnText}
-          />
+            {/* Signature Violet Submit Button */}
+            <Button
+              title={loading ? 'Sending Code…' : 'Send Recovery Code'}
+              onPress={handleContinue}
+              loading={loading}
+              disabled={loading}
+              size="large"
+              style={s.submitBtn}
+            />
+          </View>
 
-          <TouchableOpacity
-            style={styles.backToLoginBtn}
-            onPress={() => navigation.navigate('Login')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.backToLoginText}>Back to Login</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* Switch to Login Footer */}
+          <View style={s.footer}>
+            <Text style={s.footerText}>Remember your password?</Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={loading}
+              onPress={() => navigation.navigate('Login')}
+              style={s.loginBtn}
+            >
+              <Text style={s.link}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+  screen: { flex: 1, backgroundColor: '#F5F0FD' },
+  content: {
+    flexGrow: 1,
     justifyContent: 'center',
-    minHeight: '100%',
+    paddingHorizontal: 26,
+    paddingTop: 24,
+    paddingBottom: 28,
   },
-  brandContainer: {
+  brand: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 26,
   },
-  logoImage: {
-    width: 220,
-    height: 70,
-    marginBottom: 6,
+  logo: {
+    width: 175,
+    height: 51,
+    marginBottom: 16,
   },
-  brandSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
-    marginTop: 2,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...SHADOWS.medium,
-  },
-  cardTitle: {
-    fontSize: 24,
+  heading: {
+    fontSize: 28,
+    lineHeight: 35,
     fontWeight: '700',
-    color: '#0F172A',
+    letterSpacing: -0.6,
+    color: '#30243E',
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 21,
+    color: '#8B7C9C',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  form: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+    gap: 16,
+  },
+  fieldBox: {
+    height: 74,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#D9CFE8',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#6D4699',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  fieldFocused: {
+    borderColor: '#9C7ACB',
+  },
+  fieldLabel: {
+    position: 'absolute',
+    top: 10,
+    left: 16,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#857293',
+  },
+  fieldInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#3E304C',
+    paddingHorizontal: 16,
+    paddingTop: 26,
+    paddingBottom: 8,
+  },
+  errorBox: {
+    backgroundColor: '#FFF0ED',
+    padding: 12,
+    borderRadius: 12,
     marginBottom: 4,
   },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  errorContainer: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: RADIUS.sm,
-    padding: SPACING.sm,
-    marginBottom: SPACING.md,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.danger,
-  },
   errorText: {
-    ...TYPOGRAPHY.captionBold,
-    color: COLORS.danger,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#9C4E50',
   },
   submitBtn: {
-    backgroundColor: '#5653fe',
-    borderRadius: 28, // Fully curved
-    height: 56,
-    paddingVertical: 0,
+    backgroundColor: '#7655B8',
+    borderRadius: 18,
+    height: 54,
+    marginTop: 6,
+    shadowColor: '#8A65B8',
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 12,
+  },
+  footer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: 24,
+    gap: 6,
   },
-  submitBtnText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    includeFontPadding: false,
-    lineHeight: 22,
+  footerText: {
+    fontSize: 13,
+    color: '#93849F',
   },
-  backToLoginBtn: {
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    marginTop: 8,
+  loginBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
-  backToLoginText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#5653fe',
+  link: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#7753B4',
   },
 });

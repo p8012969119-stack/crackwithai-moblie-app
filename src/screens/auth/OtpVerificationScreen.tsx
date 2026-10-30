@@ -10,11 +10,13 @@ import {
   TextInput,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { authApi } from '../../api/authApi';
 import { useAuth } from '../../store/AuthContext';
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
-import { COLORS, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/theme';
+
+const gradient = ['#EEE7FC', '#F0E9FC', '#F2ECFD', '#F4EFFD', '#F6F2FD', '#F8F5FE', '#FAF8FE', '#FCFAFF', '#FDFCFF', '#FFFFFF'];
 
 export const OtpVerificationScreen = ({ route, navigation }: any) => {
   const { login } = useAuth();
@@ -25,6 +27,7 @@ export const OtpVerificationScreen = ({ route, navigation }: any) => {
   const fromForgot = route?.params?.fromForgot ?? !fromRegister;
 
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
@@ -86,13 +89,11 @@ export const OtpVerificationScreen = ({ route, navigation }: any) => {
 
     try {
       setLoading(true);
-      // Verify OTP code with backend API
       await authApi.verifyOTP(email, code);
 
       if (fromForgot) {
         navigation.navigate('ResetPassword', { email, otp: code });
       } else if (fromRegister && password) {
-        // Auto-login registered user into CrackWithAI main dashboard
         try {
           await login(email, password);
         } catch {
@@ -123,29 +124,107 @@ export const OtpVerificationScreen = ({ route, navigation }: any) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Brand Header with Official CrackWithAI Logo */}
-        <View style={styles.brandContainer}>
-          <Image
-            source={require('../../assets/images/logo/crackwithai.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <Text style={styles.brandSubtitle}>Master Tech & AI Skills on Mobile</Text>
-        </View>
+    <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
+      {/* Soft Violet Gradient Background Overlay matching Login */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        {gradient.map((color) => (
+          <View key={color} style={{ flex: 1, backgroundColor: color }} />
+        ))}
+      </View>
 
-        {/* Card Form */}
-        <View style={styles.card}>
-          <View style={styles.headerRow}>
+      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={s.content}
+        >
+          {/* Brand Header with Official CrackWithAI Logo */}
+          <View style={s.brand}>
+            <Image
+              source={require('../../assets/images/logo/crackwithai.png')}
+              style={s.logo}
+              resizeMode="contain"
+            />
+            <Text style={s.heading}>Verify OTP Code</Text>
+            <Text style={s.subtitle}>
+              Please check your email inbox and enter the 6-digit code below.
+            </Text>
+          </View>
+
+          {/* Form Container */}
+          <View style={s.form}>
+            {/* Soft Violet Email Banner */}
+            <View style={s.emailBanner}>
+              <View style={s.bannerIconBadge}>
+                <Icon name="mail" size={16} color="#7655B8" />
+              </View>
+              <Text style={s.bannerText}>
+                OTP sent to <Text style={s.emailHighlight}>{email}</Text> via email.
+              </Text>
+            </View>
+
+            {/* Error Container */}
+            {!!errorMessage && (
+              <View accessibilityLiveRegion="polite" style={s.errorBox}>
+                <Text style={s.errorText}>{errorMessage}</Text>
+              </View>
+            )}
+
+            {/* 6-Digit OTP Inputs Row */}
+            <View style={s.otpRow}>
+              {otpDigits.map((digit, i) => {
+                const isFocused = focusedIndex === i;
+                const isFilled = !!digit;
+                return (
+                  <TextInput
+                    key={i}
+                    ref={(ref) => (inputRefs.current[i] = ref)}
+                    style={[
+                      s.otpBox,
+                      (isFilled || isFocused) && s.otpBoxActive,
+                    ]}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    value={digit}
+                    onFocus={() => setFocusedIndex(i)}
+                    onBlur={() => setFocusedIndex(null)}
+                    onChangeText={(text) => handleOtpChange(text, i)}
+                    onKeyPress={(e) => handleKeyPress(e, i)}
+                    selectTextOnFocus
+                  />
+                );
+              })}
+            </View>
+
+            {/* Signature Violet Submit Button */}
+            <Button
+              title={loading ? 'Verifying OTP…' : 'Verify OTP'}
+              onPress={handleVerify}
+              loading={loading}
+              disabled={loading}
+              size="large"
+              style={s.submitBtn}
+            />
+
+            {/* Resend OTP Timer & Button */}
+            <View style={s.resendContainer}>
+              <Text style={s.resendLabel}>Didn't receive the code? </Text>
+              {canResend ? (
+                <TouchableOpacity onPress={handleResend} activeOpacity={0.7} style={s.resendBtn}>
+                  <Text style={s.link}>Resend OTP</Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={s.timerText}>Resend OTP in {resendTimer}s</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Back to Sign In Footer */}
+          <View style={s.footer}>
             <TouchableOpacity
+              accessibilityRole="button"
+              disabled={loading}
               onPress={() => {
                 if (navigation.canGoBack()) {
                   navigation.goBack();
@@ -153,213 +232,137 @@ export const OtpVerificationScreen = ({ route, navigation }: any) => {
                   navigation.navigate('Login');
                 }
               }}
-              style={styles.backIconBtn}
-              activeOpacity={0.7}
+              style={s.loginBtn}
             >
-              <Icon name="chevron-left" size={22} color="#0F172A" />
+              <Text style={s.link}>Back to Sign In</Text>
             </TouchableOpacity>
-            <Text style={styles.cardTitle}>Verify OTP Code</Text>
           </View>
-
-          <Text style={styles.cardSubtitle}>
-            Please check your email inbox and enter the 6-digit code below.
-          </Text>
-
-          {/* Nodemailer Email Banner */}
-          <View style={styles.emailBanner}>
-            <View style={styles.bannerIconBadge}>
-              <Icon name="mail" size={16} color="#5653fe" />
-            </View>
-            <Text style={styles.bannerText}>
-              OTP sent to <Text style={styles.emailHighlight}>{email}</Text> via email.
-            </Text>
-          </View>
-
-          {errorMessage ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            </View>
-          ) : null}
-
-          {/* 6 Digit OTP Inputs Row */}
-          <View style={styles.otpRow}>
-            {otpDigits.map((digit, i) => (
-              <TextInput
-                key={i}
-                ref={(ref) => (inputRefs.current[i] = ref)}
-                style={[
-                  styles.otpBox,
-                  digit ? styles.otpBoxFilled : null,
-                ]}
-                keyboardType="number-pad"
-                maxLength={6}
-                value={digit}
-                onChangeText={(text) => handleOtpChange(text, i)}
-                onKeyPress={(e) => handleKeyPress(e, i)}
-                selectTextOnFocus
-              />
-            ))}
-          </View>
-
-          <Button
-            title={loading ? 'Verifying OTP...' : 'Verify OTP'}
-            variant="primary"
-            size="large"
-            onPress={handleVerify}
-            loading={loading}
-            disabled={loading}
-            style={styles.submitBtn}
-            textStyle={styles.submitBtnText}
-          />
-
-          {/* Resend OTP Timer & Button */}
-          <View style={styles.resendContainer}>
-            <Text style={styles.resendLabel}>Didn't receive the code? </Text>
-            {canResend ? (
-              <TouchableOpacity onPress={handleResend} activeOpacity={0.7}>
-                <Text style={styles.resendLink}>Resend OTP</Text>
-              </TouchableOpacity>
-            ) : (
-              <Text style={styles.timerText}>Resend OTP in {resendTimer}s</Text>
-            )}
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+  screen: { flex: 1, backgroundColor: '#F5F0FD' },
+  content: {
+    flexGrow: 1,
     justifyContent: 'center',
-    minHeight: '100%',
+    paddingHorizontal: 26,
+    paddingTop: 24,
+    paddingBottom: 28,
   },
-  brandContainer: {
+  brand: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 26,
   },
-  logoImage: {
-    width: 220,
-    height: 70,
-    marginBottom: 6,
+  logo: {
+    width: 175,
+    height: 51,
+    marginBottom: 20,
   },
-  brandSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
-    marginTop: 2,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...SHADOWS.medium,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  backIconBtn: {
-    marginRight: 8,
-    padding: 2,
-  },
-  cardTitle: {
-    fontSize: 22,
+  heading: {
+    fontSize: 28,
+    lineHeight: 35,
     fontWeight: '700',
-    color: '#0F172A',
+    letterSpacing: -0.6,
+    color: '#30243E',
   },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 12,
-    marginTop: 4,
-    lineHeight: 20,
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 21,
+    color: '#8B7C9C',
+    marginTop: 6,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  form: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   emailBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEEDFF',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: '#F3EDFC',
+    borderRadius: 16,
+    padding: 14,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#C7C5FF',
+    borderColor: '#D9CFE8',
   },
   bannerIconBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
+    shadowColor: '#6D4699',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 2,
   },
   bannerText: {
     flex: 1,
     fontSize: 13,
-    color: '#3B36B4',
+    color: '#5C4A73',
     lineHeight: 18,
   },
   emailHighlight: {
     fontWeight: '700',
-    color: '#5653fe',
+    color: '#7655B8',
   },
-  errorContainer: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: RADIUS.sm,
-    padding: SPACING.sm,
-    marginBottom: SPACING.md,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.danger,
+  errorBox: {
+    backgroundColor: '#FFF0ED',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
   },
   errorText: {
-    ...TYPOGRAPHY.captionBold,
-    color: COLORS.danger,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#9C4E50',
   },
   otpRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 22,
   },
   otpBox: {
-    width: 44,
-    height: 52,
-    borderRadius: 12,
+    width: 48,
+    height: 58,
+    borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    borderColor: '#D9CFE8',
+    backgroundColor: '#FFFFFF',
     textAlign: 'center',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#30243E',
+    shadowColor: '#6D4699',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 8,
+    elevation: 2,
   },
-  otpBoxFilled: {
-    borderColor: '#5653fe',
-    backgroundColor: '#EEEDFF',
+  otpBoxActive: {
+    borderColor: '#7655B8',
+    backgroundColor: '#FAF7FD',
   },
   submitBtn: {
-    backgroundColor: '#5653fe',
-    borderRadius: 28, // Fully curved
-    height: 56,
-    paddingVertical: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  submitBtnText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    includeFontPadding: false,
-    lineHeight: 22,
+    backgroundColor: '#7655B8',
+    borderRadius: 18,
+    height: 54,
+    shadowColor: '#8A65B8',
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 12,
+    elevation: 3,
+    width: '100%',
   },
   resendContainer: {
     flexDirection: 'row',
@@ -368,17 +371,30 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   resendLabel: {
-    fontSize: 14,
-    color: '#64748B',
+    fontSize: 13,
+    color: '#93849F',
   },
-  resendLink: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#5653fe',
+  resendBtn: {
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  link: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#7753B4',
   },
   timerText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: '#93849F',
+  },
+  footer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  loginBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });

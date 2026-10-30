@@ -6,14 +6,17 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
   Modal,
   Image,
+  TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { authApi } from '../../api/authApi';
 import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
 import { AnimatedEyeToggle } from '../../components/AnimatedAuthIcons';
-import { COLORS, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from '../../constants/theme';
+
+const gradient = ['#EEE7FC', '#F0E9FC', '#F2ECFD', '#F4EFFD', '#F6F2FD', '#F8F5FE', '#FAF8FE', '#FCFAFF', '#FDFCFF', '#FFFFFF'];
 
 export const ResetPasswordScreen = ({ route, navigation }: any) => {
   const email = route?.params?.email || '';
@@ -25,12 +28,17 @@ export const ResetPasswordScreen = ({ route, navigation }: any) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [newPasswordFocused, setNewPasswordFocused] = useState(false);
+  const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
 
+  const clearError = () => setErrorMessage(null);
+
   const handleResetPassword = async () => {
-    setErrorMessage(null);
+    clearError();
     if (!newPassword || !confirmPassword) {
       setErrorMessage('Please fill in both password fields.');
       return;
@@ -48,7 +56,6 @@ export const ResetPasswordScreen = ({ route, navigation }: any) => {
 
     try {
       setLoading(true);
-      // Reset password using backend API
       await authApi.resetPassword({ email, otp, password: newPassword });
       setSuccessModalVisible(true);
     } catch (err: any) {
@@ -59,240 +66,320 @@ export const ResetPasswordScreen = ({ route, navigation }: any) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Brand Header with Official CrackWithAI Logo */}
-        <View style={styles.brandContainer}>
-          <Image
-            source={require('../../assets/images/logo/crackwithai.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <Text style={styles.brandSubtitle}>Master Tech & AI Skills on Mobile</Text>
-        </View>
+    <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
+      {/* Soft Violet Gradient Background Overlay matching Login */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        {gradient.map((color) => (
+          <View key={color} style={{ flex: 1, backgroundColor: color }} />
+        ))}
+      </View>
 
-        {/* Card Form */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Create New Password</Text>
-          <Text style={styles.cardSubtitle}>
-            Enter a new password for your account to complete reset.
-          </Text>
+      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={s.content}
+        >
+          {/* Brand Header with Official CrackWithAI Logo */}
+          <View style={s.brand}>
+            <Image
+              source={require('../../assets/images/logo/crackwithai.png')}
+              style={s.logo}
+              resizeMode="contain"
+            />
+            <Text style={s.heading}>Create New Password</Text>
+            <Text style={s.subtitle}>
+              Enter a new secure password for your CrackWithAI account.
+            </Text>
+          </View>
 
-          {errorMessage ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
+          {/* Form Fields matching Login's violet card design */}
+          <View style={s.form}>
+            {/* New Password Field */}
+            <View style={[s.fieldBox, newPasswordFocused && s.fieldFocused]}>
+              <Text style={s.fieldLabel}>New Password</Text>
+              <TextInput
+                placeholder="Enter new password"
+                placeholderTextColor="#A094B3"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                value={newPassword}
+                editable={!loading}
+                onFocus={() => setNewPasswordFocused(true)}
+                onBlur={() => setNewPasswordFocused(false)}
+                onChangeText={(text) => {
+                  clearError();
+                  setNewPassword(text);
+                }}
+                style={s.fieldInput}
+              />
+              <View style={s.eyeToggleBox}>
+                <AnimatedEyeToggle
+                  showPassword={showPassword}
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  color="#7660BE"
+                />
+              </View>
             </View>
-          ) : null}
 
-          <Input
-            label="New Password"
-            placeholder="Enter new password"
-            isPassword
-            secureTextEntry={!showPassword}
-            value={newPassword}
-            onChangeText={(text) => {
-              setErrorMessage(null);
-              setNewPassword(text);
-            }}
-            rightIcon={
-              <AnimatedEyeToggle
-                showPassword={showPassword}
-                onPress={() => setShowPassword(!showPassword)}
-                color="#5653fe"
+            {/* Confirm Password Field */}
+            <View style={[s.fieldBox, confirmPasswordFocused && s.fieldFocused]}>
+              <Text style={s.fieldLabel}>Confirm New Password</Text>
+              <TextInput
+                placeholder="Confirm new password"
+                placeholderTextColor="#A094B3"
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                value={confirmPassword}
+                editable={!loading}
+                onFocus={() => setConfirmPasswordFocused(true)}
+                onBlur={() => setConfirmPasswordFocused(false)}
+                onChangeText={(text) => {
+                  clearError();
+                  setConfirmPassword(text);
+                }}
+                style={s.fieldInput}
               />
-            }
-          />
+              <View style={s.eyeToggleBox}>
+                <AnimatedEyeToggle
+                  showPassword={showConfirmPassword}
+                  onPress={() => setShowConfirmPassword((prev) => !prev)}
+                  color="#7660BE"
+                />
+              </View>
+            </View>
 
-          <Input
-            label="Confirm Password"
-            placeholder="Confirm new password"
-            isPassword
-            secureTextEntry={!showConfirmPassword}
-            value={confirmPassword}
-            onChangeText={(text) => {
-              setErrorMessage(null);
-              setConfirmPassword(text);
-            }}
-            rightIcon={
-              <AnimatedEyeToggle
-                showPassword={showConfirmPassword}
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                color="#5653fe"
-              />
-            }
-          />
+            {/* Error Container */}
+            {!!errorMessage && (
+              <View accessibilityLiveRegion="polite" style={s.errorBox}>
+                <Text style={s.errorText}>{errorMessage}</Text>
+              </View>
+            )}
 
-          <Button
-            title={loading ? 'Resetting Password...' : 'Reset Password'}
-            variant="primary"
-            size="large"
-            onPress={handleResetPassword}
-            loading={loading}
-            disabled={loading}
-            style={styles.submitBtn}
-            textStyle={styles.submitBtnText}
-          />
-        </View>
-      </ScrollView>
+            {/* Signature Violet Submit Button */}
+            <Button
+              title={loading ? 'Resetting Password…' : 'Reset Password'}
+              onPress={handleResetPassword}
+              loading={loading}
+              disabled={loading}
+              size="large"
+              style={s.submitBtn}
+            />
+          </View>
+
+          {/* Back to Sign In Footer */}
+          <View style={s.footer}>
+            <Text style={s.footerText}>Remember your password?</Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={loading}
+              onPress={() => navigation.navigate('Login')}
+              style={s.loginBtn}
+            >
+              <Text style={s.link}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Success Dialog Modal */}
       <Modal visible={successModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.checkBadge}>
-              <Text style={styles.checkEmoji}>🎉</Text>
+        <View style={s.modalOverlay}>
+          <View style={s.modalCard}>
+            <View style={s.checkBadge}>
+              <Text style={s.checkEmoji}>🎉</Text>
             </View>
-            <Text style={styles.modalTitle}>Password Reset Successful</Text>
-            <Text style={styles.modalSub}>
+            <Text style={s.modalTitle}>Password Reset Successful</Text>
+            <Text style={s.modalSub}>
               Your password has been updated successfully. You can now sign in with your new password.
             </Text>
             <Button
               title="Sign In"
-              variant="primary"
               size="large"
               onPress={() => {
                 setSuccessModalVisible(false);
                 navigation.navigate('Login');
               }}
-              style={styles.modalBtn}
-              textStyle={styles.submitBtnText}
+              style={s.submitBtn}
             />
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+  screen: { flex: 1, backgroundColor: '#F5F0FD' },
+  content: {
+    flexGrow: 1,
     justifyContent: 'center',
-    minHeight: '100%',
+    paddingHorizontal: 26,
+    paddingTop: 24,
+    paddingBottom: 28,
   },
-  brandContainer: {
+  brand: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 26,
   },
-  logoImage: {
-    width: 220,
-    height: 70,
-    marginBottom: 6,
-  },
-  brandSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
-    marginTop: 2,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...SHADOWS.medium,
-  },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#64748B',
+  logo: {
+    width: 175,
+    height: 51,
     marginBottom: 20,
-    lineHeight: 20,
   },
-  errorContainer: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: RADIUS.sm,
-    padding: SPACING.sm,
-    marginBottom: SPACING.md,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.danger,
+  heading: {
+    fontSize: 28,
+    lineHeight: 35,
+    fontWeight: '700',
+    letterSpacing: -0.6,
+    color: '#30243E',
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 21,
+    color: '#8B7C9C',
+    marginTop: 6,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  form: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+  },
+  fieldBox: {
+    height: 74,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#D9CFE8',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#6D4699',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 2,
+    marginBottom: 14,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    position: 'relative',
+  },
+  fieldFocused: {
+    borderColor: '#9C7ACB',
+  },
+  fieldLabel: {
+    position: 'absolute',
+    top: 10,
+    left: 16,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#857293',
+  },
+  fieldInput: {
+    fontSize: 15,
+    color: '#3E304C',
+    paddingTop: 18,
+    paddingBottom: 2,
+    paddingRight: 40,
+  },
+  eyeToggleBox: {
+    position: 'absolute',
+    right: 14,
+    top: 24,
+  },
+  errorBox: {
+    backgroundColor: '#FFF0ED',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 14,
   },
   errorText: {
-    ...TYPOGRAPHY.captionBold,
-    color: COLORS.danger,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#9C4E50',
   },
   submitBtn: {
-    backgroundColor: '#5653fe',
-    borderRadius: 28, // Fully curved
-    height: 56,
-    marginTop: 8,
-    paddingVertical: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#7655B8',
+    borderRadius: 18,
+    height: 54,
+    marginTop: 6,
+    shadowColor: '#8A65B8',
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 12,
+    elevation: 3,
+    width: '100%',
   },
-  submitBtnText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    includeFontPadding: false,
-    lineHeight: 22,
+  footer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    gap: 6,
+  },
+  footerText: {
+    fontSize: 13,
+    color: '#93849F',
+  },
+  loginBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  link: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#7753B4',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(30, 20, 48, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.lg,
+    padding: 24,
   },
   modalCard: {
-    width: '90%',
+    width: '100%',
     maxWidth: 340,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 24,
+    padding: 26,
     alignItems: 'center',
-    ...SHADOWS.large,
+    shadowColor: '#6D4699',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 20,
+    elevation: 8,
   },
   checkBadge: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#ECFDF5',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F3EDFC',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: 16,
   },
   checkEmoji: {
-    fontSize: 28,
+    fontSize: 30,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 6,
+    fontWeight: '700',
+    color: '#30243E',
+    marginBottom: 8,
     textAlign: 'center',
   },
   modalSub: {
     fontSize: 13,
-    color: '#64748B',
+    lineHeight: 19,
+    color: '#8B7C9C',
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 18,
-  },
-  modalBtn: {
-    width: '100%',
-    backgroundColor: '#5653fe',
-    borderRadius: 26,
-    height: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 22,
   },
 });
