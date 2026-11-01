@@ -177,13 +177,12 @@ export const FullStackCertificateScreen: React.FC = () => {
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Icon name="arrow-left" size={20} color="#FFFFFF" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Full Stack Certificate</Text>
         {certificate ? (
           <TouchableOpacity style={styles.headerShareBtn} onPress={handleShare}>
-            <Icon name="share-2" size={18} color="#FFFFFF" />
+            <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>Share</Text>
           </TouchableOpacity>
         ) : (
           <View style={{ width: 40 }} />
@@ -211,8 +210,7 @@ export const FullStackCertificateScreen: React.FC = () => {
               style={styles.continueCourseBtn}
               onPress={() => navigation.navigate('FullStackOverview')}
             >
-              <Text style={styles.continueCourseBtnText}>Continue Full Stack Course</Text>
-              <Icon name="arrow-right" size={16} color="#FFFFFF" />
+              <Text style={styles.continueCourseBtnText} numberOfLines={1}>Continue Full Stack Course ➔</Text>
             </TouchableOpacity>
           </View>
         ) : certificate ? (
@@ -324,8 +322,7 @@ export const FullStackCertificateScreen: React.FC = () => {
                 activeOpacity={0.85}
                 onPress={handleShare}
               >
-                <Icon name="share-2" size={16} color="#FFFFFF" />
-                <Text style={styles.primaryActionBtnText}>Share Certificate</Text>
+                <Text style={styles.primaryActionBtnText} numberOfLines={1}>Share Certificate ➔</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -337,10 +334,7 @@ export const FullStackCertificateScreen: React.FC = () => {
                 {downloading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <>
-                    <Icon name="download" size={16} color="#FFFFFF" />
-                    <Text style={styles.secondaryActionBtnText}>Download PDF</Text>
-                  </>
+                  <Text style={styles.secondaryActionBtnText} numberOfLines={1}>Download PDF ➔</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -352,7 +346,7 @@ export const FullStackCertificateScreen: React.FC = () => {
                 onPress={handleCopyLink}
                 activeOpacity={0.8}
               >
-                <Text style={styles.utilityBtnText}>
+                <Text style={styles.utilityBtnText} numberOfLines={1}>
                   {copied ? 'Link Copied!' : 'Copy Verification Link'}
                 </Text>
               </TouchableOpacity>
@@ -362,8 +356,7 @@ export const FullStackCertificateScreen: React.FC = () => {
                 onPress={handleVerify}
                 activeOpacity={0.8}
               >
-                <Icon name="check-circle" size={15} color="#10B981" />
-                <Text style={styles.utilityBtnText}>Verify Authenticity</Text>
+                <Text style={styles.utilityBtnText} numberOfLines={1}>Verify Authenticity ➔</Text>
               </TouchableOpacity>
             </View>
 
@@ -392,10 +385,7 @@ export const FullStackCertificateScreen: React.FC = () => {
               {generating ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <>
-                  <Icon name="check" size={18} color="#FFFFFF" />
-                  <Text style={styles.claimBtnText}>Generate My Certificate</Text>
-                </>
+                <Text style={styles.claimBtnText} numberOfLines={1}>Generate My Certificate ➔</Text>
               )}
             </TouchableOpacity>
           </View>

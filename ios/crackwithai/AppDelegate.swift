@@ -43,7 +43,7 @@ class AppDelegate: RCTAppDelegate {
        !ip.isEmpty {
       RCTBundleURLProvider.sharedSettings().jsLocation = ip
     } else {
-      RCTBundleURLProvider.sharedSettings().jsLocation = "172.168.2.74"
+      RCTBundleURLProvider.sharedSettings().jsLocation = "172.168.7.189"
     }
     return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
     #endif

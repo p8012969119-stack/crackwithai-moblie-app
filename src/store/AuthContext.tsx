@@ -112,6 +112,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setToken(null);
       setUser(null);
+      setSessionError(null);
       await storage.clearAll();
       setIsLoading(false);
     }

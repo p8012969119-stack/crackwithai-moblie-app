@@ -1,17 +1,17 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://bytes-ion-hours-competitions.trycloudflare.com/api';
+const TUNNEL_URL = 'https://kissing-formatting-has-friendship.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
-const DEV_LAN_IP = '172.168.2.75';
+const DEV_LAN_IP = '172.168.7.189';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
 const USB_URL = 'http://169.254.33.184:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
-// Prioritize public tunnel and LAN connections for seamless cellular & Wi-Fi support
+// Prioritize local loopback and LAN endpoints for rapid dev iteration, with tunnel for remote access
 export const CANDIDATE_URLS = [
-  TUNNEL_URL,
-  DEV_LAN_URL,
   LOCAL_URL,
+  DEV_LAN_URL,
+  TUNNEL_URL,
   USB_URL,
   EMULATOR_URL,
 ];
@@ -55,20 +55,21 @@ export const probeFastestApiUrl = async (): Promise<string> => {
     // Fast probe: Test Local, LAN, and Tunnel in parallel
     try {
       const fastest = await Promise.any([
-        probe(LOCAL_URL, 350),
-        probe(DEV_LAN_URL, 500),
-        probe(TUNNEL_URL, 1200),
+        probe(LOCAL_URL, 1500),
+        probe(DEV_LAN_URL, 2000),
+        probe(TUNNEL_URL, 3000),
       ]);
       if (fastest) {
         setDynamicApiBaseUrl(fastest);
         return fastest;
       }
     } catch {
-      // Probing failed; fallback to tunnel
+      // Probing failed; fallback safely
     }
 
-    setDynamicApiBaseUrl(TUNNEL_URL);
-    return TUNNEL_URL;
+    const fallback = Platform.OS === 'ios' ? LOCAL_URL : TUNNEL_URL;
+    setDynamicApiBaseUrl(fallback);
+    return fallback;
   })();
 
   const result = await probePromise;
@@ -83,7 +84,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return TUNNEL_URL;
+  return Platform.OS === 'ios' ? LOCAL_URL : TUNNEL_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -113,7 +114,11 @@ export const getDevApiBaseUrl = (): string => {
     } catch (_) {}
   }
 
-  // On physical iOS device or when running bundled JS, use HTTPS tunnel or local LAN
+  // On iOS Simulator / local devices, default to LOCAL_URL
+  if (Platform.OS === 'ios') {
+    return LOCAL_URL;
+  }
+
   return TUNNEL_URL;
 };
 

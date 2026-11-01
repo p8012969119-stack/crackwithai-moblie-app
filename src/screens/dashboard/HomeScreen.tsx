@@ -136,87 +136,6 @@ export const HomeScreen = ({ navigation }: any) => {
         ? Math.min(100, Math.max(0, fullstackProgress.overallPercentage))
         : 0);
 
-  // Aggregated list of earned certificates
-  const earnedCertificates = useMemo(() => {
-    const list: Array<{
-      id: string;
-      title: string;
-      recipientName: string;
-      certificateNumber: string;
-      date: string;
-      percentage: number;
-      isFullStack: boolean;
-    }> = [];
-
-    // 1. Full Stack Certificate if available
-    if (fullstackProgress?.certificate) {
-      list.push({
-        id: fullstackProgress.certificate.certificateId || 'fullstack-cert',
-        title: fullstackProgress.certificate.courseName || 'Full Stack Web Development',
-        recipientName: fullstackProgress.certificate.recipientName || rawName,
-        certificateNumber: fullstackProgress.certificate.verificationCode || fullstackProgress.certificate.certificateNumber || 'CWA-FS',
-        date: fullstackProgress.certificate.issuedAt ? new Date(fullstackProgress.certificate.issuedAt).toLocaleDateString() : 'Issued',
-        percentage: fullstackProgress.certificate.percentage || 100,
-        isFullStack: true,
-      });
-    }
-
-    // 2. Certificates from dashboardData
-    if (Array.isArray(dashboardData?.certificates)) {
-      for (const rawCert of dashboardData.certificates) {
-        const cert = rawCert as any;
-        const id = cert._id || cert.certificateId || cert.certificateNumber;
-        if (id && !list.some(c => c.id === id || c.certificateNumber === cert.certificateNumber)) {
-          const courseObj = typeof cert.course === 'object' ? cert.course : null;
-          const courseSlug = courseObj?.slug || cert.slug || '';
-          const certTitle = cert.title || courseObj?.title || cert.courseName || 'CrackWithAI Course';
-          const isFs = courseSlug.toLowerCase().includes('fullstack') ||
-            certTitle.toLowerCase().includes('full stack');
-          const issueDate = cert.issuedDate || cert.issueDate || cert.issuedAt;
-          list.push({
-            id,
-            title: certTitle,
-            recipientName: cert.recipientName || cert.userName || rawName,
-            certificateNumber: cert.certificateNumber || cert.verificationCode || id,
-            date: issueDate ? new Date(issueDate).toLocaleDateString() : 'Issued',
-            percentage: cert.percentage ?? 100,
-            isFullStack: isFs,
-          });
-        }
-      }
-    }
-
-    // 3. Fallback: If 100% complete or any module is 100% complete but cert not in list yet
-    if (list.length === 0) {
-      if (fullstackProgress?.courseCompleted || progressPercent >= 100) {
-        list.push({
-          id: 'fs-completed',
-          title: 'Full Stack Web Development',
-          recipientName: rawName,
-          certificateNumber: 'CWA-FS-VERIFIED',
-          date: 'Completed Today',
-          percentage: 100,
-          isFullStack: true,
-        });
-      } else if (fullstackProgress?.modules) {
-        const completedMod = fullstackProgress.modules.find(m => m.isCompleted || m.progressPercentage >= 100);
-        if (completedMod) {
-          list.push({
-            id: `mod-${completedMod.id}`,
-            title: `${completedMod.title} Course`,
-            recipientName: rawName,
-            certificateNumber: `CWA-${completedMod.id.toUpperCase()}-VERIFIED`,
-            date: 'Completed Today',
-            percentage: 100,
-            isFullStack: false,
-          });
-        }
-      }
-    }
-
-    return list;
-  }, [fullstackProgress, dashboardData?.certificates, rawName, progressPercent]);
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -278,76 +197,6 @@ export const HomeScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          {/* EARNED CERTIFICATES SECTION (PROMINENT CELEBRATION WHEN USER COMPLETES COURSE) */}
-          {earnedCertificates.length > 0 && (
-            <View style={styles.certSectionBlock}>
-              <View style={styles.sectionHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={styles.sectionTitle}>Earned Certificates</Text>
-                  <View style={styles.certPillBadge}>
-                    <Text style={styles.certPillBadgeText}>{earnedCertificates.length}</Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('Certificates')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.viewAllText}>View All</Text>
-                </TouchableOpacity>
-              </View>
-
-              {earnedCertificates.slice(0, 1).map((cert, idx) => (
-                <View key={cert.id || idx} style={styles.certBannerCard}>
-                  <View style={styles.certBannerTopRow}>
-                    <Image
-                      source={require('../../assets/brand/certificate_rosette.png')}
-                      style={styles.certBannerRosette}
-                      resizeMode="contain"
-                    />
-                    <View style={styles.certBannerInfoCol}>
-                      <View style={styles.certVerifiedTag}>
-                        <Text style={styles.certVerifiedTagText}>OFFICIAL 100% COMPLETION</Text>
-                      </View>
-                      <Text style={styles.certBannerCourseName} numberOfLines={1}>
-                        {cert.title}
-                      </Text>
-                      <Text style={styles.certBannerStudentName} numberOfLines={1}>
-                        Awarded to {cert.recipientName} · {cert.date}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.certBannerDivider} />
-
-                  <View style={styles.certBannerBottomRow}>
-                    <View style={styles.certBannerCodeCol}>
-                      <Text style={styles.certBannerCodeLabel}>CREDENTIAL ID</Text>
-                      <Text style={styles.certBannerCodeValue} numberOfLines={1}>
-                        {cert.certificateNumber}
-                      </Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.certBannerActionBtn}
-                      activeOpacity={0.85}
-                      onPress={() => {
-                        if (cert.isFullStack) {
-                          navigation.navigate('FullStackCertificate');
-                        } else {
-                          navigation.navigate('Certificates', { certificateId: cert.id });
-                        }
-                      }}
-                    >
-                      <Text style={styles.certBannerActionBtnText} numberOfLines={1}>
-                        View Certificate ➔
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
-
           {/* CONTINUE LEARNING SECTION */}
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Continue Learning</Text>
@@ -362,7 +211,7 @@ export const HomeScreen = ({ navigation }: any) => {
           <TouchableOpacity
             style={styles.continueCard}
             activeOpacity={0.88}
-            onPress={() => navigation.navigate(progressPercent >= 100 ? 'FullStackCertificate' : 'FullStackOverview')}
+            onPress={() => navigation.navigate('FullStackOverview')}
           >
             <View style={styles.continueLeftCol}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -397,14 +246,6 @@ export const HomeScreen = ({ navigation }: any) => {
                   {progressPercent}%
                 </Text>
               </View>
-
-              {progressPercent >= 100 && (
-                <View style={styles.continueCertReadyPill}>
-                  <Text style={styles.continueCertReadyPillText} numberOfLines={1}>
-                    Certificate Unlocked · Tap to View ➔
-                  </Text>
-                </View>
-              )}
             </View>
 
             <View style={styles.continueRightCol}>
@@ -472,7 +313,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
                     <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
                       <Text style={styles.darkPillButtonText} numberOfLines={1}>
-                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                        {isComp ? 'Review Course ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
                       </Text>
                     </View>
                   </View>
@@ -524,7 +365,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
                     <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
                       <Text style={styles.darkPillButtonText} numberOfLines={1}>
-                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                        {isComp ? 'Review Course ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
                       </Text>
                     </View>
                   </View>
@@ -576,7 +417,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
                     <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
                       <Text style={styles.darkPillButtonText} numberOfLines={1}>
-                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                        {isComp ? 'Review Course ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
                       </Text>
                     </View>
                   </View>
@@ -628,7 +469,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
                     <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
                       <Text style={styles.darkPillButtonText} numberOfLines={1}>
-                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                        {isComp ? 'Review Course ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
                       </Text>
                     </View>
                   </View>
@@ -680,7 +521,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
                     <View style={[styles.darkPillButton, isComp && styles.darkPillButtonCompleted]}>
                       <Text style={styles.darkPillButtonText} numberOfLines={1}>
-                        {isComp ? 'View Certificate ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
+                        {isComp ? 'Review Course ➔' : prog && prog.percent > 0 ? `Continue (${prog.percent}%) ➔` : 'Start Course ➔'}
                       </Text>
                     </View>
                   </View>

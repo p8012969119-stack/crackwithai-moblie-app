@@ -53,7 +53,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (axios.isCancel(error)) return Promise.reject(error);
 
-    // Automatic transparent failover on alternate network hosts (e.g. Tunnel -> LAN IP -> Localhost)
+    // Automatic transparent failover on alternate network hosts (e.g. Localhost -> LAN IP -> Tunnel)
     const config = error.config as (InternalAxiosRequestConfig & { _retryAttempted?: boolean }) | undefined;
     const isNetworkOrTimeout = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
     if (config && !config._retryAttempted && isNetworkOrTimeout) {
@@ -68,8 +68,15 @@ apiClient.interceptors.response.use(
           const res = await axios(config);
           setDynamicApiBaseUrl(altBase);
           return res;
-        } catch {
-          // Continue cycling through next candidate
+        } catch (altError: any) {
+          // If the candidate server answered with an HTTP response (e.g. 401, 400, 404, 500),
+          // this candidate IS reachable and responsive.
+          if (altError?.response) {
+            setDynamicApiBaseUrl(altBase);
+            error = altError;
+            break;
+          }
+          // Continue cycling through remaining candidates
         }
       }
     }

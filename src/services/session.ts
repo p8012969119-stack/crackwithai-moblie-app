@@ -20,7 +20,12 @@ export async function restoreValidatedSession() {
     await storage.saveUser(response.data);
     return {token, user: response.data};
   } catch (error: any) {
-    if (error.status === 401) {
+    if (
+      error.status === 401 ||
+      error.code === 'USER_AUTH_INVALID' ||
+      error.message?.includes('Invalid token') ||
+      error.message?.includes('expired')
+    ) {
       await clearSession();
       return null;
     }

@@ -596,6 +596,18 @@ export const HtmlLessonScreen: React.FC = () => {
     }
   };
 
+  const handleCompleteAndNext = async (sibling: HtmlLesson) => {
+    const lessonResolvedId = lesson?._id || lesson?.id || lesson?.slug || currentId;
+    if (lessonResolvedId) {
+      try {
+        await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
+      } catch (err) {
+        console.warn('Auto-save lesson progress error:', err);
+      }
+    }
+    navigateToSiblingLesson(sibling);
+  };
+
   const referenceSolution = useMemo(() => getLessonSolution(lesson, activeTech), [lesson, activeTech]);
   const syntaxErrorsCount = validationResult?.errors?.length || 0;
 
@@ -659,9 +671,28 @@ export const HtmlLessonScreen: React.FC = () => {
           </Text>
         </View>
 
-        <View style={[styles.completeCheckBtn, isCompleted && styles.completeCheckBtnActive]}>
+        <TouchableOpacity
+          style={[styles.completeCheckBtn, isCompleted && styles.completeCheckBtnActive]}
+          activeOpacity={0.7}
+          onPress={async () => {
+            const lessonResolvedId = lesson?._id || lesson?.id || lesson?.slug || currentId;
+            if (lessonResolvedId) {
+              try {
+                await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
+                setIsCompleted(true);
+                setSubmissionFeedback({
+                  type: 'success',
+                  message: '✓ Lesson marked as completed and progress saved!'
+                });
+              } catch (e) {
+                console.warn('Manual complete error:', e);
+              }
+            }
+          }}
+          accessibilityLabel="Mark lesson as completed"
+        >
           <Icon name="check" size={16} color={isCompleted ? '#FFFFFF' : '#94A3B8'} />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -1049,18 +1080,26 @@ export const HtmlLessonScreen: React.FC = () => {
           {nextLesson ? (
             <TouchableOpacity
               style={[styles.nextLessonDarkBtn, { backgroundColor: '#0F172A' }]}
-              onPress={() => navigateToSiblingLesson(nextLesson)}
+              onPress={() => handleCompleteAndNext(nextLesson)}
               activeOpacity={0.85}
             >
               <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Next Lesson ➔</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.nextLessonDarkBtn, { backgroundColor: '#0F172A' }]}
-              onPress={() => navigation.goBack()}
+              style={[styles.nextLessonDarkBtn, { backgroundColor: '#10B981' }]}
+              onPress={async () => {
+                const lessonResolvedId = lesson?._id || lesson?.id || lesson?.slug || currentId;
+                if (lessonResolvedId) {
+                  try {
+                    await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
+                  } catch (e) {}
+                }
+                navigation.goBack();
+              }}
               activeOpacity={0.85}
             >
-              <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Back to Course ➔</Text>
+              <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Complete & Back to Course ➔</Text>
             </TouchableOpacity>
           )}
         </View>
