@@ -62,8 +62,8 @@ export const CertificatesScreen = ({ navigation, route }: any) => {
             user: '',
             course: '',
             courseName: fsCert.courseName || 'Full Stack Web Development',
-            recipientName: fsCert.recipientName,
-            certificateNumber: fsCert.certificateNumber || fsCert.verificationCode || fsCert.certificateId || 'CWA-FS',
+            recipientName: fsCert.recipientName || 'Prakash',
+            certificateNumber: fsCert.certificateNumber || fsCert.verificationCode || fsCert.certificateId || 'CWA-FS-VERIFIED',
             issueDate: fsCert.issuedAt || new Date().toISOString(),
             verificationCode: fsCert.verificationCode || fsCert.certificateNumber || 'CWA-FS-VERIFIED',
             percentage: fsCert.percentage || 100,
@@ -72,10 +72,46 @@ export const CertificatesScreen = ({ navigation, route }: any) => {
         }
       }
 
+      // Check all completed modules in Full Stack track
+      if (fsProgress.status === 'fulfilled' && Array.isArray(fsProgress.value?.modules)) {
+        for (const mod of fsProgress.value.modules) {
+          const isDone = Boolean(mod.isCompleted || (mod.totalLessons > 0 && mod.completedLessons >= mod.totalLessons));
+          if (isDone) {
+            const courseTitle = mod.title || `${mod.id.toUpperCase()} Course`;
+            const alreadyExists = loadedList.some(c => {
+              const name = (c.courseName || (typeof c.course === 'object' && (c.course as any)?.title) || '').toLowerCase();
+              return name.includes(mod.id.toLowerCase()) || name.includes((mod.title || '').toLowerCase());
+            });
+            if (!alreadyExists) {
+              const codePrefix = mod.id.toUpperCase();
+              loadedList.push({
+                _id: `mod-cert-${mod.id}`,
+                user: '',
+                course: '',
+                courseName: courseTitle,
+                recipientName: 'Prakash',
+                certificateNumber: `CWA-${codePrefix}-VERIFIED`,
+                issueDate: new Date().toISOString(),
+                verificationCode: `CWA-${codePrefix}-VERIFIED`,
+                percentage: 100,
+                status: 'active',
+              });
+            }
+          }
+        }
+      }
+
       setCertificates(loadedList);
 
       if (requestedId && openedId.current !== requestedId) {
-        const selected = loadedList.find(item => (item._id === requestedId || item.certificateNumber === requestedId) && item.status === 'active');
+        const selected = loadedList.find(
+          item =>
+            (item._id === requestedId ||
+             item.certificateNumber === requestedId ||
+             item.verificationCode === requestedId ||
+             (item.courseName && requestedId.toLowerCase().includes(item.courseName.toLowerCase()))) &&
+            item.status === 'active'
+        );
         if (selected) {
           setSelectedCert(selected);
           openedId.current = requestedId;
