@@ -18,6 +18,7 @@ import { fullstackApi } from '../../api/fullstackApi';
 import { Certificate } from '../../types';
 import { CertificateModal } from '../../components/CertificateModal';
 import { Icon } from '../../components/Icon';
+import { getPublicCertificateUrl, getPublicCertificatePdfUrl } from '../../constants/config';
 
 const SANS_SERIF_FONT = Platform.OS === 'android' ? 'Roboto' : undefined;
 
@@ -139,11 +140,18 @@ export const CertificatesScreen = ({ navigation, route }: any) => {
 
   const handleShareCertificate = async (cert: Certificate) => {
     const title = typeof cert.course === 'object' ? cert.course.title : cert.courseName || 'CrackWithAI Course';
-    const code = cert.verificationCode || cert.certificateNumber;
+    const student = cert.recipientName || cert.userName || 'Prakash';
+    const code = cert.verificationCode || cert.certificateNumber || cert._id;
+    const publicUrl = getPublicCertificateUrl(code);
+    const pdfUrl = getPublicCertificatePdfUrl(code);
+
+    const message = `🎓 CrackWithAI Official Certificate of Completion\n\nRecipient: ${student}\nCourse: ${title}\nVerification ID: ${code}\nStatus: Verified Authentic ✓ (100% Completed)\n\nView Full Certificate:\n${publicUrl}\n\nDownload Official PDF:\n${pdfUrl}`;
+
     try {
       await Share.share({
-        title: 'CrackWithAI Certificate - ' + title,
-        message: `Official CrackWithAI Certificate of Completion for "${title}"! Verification Code: ${code} - https://crackwithai.com`,
+        title: `CrackWithAI Certificate - ${title}`,
+        message,
+        url: publicUrl,
       });
     } catch (e) {
       console.warn('[CertificatesScreen] Share error:', e);

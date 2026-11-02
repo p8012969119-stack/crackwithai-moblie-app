@@ -33,10 +33,10 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>CrackWithAI uses your location to provide personalized learning features.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>CrackWithAI connects to your local development server to log in and sync learning content.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CrackWithAI uses your location to provide personalized learning features.</string>
 	<key>RCTNewArchEnabled</key>
 	<false/>
 	<key>UIApplicationSceneManifest</key>
