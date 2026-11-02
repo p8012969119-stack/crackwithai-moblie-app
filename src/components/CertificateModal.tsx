@@ -2,7 +2,6 @@ import React, {useState} from 'react';
 import {Modal, View, Text, Pressable, ScrollView, Share, Alert, Linking} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {certificateApi} from '../api/certificateApi';
-import {CertificateMark} from './CertificateMark';
 import {Certificate} from '../types';
 import {useAuth} from '../store/AuthContext';
 import {InlineCertificateCanvas} from './InlineCertificateCanvas';
@@ -65,33 +64,13 @@ export const CertificateModal = ({visible, certificate, onClose}: Props) => {
         </View>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
           {active ? (
-            <>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
-                <CertificateMark size={40} />
-                <Text style={s.label}>VERIFIED CREDENTIAL • 100% COMPLETE</Text>
-              </View>
-              <InlineCertificateCanvas studentName={studentName} courseTitle={courseTitle} issueDate={certificate.issuedAt || certificate.issueDate} isUnlocked />
-              <View style={s.card}>
-                {Number.isFinite(certificate.percentage) && (
-                  <View style={{gap: 4}}>
-                    <Text style={s.label}>ASSESSMENT SCORE</Text>
-                    <Text style={s.heading}>{certificate.percentage}%</Text>
-                  </View>
-                )}
-                {certificateId && (
-                  <View style={{gap: 4}}>
-                    <Text style={s.label}>CERTIFICATE ID</Text>
-                    <Text selectable style={s.body}>{certificateId}</Text>
-                  </View>
-                )}
-                {certificate.verificationCode && (
-                  <View style={{gap: 4}}>
-                    <Text style={s.label}>VERIFICATION CODE</Text>
-                    <Text selectable style={s.small}>{certificate.verificationCode}</Text>
-                  </View>
-                )}
-              </View>
-            </>
+            <InlineCertificateCanvas
+              studentName={studentName}
+              courseTitle={courseTitle}
+              issueDate={certificate.issuedAt || certificate.issueDate}
+              verificationCode={code}
+              isUnlocked
+            />
           ) : (
             <View style={s.card}>
               <Text style={s.heading}>Certificate unavailable</Text>

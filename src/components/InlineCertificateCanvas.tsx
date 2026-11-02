@@ -12,7 +12,7 @@ interface InlineCertificateCanvasProps {
 }
 // Mobile adaptation of the supplied web certificate: double frame, corner
 // ribbons, brand medallion, serif heading, recipient line and signature area.
-export const InlineCertificateCanvas = ({studentName, courseTitle, issueDate, isUnlocked}: InlineCertificateCanvasProps) => {
+export const InlineCertificateCanvas = ({studentName, courseTitle, issueDate, verificationCode, isUnlocked}: InlineCertificateCanvasProps) => {
   if (!isUnlocked) return null;
   const date = issueDate ? new Date(issueDate) : null;
   const formattedDate = date && Number.isFinite(date.getTime()) ? date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) : 'Date unavailable';
@@ -39,6 +39,9 @@ export const InlineCertificateCanvas = ({studentName, courseTitle, issueDate, is
         <View style={styles.footerColumn}><Text style={styles.footerLabel}>DATE</Text><Text style={styles.footerValue}>{formattedDate}</Text></View>
         <View style={styles.footerColumn}><Text style={styles.footerLabel}>SIGNATURE</Text><Text style={styles.signature}>CrackWithAI</Text></View>
       </View>
+      {verificationCode ? (
+        <Text style={styles.verifIdText}>Certificate ID: {verificationCode}</Text>
+      ) : null}
     </View>
   </View>;
 };
@@ -68,4 +71,5 @@ const styles = StyleSheet.create({
   footerLabel: {fontSize: 9, letterSpacing: 1.5, fontWeight: '700', color: palette.muted},
   footerValue: {fontSize: 11, lineHeight: 17, color: palette.muted, textAlign: 'center'},
   signature: {fontFamily: serif, fontStyle: 'italic', fontSize: 13, lineHeight: 18, color: palette.ink, textAlign: 'center'},
+  verifIdText: {fontSize: 10, color: '#94A3B8', letterSpacing: 0.8, fontWeight: '600', textAlign: 'center', marginTop: 4},
 });
