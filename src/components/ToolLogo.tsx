@@ -28,6 +28,7 @@ const logos: Record<string, ImageSourcePropType> = {
   'restapi': require('../assets/tool-logos/restapi.png'),
   'auth': require('../assets/tool-logos/auth.png'),
   'capstone': require('../assets/tool-logos/capstone.png'),
+  'fullstack': require('../assets/tool-logos/fullstack-final-project.png'),
 };
 const slugs: Record<string, string> = {
   'chatgpt-mastery': 'chatgpt', 'google-gemini-ai': 'gemini', 'claude-ai-professional': 'claude',
@@ -46,6 +47,7 @@ const slugs: Record<string, string> = {
   'restapi': 'restapi', 'rest-api': 'restapi', 'rest-api-architecture': 'restapi', 'rest-auth': 'restapi',
   'auth': 'auth', 'authentication': 'auth', 'authentication-jwt-security': 'auth',
   'capstone': 'capstone', 'fullstack-final-project': 'capstone', 'final-project': 'capstone',
+  'fullstack': 'fullstack', 'full-stack': 'fullstack', 'full-stack-web-development': 'fullstack',
 };
 export function resolveLogoUri(value?: string): string | undefined {
   if (!value) return undefined;
@@ -67,7 +69,7 @@ export const ToolLogo = ({courseKey, slug, logoUrl, size = 64}: {courseKey: stri
     else if (s.includes('mongo')) key = 'mongodb';
     else if (s.includes('rest') || s.includes('api')) key = 'restapi';
     else if (s.includes('auth') || s.includes('jwt') || s.includes('security')) key = 'auth';
-    else if (s.includes('capstone') || s.includes('final-project')) key = 'capstone';
+    else if (s.includes('capstone') || s.includes('final-project') || s.includes('fullstack') || s.includes('full stack')) key = 'fullstack';
   }
   const local = key ? logos[key] : undefined;
   const uri = resolveLogoUri(logoUrl);

@@ -18,6 +18,7 @@ import { fullstackApi } from '../../api/fullstackApi';
 import { Certificate } from '../../types';
 import { CertificateModal } from '../../components/CertificateModal';
 import { Icon } from '../../components/Icon';
+import { ToolLogo } from '../../components/ToolLogo';
 import { getPublicCertificateUrl, getPublicCertificatePdfUrl } from '../../constants/config';
 
 const SANS_SERIF_FONT = Platform.OS === 'android' ? 'Roboto' : undefined;
@@ -203,40 +204,13 @@ export const CertificatesScreen = ({ navigation, route }: any) => {
               setRefreshing(true);
               fetchCertificates();
             }}
-            tintColor="#5653FE"
+            tintColor="#6C5CE7"
           />
-        }
-        ListHeaderComponent={
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryTopRow}>
-              <View style={styles.summaryIconBox}>
-                <Image
-                  source={require('../../assets/menu-icons/certificate.png')}
-                  style={styles.summaryIcon}
-                  resizeMode="contain"
-                />
-              </View>
-              <View style={styles.summaryTextCol}>
-                <Text style={styles.summaryTitle}>Accredited Credentials</Text>
-                <Text style={styles.summarySub}>
-                  Official certificates issued upon 100% syllabus mastery & code verification.
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.summaryBadgeRow}>
-              <View style={styles.countPill}>
-                <Text style={styles.countPillText}>
-                  {certificates.length} {certificates.length === 1 ? 'Certificate Earned' : 'Certificates Earned'}
-                </Text>
-              </View>
-            </View>
-          </View>
         }
         ListEmptyComponent={
           loading ? (
             <View style={styles.emptyContainer}>
-              <ActivityIndicator size="large" color="#5653FE" />
+              <ActivityIndicator size="large" color="#6C5CE7" />
               <Text style={styles.emptyLoadingText}>Loading your certificates…</Text>
             </View>
           ) : error ? (
@@ -251,16 +225,11 @@ export const CertificatesScreen = ({ navigation, route }: any) => {
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.emptyActionBtnText} numberOfLines={1}>Try Again ➔</Text>
+                <Text style={styles.emptyActionBtnText} numberOfLines={1}>Try Again</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.emptyContainer}>
-              <Image
-                source={require('../../assets/brand/certificate_rosette.png')}
-                style={styles.emptyRosetteImage}
-                resizeMode="contain"
-              />
               <Text style={styles.emptyTitle}>No Certificates Earned Yet</Text>
               <Text style={styles.emptySub}>
                 Complete 100% of any course curriculum in learning to automatically unlock your official certificate here.
@@ -270,84 +239,46 @@ export const CertificatesScreen = ({ navigation, route }: any) => {
                 onPress={() => navigation.navigate('FullStackRoadmap')}
                 activeOpacity={0.8}
               >
-                <Text style={styles.emptyActionBtnText} numberOfLines={1}>Explore Courses ➔</Text>
+                <Text style={styles.emptyActionBtnText} numberOfLines={1}>Explore Courses</Text>
               </TouchableOpacity>
             </View>
           )
         }
         renderItem={({ item }) => {
           const courseTitle = typeof item.course === 'object' ? item.course.title : item.courseName || 'Full Stack Course';
-          const issueDate = item.issueDate
-            ? new Date(item.issueDate).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })
-            : 'Verified';
-          const certId = item.certificateNumber || item.verificationCode || item._id;
-          const student = item.recipientName || item.userName || 'Student';
+          const courseSlug = (typeof item.course === 'object' ? item.course.slug : '') || item.courseName || '';
 
           return (
-            <View style={styles.certCard}>
-              <View style={styles.certCardTopRow}>
-                <Image
-                  source={require('../../assets/brand/certificate_rosette.png')}
-                  style={styles.certRosette}
-                  resizeMode="contain"
+            <TouchableOpacity
+              style={styles.certRowCard}
+              activeOpacity={0.85}
+              onPress={() => setSelectedCert(item)}
+            >
+              {/* LEFT: Course Logo (NOT medal logo) */}
+              <View style={styles.certLogoWrap}>
+                <ToolLogo
+                  courseKey={courseTitle}
+                  slug={courseSlug}
+                  size={42}
                 />
-
-                <View style={styles.certHeaderMetaCol}>
-                  <View style={styles.verifiedTag}>
-                    <Text style={styles.verifiedTagText}>OFFICIAL 100% COMPLETION</Text>
-                  </View>
-                  <Text style={styles.certCourseTitle} numberOfLines={2}>
-                    {courseTitle}
-                  </Text>
-                  <Text style={styles.certStudentText} numberOfLines={1}>
-                    Awarded to {student} · {issueDate}
-                  </Text>
-                </View>
               </View>
 
-              <View style={styles.certDivider} />
-
-              <View style={styles.certDetailsRow}>
-                <View style={styles.certDetailItem}>
-                  <Text style={styles.certDetailLabel}>VERIFICATION ID</Text>
-                  <Text style={styles.certDetailValue} numberOfLines={1} selectable>
-                    {certId}
-                  </Text>
-                </View>
-                <View style={styles.certDetailItem}>
-                  <Text style={styles.certDetailLabel}>STATUS</Text>
-                  <Text style={[styles.certDetailValue, { color: '#059669' }]}>
-                    Active & Verified ✓
-                  </Text>
-                </View>
+              {/* CENTER: Course Name */}
+              <View style={styles.certCenterCol}>
+                <Text style={styles.certCourseName} numberOfLines={2}>
+                  {courseTitle}
+                </Text>
               </View>
 
-              <View style={styles.certActionsRow}>
-                <TouchableOpacity
-                  style={styles.viewCertBtn}
-                  activeOpacity={0.85}
-                  onPress={() => setSelectedCert(item)}
-                >
-                  <Text style={styles.viewCertBtnText} numberOfLines={1}>
-                    View Official Certificate ➔
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.shareCertBtn}
-                  activeOpacity={0.8}
-                  onPress={() => handleShareCertificate(item)}
-                >
-                  <Text style={styles.shareCertBtnText} numberOfLines={1}>
-                    Share Certificate
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+              {/* RIGHT: Text-only button "Open" */}
+              <TouchableOpacity
+                style={styles.openBtn}
+                activeOpacity={0.8}
+                onPress={() => setSelectedCert(item)}
+              >
+                <Text style={styles.openBtnText}>Open</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
           );
         }}
       />
@@ -405,203 +336,60 @@ const styles = StyleSheet.create({
     width: 40,
   },
   listContent: {
-    padding: 18,
+    padding: 16,
     paddingBottom: 40,
-    gap: 16,
+    gap: 12,
     maxWidth: 640,
     width: '100%',
     alignSelf: 'center',
   },
 
-  /* SUMMARY CARD */
-  summaryCard: {
+  /* HORIZONTAL CERTIFICATE ROW CARD */
+  certRowCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 4,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  summaryTopRow: {
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  summaryIconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: '#EEF2FF',
+  certLogoWrap: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  summaryIcon: {
-    width: 28,
-    height: 28,
-  },
-  summaryTextCol: {
+  certCenterCol: {
     flex: 1,
+    marginHorizontal: 14,
+    justifyContent: 'center',
   },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-    fontFamily: SANS_SERIF_FONT,
-  },
-  summarySub: {
-    fontSize: 12,
-    color: '#64748B',
-    lineHeight: 16,
-    marginTop: 2,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  summaryBadgeRow: {
-    marginTop: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  countPill: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  countPillText: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#059669',
-    fontFamily: SANS_SERIF_FONT,
-  },
-
-  /* CERTIFICATE CARD */
-  certCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  certCardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  certRosette: {
-    width: 58,
-    height: 58,
-  },
-  certHeaderMetaCol: {
-    flex: 1,
-  },
-  verifiedTag: {
-    backgroundColor: '#ECFDF5',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    marginBottom: 4,
-  },
-  verifiedTagText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#059669',
-    letterSpacing: 0.4,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  certCourseTitle: {
-    fontSize: 16.5,
-    fontWeight: '800',
+  certCourseName: {
+    fontSize: 15,
+    fontWeight: '700',
     color: '#0F172A',
     fontFamily: SANS_SERIF_FONT,
     letterSpacing: -0.2,
-    marginBottom: 2,
-    lineHeight: 22,
+    lineHeight: 20,
   },
-  certStudentText: {
-    fontSize: 12,
-    color: '#64748B',
-    fontFamily: SANS_SERIF_FONT,
-  },
-  certDivider: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: 14,
-  },
-  certDetailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  certDetailItem: {
-    flex: 1,
-  },
-  certDetailLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#94A3B8',
-    letterSpacing: 0.5,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  certDetailValue: {
-    fontSize: 12.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginTop: 2,
-    fontFamily: SANS_SERIF_FONT,
-  },
-
-  /* ACTION BUTTONS (TEXT-ONLY, NO ICONS, ZERO TEXT BREAKING) */
-  certActionsRow: {
-    gap: 10,
-  },
-  viewCertBtn: {
-    backgroundColor: '#0F172A',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
+  openBtn: {
+    backgroundColor: '#6C5CE7',
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 5,
-    elevation: 3,
   },
-  viewCertBtnText: {
+  openBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: -0.1,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  shareCertBtn: {
-    backgroundColor: '#F8FAFC',
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shareCertBtnText: {
-    color: '#334155',
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontWeight: '700',
     fontFamily: SANS_SERIF_FONT,
   },
@@ -613,18 +401,13 @@ const styles = StyleSheet.create({
     paddingVertical: 48,
     paddingHorizontal: 24,
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-  },
-  emptyRosetteImage: {
-    width: 72,
-    height: 72,
-    marginBottom: 16,
-    opacity: 0.75,
+    marginTop: 12,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
     fontFamily: SANS_SERIF_FONT,
@@ -646,11 +429,11 @@ const styles = StyleSheet.create({
     fontFamily: SANS_SERIF_FONT,
   },
   emptyActionBtn: {
-    backgroundColor: '#5653FE',
+    backgroundColor: '#6C5CE7',
     paddingHorizontal: 22,
     paddingVertical: 12,
-    borderRadius: 14,
-    shadowColor: '#5653FE',
+    borderRadius: 12,
+    shadowColor: '#6C5CE7',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
