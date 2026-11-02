@@ -1,6 +1,6 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://kissing-formatting-has-friendship.trycloudflare.com/api';
+const TUNNEL_URL = 'https://sorry-developmental-obligation-continue.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const DEV_LAN_IP = '172.168.7.189';
 const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
@@ -134,4 +134,14 @@ export const CONFIG = {
     LANGUAGE: '@crackwithai_user_language',
     SETTINGS: '@crackwithai_settings',
   },
+};
+
+export const getPublicCertificateUrl = (code: string): string => {
+  const base = TUNNEL_URL.replace(/\/api\/?$/, '');
+  return `${base}/verify/${encodeURIComponent(code)}`;
+};
+
+export const getPublicCertificatePdfUrl = (code: string): string => {
+  const base = TUNNEL_URL.replace(/\/api\/?$/, '');
+  return `${base}/verify/${encodeURIComponent(code)}/pdf`;
 };

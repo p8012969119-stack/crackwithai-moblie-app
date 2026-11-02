@@ -34,17 +34,18 @@ export const aiApi = {
       success: true,
       message: 'Loaded available AI models',
       data: [
+        { id: 'crackwithai', name: 'CrackWithAI AI', provider: 'CrackWithAI', apiModel: 'crackwithai', providerModel: 'Qwen/Qwen3-8B' },
+        { id: 'groq', name: 'Groq Llama 3', provider: 'Groq', apiModel: 'groq', providerModel: 'openai/gpt-oss-120b' },
         { id: 'gemini', name: 'Gemini 3.7 Flash', provider: 'Google', apiModel: 'gemini', providerModel: 'gemini-3.7-flash' },
+        { id: 'cwa-free', name: 'CWA Free AI', provider: 'CrackWithAI', apiModel: 'cwa-free', providerModel: 'openrouter/free' },
         { id: 'claude', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', apiModel: 'claude', providerModel: 'claude-3-5-sonnet-latest' },
         { id: 'deepseek', name: 'DeepSeek Chat', provider: 'DeepSeek', apiModel: 'deepseek', providerModel: 'deepseek-chat' },
         { id: 'openai', name: 'GPT-4o Mini', provider: 'OpenAI', apiModel: 'openai', providerModel: 'gpt-4o-mini' },
-        { id: 'groq', name: 'Groq Llama 3', provider: 'Groq', apiModel: 'groq', providerModel: 'openai/gpt-oss-20b' },
-        { id: 'free', name: 'CWA Free AI', provider: 'CrackWithAI', apiModel: 'free', providerModel: 'openrouter/free' },
       ],
     };
   },
 
-  chat: async (prompt: string, history: WorkshopHistoryMessage[] = [], model = 'gemini', signal?: AbortSignal): Promise<ApiResponse<{response: string; text?: string; provider?: string; model?: string}>> => {
+  chat: async (prompt: string, history: WorkshopHistoryMessage[] = [], model = 'crackwithai', signal?: AbortSignal): Promise<ApiResponse<{response: string; text?: string; provider?: string; model?: string}>> => {
     const response = await apiClient.post('/ai/chat', {message: prompt, prompt, history: history.slice(-20), model}, {signal, timeout: 90000});
     const data = response.data?.data;
     const text = data?.message || data?.response || data?.text;

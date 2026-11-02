@@ -48,6 +48,9 @@ const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'Sy
 
 const getModelBrand = (modelId: string = '', provider: string = '', name: string = '') => {
   const key = `${modelId} ${provider} ${name}`.toLowerCase();
+  if (key.includes('crackwithai') || key.includes('cwa')) {
+    return { badgeColor: '#6C5CE7', icon: require('../../assets/images/logo/crackwithai.png') };
+  }
   if (key.includes('gemini') || key.includes('google')) {
     return { badgeColor: '#4285F4', icon: require('../../assets/images/models/gemini.png') };
   }
