@@ -1,19 +1,19 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://troops-aggregate-bookmark-parcel.trycloudflare.com/api';
+const TUNNEL_URL = 'https://copyrights-worker-differently-tiffany.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const DEV_LAN_URL = 'http://10.22.112.1:5001/api';
 const DEV_LAN_URL_ALT = 'http://172.168.7.188:5001/api';
 const USB_URL = 'http://169.254.33.184:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
-// Prioritize responsive local, LAN, emulator and tunnel endpoints for mobile devices and simulators
+// Prioritize responsive live tunnel, LAN, localhost (with adb reverse), and emulator
 export const CANDIDATE_URLS = [
-  LOCAL_URL,
+  TUNNEL_URL,
   DEV_LAN_URL,
+  LOCAL_URL,
   EMULATOR_URL,
   DEV_LAN_URL_ALT,
-  TUNNEL_URL,
   USB_URL,
 ];
 
@@ -76,7 +76,7 @@ export const probeFastestApiUrl = async (): Promise<string> => {
       // Probing failed; fallback safely
     }
 
-    const fallback = Platform.OS === 'android' ? EMULATOR_URL : LOCAL_URL;
+    const fallback = TUNNEL_URL;
     setDynamicApiBaseUrl(fallback);
     return fallback;
   })();
@@ -93,7 +93,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return Platform.OS === 'android' ? EMULATOR_URL : LOCAL_URL;
+  return TUNNEL_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -116,14 +116,14 @@ export const getDevApiBaseUrl = (): string => {
       if (match && match[1]) {
         const host = match[1];
         if (host === 'localhost' || host === '127.0.0.1') {
-          return Platform.OS === 'android' ? EMULATOR_URL : LOCAL_URL;
+          return LOCAL_URL;
         }
         return `http://${host}:5001/api`;
       }
     } catch (_) {}
   }
 
-  return Platform.OS === 'android' ? EMULATOR_URL : LOCAL_URL;
+  return TUNNEL_URL;
 };
 
 // Environment & App Configuration
