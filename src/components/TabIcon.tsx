@@ -8,7 +8,8 @@ export type TabIconName =
   | 'tools'
   | 'code'
   | 'fullstack'
-  | 'learning';
+  | 'learning'
+  | 'profile';
 
 interface TabIconAssetPair {
   active: ImageSourcePropType;
@@ -43,6 +44,10 @@ const TAB_ICON_MAP: Record<string, TabIconAssetPair> = {
   tools: {
     active: require('../assets/tab-icons/tools_active.png'),
     inactive: require('../assets/tab-icons/tools_inactive.png'),
+  },
+  profile: {
+    active: require('../assets/menu-icons/profile.png'),
+    inactive: require('../assets/menu-icons/profile.png'),
   },
 };
 

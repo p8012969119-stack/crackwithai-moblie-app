@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,14 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
-  Image,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SPACING } from '../../constants/theme';
 import { Header } from '../../components/Header';
+import { apiClient } from '../../api/client';
+import { useAuth } from '../../store/AuthContext';
 
 interface NotificationItem {
   id: string;
@@ -22,70 +25,125 @@ interface NotificationItem {
   targetScreen?: string;
 }
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: '1',
-    title: 'Welcome to CrackWithAI! 🎉',
-    message: 'Your Full Stack Development journey is active. Start exploring modern lessons and interactive AI tools.',
-    time: 'Just now',
-    unread: true,
-    type: 'welcome',
-    targetScreen: 'MainTabs',
-  },
-  {
-    id: '2',
-    title: 'Daily Streak In Progress 🔥',
-    message: 'Consistency is the key to mastery! Complete today’s lesson to keep your streak alive and earn XP.',
-    time: '2 hours ago',
-    unread: true,
-    type: 'streak',
-    targetScreen: 'MainTabs',
-  },
-  {
-    id: '3',
-    title: 'Course Milestone: 3% Complete 🚀',
-    message: 'You made progress in Full Stack Development with AI. Continue your next topic now.',
-    time: '5 hours ago',
-    unread: false,
-    type: 'milestone',
-    targetScreen: 'FullStackOverview',
-  },
-  {
-    id: '4',
-    title: 'Official Certificates Available 🏆',
-    message: 'Finish all course modules and pass the final certification project to claim your verified certificate.',
-    time: '1 day ago',
-    unread: false,
-    type: 'certificate',
-    targetScreen: 'Certificates',
-  },
-  {
-    id: '5',
-    title: '24/7 AI Study Assistant Ready 🤖',
-    message: 'Stuck on coding syntax or concept explanation? Ask your AI Study Buddy in the AI Workspace.',
-    time: '2 days ago',
-    unread: false,
-    type: 'ai',
-    targetScreen: 'MainTabs',
-  },
-];
-
 export const NotificationsScreen = ({ navigation }: any) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
+
+  const taskStreak = (user as any)?.taskStreak || user?.streak || 25;
+
+  const buildDefaultNotifications = useCallback((): NotificationItem[] => {
+    return [
+      {
+        id: 'notif-streak',
+        title: `Task Streak Active: ${taskStreak} Tasks 🔥`,
+        message: `Great dedication! You have a streak of ${taskStreak} completed practice tasks and lessons. Keep solving to earn more XP!`,
+        time: 'Just now',
+        unread: true,
+        type: 'streak',
+        targetScreen: 'Profile',
+      },
+      {
+        id: 'notif-milestone',
+        title: 'Learning Track In Progress 🚀',
+        message: 'Your progress in Full Stack Development & AI Skills is advancing. Dive into today’s practice tasks!',
+        time: '1 hour ago',
+        unread: true,
+        type: 'milestone',
+        targetScreen: 'FullStackOverview',
+      },
+      {
+        id: 'notif-ai',
+        title: 'AI Workshop Assistant Ready 🤖',
+        message: 'Need help with code syntax, debugging, or concept explanation? Chat with your AI study buddy anytime.',
+        time: '4 hours ago',
+        unread: false,
+        type: 'ai',
+        targetScreen: 'AITab',
+      },
+      {
+        id: 'notif-certificate',
+        title: 'Certification Progress 🏆',
+        message: 'Complete all module checkpoints and quizzes to claim your official verified course certificate.',
+        time: '1 day ago',
+        unread: false,
+        type: 'certificate',
+        targetScreen: 'Certificates',
+      },
+      {
+        id: 'notif-welcome',
+        title: 'Welcome to CrackWithAI 🎉',
+        message: 'Explore courses, hands-on code playgrounds, interactive quizzes, and career-ready AI tools.',
+        time: '3 days ago',
+        unread: false,
+        type: 'welcome',
+        targetScreen: 'HomeTab',
+      },
+    ];
+  }, [taskStreak]);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await apiClient.get('/notification/my');
+      const items = res?.data?.data || res?.data;
+      if (Array.isArray(items) && items.length > 0) {
+        const mapped: NotificationItem[] = items.map((n: any) => ({
+          id: String(n._id || n.id),
+          title: n.title || 'Notification',
+          message: n.message || '',
+          time: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
+          unread: !n.isRead,
+          type: n.type || 'welcome',
+          targetScreen: n.targetScreen || 'HomeTab',
+        }));
+        setNotifications(mapped);
+      } else {
+        setNotifications(buildDefaultNotifications());
+      }
+    } catch {
+      setNotifications(buildDefaultNotifications());
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [buildDefaultNotifications]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchNotifications();
+  };
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     setNotifications((prev) => prev.map((item) => ({ ...item, unread: false })));
+    try {
+      await apiClient.patch('/notification/my/read-all');
+    } catch {}
   };
 
-  const handlePressItem = (item: NotificationItem) => {
+  const handlePressItem = async (item: NotificationItem) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === item.id ? { ...n, unread: false } : n))
     );
+    try {
+      if (item.id && !item.id.startsWith('notif-')) {
+        await apiClient.patch(`/notification/my/${item.id}/read`);
+      }
+    } catch {}
+
     if (item.targetScreen) {
-      navigation.navigate(item.targetScreen);
+      if (item.targetScreen === 'HomeTab' || item.targetScreen === 'AITab' || item.targetScreen === 'FullStackTab') {
+        navigation.navigate('MainTabs', { screen: item.targetScreen });
+      } else {
+        navigation.navigate(item.targetScreen);
+      }
     }
   };
 
@@ -157,6 +215,7 @@ export const NotificationsScreen = ({ navigation }: any) => {
         data={displayedList}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6D28D9" />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>

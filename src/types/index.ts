@@ -7,8 +7,11 @@ export interface User {
   role?: string;
   preferredLanguage?: 'en' | 'ta' | 'hi';
   streak?: number;
+  learningStreak?: number;
+  taskStreak?: number;
   xp?: number;
   avatar?: string;
+  profileImage?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -226,6 +229,29 @@ export interface AiTool {
 }
 
 export interface DashboardData {
+  timeframeStats?: {
+    'This Month'?: {
+      averageProgress: number;
+      learningMinutes: number;
+      xp: number;
+      completedModulesCount: number;
+      completedLessonsCount: number;
+    };
+    'This Week'?: {
+      averageProgress: number;
+      learningMinutes: number;
+      xp: number;
+      completedModulesCount: number;
+      completedLessonsCount: number;
+    };
+    'All Time'?: {
+      averageProgress: number;
+      learningMinutes: number;
+      xp: number;
+      completedModulesCount: number;
+      completedLessonsCount: number;
+    };
+  };
   courses?: Course[];
   currentCourseId?: string;
   averageProgress?: number;
@@ -237,6 +263,7 @@ export interface DashboardData {
   user: User;
   greeting?: string;
   streak?: number;
+  taskStreak?: number;
   xp?: number;
   totalTimeSpentFormatted?: string;
   goalsAchieved?: number;

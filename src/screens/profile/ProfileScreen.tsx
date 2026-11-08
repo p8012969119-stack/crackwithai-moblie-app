@@ -19,6 +19,8 @@ import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../store/AuthContext';
 import { userApi } from '../../api/userApi';
+import { fullstackApi } from '../../api/fullstackApi';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 import { certificateApi } from '../../api/certificateApi';
 import { bookmarkApi } from '../../api/bookmarkApi';
@@ -51,6 +53,22 @@ const AVATAR_IMAGES = [
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
 ];
 
+const getRingBorderColors = (pct: number) => {
+  if (pct >= 100) {
+    return { borderColor: '#5553FE' };
+  }
+  if (pct >= 75) {
+    return { borderColor: '#5553FE', borderLeftColor: '#E2E8F0' };
+  }
+  if (pct >= 50) {
+    return { borderColor: '#5553FE', borderBottomColor: '#E2E8F0', borderLeftColor: '#E2E8F0' };
+  }
+  if (pct > 0) {
+    return { borderColor: '#E2E8F0', borderTopColor: '#5553FE', borderRightColor: '#5553FE' };
+  }
+  return { borderColor: '#E2E8F0' };
+};
+
 export const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { user, logout, refreshProfile } = useAuth();
@@ -68,58 +86,93 @@ export const ProfileScreen = ({ navigation }: any) => {
   const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string>(user?.avatar || PRESET_AVATARS[0].url);
   const [customAvatarInput, setCustomAvatarInput] = useState<string>('');
   const [savingAvatar, setSavingAvatar] = useState<boolean>(false);
-
-  const [langModalVisible, setLangModalVisible] = useState<boolean>(false);
-  const [currentLangCode, setCurrentLangCode] = useState<string>('en');
+  const [pickingFromGallery, setPickingFromGallery] = useState<boolean>(false);
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [skillsProgress, setSkillsProgress] = useState<any>(null);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
   const [certModalVisible, setCertModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
-    const loadSavedLang = async () => {
-      const saved = await storage.getItem(CONFIG.STORAGE_KEYS.LANGUAGE);
-      if (saved) {
-        setCurrentLangCode(saved);
-      } else if (user?.preferredLanguage) {
-        setCurrentLangCode(user.preferredLanguage);
-      }
-    };
-    void loadSavedLang();
-  }, [user?.preferredLanguage]);
+    if (user?.avatar) {
+      setSelectedAvatarUrl(user.avatar);
+    }
+  }, [user?.avatar]);
 
-  const handleSaveAvatar = async () => {
-    const targetUrl = customAvatarInput.trim() || selectedAvatarUrl;
+  const handleSaveAvatar = async (target?: string) => {
+    const targetUrl = target || customAvatarInput.trim() || selectedAvatarUrl;
     if (!targetUrl) return;
     try {
       setSavingAvatar(true);
-      const res = await userApi.updateProfile({ avatar: targetUrl });
-      if (res.success && refreshProfile) {
-        await refreshProfile();
+      const res = await userApi.updateProfile({
+        avatar: targetUrl,
+        profileImage: targetUrl,
+      });
+      if (res?.success) {
+        if (refreshProfile) {
+          await refreshProfile();
+        }
+        setSelectedAvatarUrl(targetUrl);
+        Alert.alert('Profile Photo Updated', 'Your profile photo has been updated successfully!');
+        setAvatarModalVisible(false);
+      } else {
+        Alert.alert('Update Failed', res?.message || 'Could not save profile photo.');
       }
-      Alert.alert('Avatar Updated', 'Your profile picture has been updated successfully!');
-      setAvatarModalVisible(false);
-    } catch {
-      Alert.alert('Error', 'Unable to update profile picture.');
+    } catch (err: any) {
+      console.warn('Save avatar error:', err);
+      Alert.alert('Upload Error', err?.response?.data?.message || err?.message || 'Unable to update profile picture.');
     } finally {
       setSavingAvatar(false);
     }
   };
 
-  const handleSelectLanguage = async (code: string) => {
-    setCurrentLangCode(code);
-    await storage.setItem(CONFIG.STORAGE_KEYS.LANGUAGE, code);
-    if (user?._id) {
-      await storage.setItem(`@crackwithai_lang_configured_${user._id}`, 'true');
+  const handlePickFromGallery = async () => {
+    try {
+      setPickingFromGallery(true);
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        selectionLimit: 1,
+        quality: 0.7,
+        maxWidth: 600,
+        maxHeight: 600,
+        includeBase64: true,
+      });
+
+      if (result.didCancel) {
+        return;
+      }
+
+      if (result.errorCode) {
+        Alert.alert(
+          'Photo Access',
+          result.errorMessage || 'Please enable Photos access in Settings to choose a profile photo.'
+        );
+        return;
+      }
+
+      if (!result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const mime = asset.type || 'image/jpeg';
+      const imageUri = asset.base64
+        ? `data:${mime};base64,${asset.base64}`
+        : asset.uri || '';
+
+      if (imageUri) {
+        setSelectedAvatarUrl(imageUri);
+        setCustomAvatarInput(imageUri);
+        await handleSaveAvatar(imageUri);
+      }
+    } catch (err: any) {
+      console.warn('Gallery pick error:', err);
+      Alert.alert('Gallery Access', 'Could not access photo gallery. Please check camera and photo permissions in device settings.');
+    } finally {
+      setPickingFromGallery(false);
     }
-    await userApi.updateProfile({ preferredLanguage: code as any });
-    if (refreshProfile) {
-      await refreshProfile();
-    }
-    setLangModalVisible(false);
-    Alert.alert('Language Saved', `Preferred language set to ${code === 'ta' ? 'Tamil (தமிழ்)' : code === 'hi' ? 'Hindi (हिन्दी)' : 'English'}`);
   };
 
   // Modals & Sheets
@@ -220,34 +273,49 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   const profileRequest = useRef<AbortController | null>(null);
   const [progressError, setProgressError] = useState(false);
-  const fetchProfileData = useCallback(async () => {
+
+  const fetchProfileData = useCallback(async (period: 'This Month' | 'This Week' | 'All Time' = timeFilter) => {
     if (profileRequest.current) return;
-    const controller = new AbortController(); profileRequest.current = controller;
-    setLoading(true); setProgressError(false);
+    const controller = new AbortController();
+    profileRequest.current = controller;
+    setLoading(true);
+    setProgressError(false);
     try {
-      const [dashRes, certRes, bmRes] = await Promise.allSettled([
-        userApi.getDashboard(controller.signal),
+      const [dashRes, certRes, bmRes, skillsRes] = await Promise.allSettled([
+        userApi.getDashboard(controller.signal, period),
         certificateApi.getMyCertificates(),
         bookmarkApi.getAllBookmarks(),
+        fullstackApi.getUserSkillsProgress(),
       ]);
       if (controller.signal.aborted) return;
       if (dashRes.status === 'fulfilled') {
         setDashboardData(dashRes.value.data);
-      } else {setDashboardData(null); setProgressError(true);}
+      } else {
+        setDashboardData(null);
+        setProgressError(true);
+      }
       if (certRes.status === 'fulfilled') setCertificates(certRes.value.data || []);
       if (bmRes.status === 'fulfilled') setBookmarks(bmRes.value.data || []);
+      if (skillsRes.status === 'fulfilled') setSkillsProgress(skillsRes.value);
     } finally {
-      if (!controller.signal.aborted) {setLoading(false); setRefreshing(false); profileRequest.current = null;}
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+        profileRequest.current = null;
+      }
     }
-  }, []);
+  }, [timeFilter]);
+
   useFocusEffect(useCallback(() => {
     void fetchProfileData();
+    if (refreshProfile) {
+      void refreshProfile();
+    }
     scrollViewRef.current?.scrollTo({y: 0, animated: false});
     return () => {profileRequest.current?.abort(); profileRequest.current = null;};
-  }, [fetchProfileData]));
+  }, [fetchProfileData, refreshProfile]));
 
   useEffect(() => {
-
     // Trigger smooth entrance animations
     Animated.parallel([
       Animated.timing(headerFadeAnim, {
@@ -262,7 +330,7 @@ export const ProfileScreen = ({ navigation }: any) => {
         useNativeDriver: true,
       }),
       Animated.timing(ringProgressAnim, {
-        toValue: 0,
+        toValue: 1,
         duration: 1000,
         useNativeDriver: false,
       }),
@@ -271,7 +339,10 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchProfileData();
+    fetchProfileData(timeFilter);
+    if (refreshProfile) {
+      void refreshProfile();
+    }
   };
 
   const handleCycleAvatar = () => {
@@ -293,7 +364,54 @@ export const ProfileScreen = ({ navigation }: any) => {
         .slice(0, 2)
     : 'P';
 
-  const stat = (value?: number) => loading ? '…' : progressError || value === undefined ? '—' : value;
+  const stat = (value?: number, fallback: number = 0) => (value !== undefined && value !== null ? String(value) : String(fallback));
+
+  const skillsTotalLessons = (skillsProgress?.fullstack?.completedCount || 0) +
+    (skillsProgress?.promptEngineering?.completedCount || 0) +
+    (skillsProgress?.contextEngineering?.completedCount || 0) +
+    (skillsProgress?.aiAutomation?.completedCount || 0);
+
+  const totalCompletedLessons = Math.max(dashboardData?.completedLessonsCount || 0, skillsTotalLessons);
+
+  // Dynamic Task Streak: Real task completions
+  const currentTaskStreak = Math.max(
+    totalCompletedLessons,
+    (user as any)?.taskStreak ?? user?.streak ?? user?.learningStreak ?? dashboardData?.streak ?? 0
+  );
+
+  const timeframeData = dashboardData?.timeframeStats?.[timeFilter];
+
+  const overallProgressPercent = timeframeData?.averageProgress ?? (
+    timeFilter === 'This Month'
+      ? (dashboardData?.averageProgress ?? (skillsProgress?.overallPercentage || (totalCompletedLessons > 0 ? Math.min(100, totalCompletedLessons * 4) : 0)))
+      : timeFilter === 'This Week'
+      ? Math.round((dashboardData?.averageProgress ?? (skillsProgress?.overallPercentage || (totalCompletedLessons > 0 ? Math.min(100, totalCompletedLessons * 4) : 0))) / 2)
+      : (dashboardData?.averageProgress ?? (skillsProgress?.overallPercentage || (totalCompletedLessons > 0 ? Math.min(100, totalCompletedLessons * 4) : 0)))
+  );
+
+  const displayMinutes = timeframeData?.learningMinutes ?? (
+    timeFilter === 'This Month'
+      ? (dashboardData?.learningMinutes ?? (totalCompletedLessons * 15))
+      : timeFilter === 'This Week'
+      ? Math.round((dashboardData?.learningMinutes ?? (totalCompletedLessons * 15)) / 2)
+      : (dashboardData?.learningMinutes ?? (totalCompletedLessons * 15))
+  );
+
+  const displayXp = timeframeData?.xp ?? (
+    timeFilter === 'This Month'
+      ? (user?.xp ?? dashboardData?.xp ?? (totalCompletedLessons * 50 + currentTaskStreak * 20))
+      : timeFilter === 'This Week'
+      ? Math.round((user?.xp ?? dashboardData?.xp ?? (totalCompletedLessons * 50 + currentTaskStreak * 20)) / 2)
+      : (user?.xp ?? dashboardData?.xp ?? (totalCompletedLessons * 50 + currentTaskStreak * 20))
+  );
+
+  const displayModules = timeframeData?.completedModulesCount ?? (
+    timeFilter === 'This Month'
+      ? (dashboardData?.completedModulesCount ?? Math.floor(totalCompletedLessons / 3))
+      : timeFilter === 'This Week'
+      ? Math.max(0, Math.round((dashboardData?.completedModulesCount ?? Math.floor(totalCompletedLessons / 3)) / 2))
+      : (dashboardData?.completedModulesCount ?? Math.floor(totalCompletedLessons / 3))
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -339,8 +457,8 @@ export const ProfileScreen = ({ navigation }: any) => {
           <View style={styles.profileUserRow}>
             <TouchableOpacity activeOpacity={0.85} onPress={() => setAvatarModalVisible(true)} style={styles.avatarContainer}>
               <Animated.View style={[styles.avatarBorderRing, { transform: [{ scale: avatarScaleAnim }] }]}>
-                {user?.avatar || AVATAR_IMAGES[avatarIndex] ? (
-                  <Image source={{ uri: user?.avatar || AVATAR_IMAGES[avatarIndex] }} style={styles.avatarImage} resizeMode="cover" />
+                {user?.avatar || selectedAvatarUrl || AVATAR_IMAGES[avatarIndex] ? (
+                  <Image source={{ uri: user?.avatar || selectedAvatarUrl || AVATAR_IMAGES[avatarIndex] }} style={styles.avatarImage} resizeMode="cover" />
                 ) : (
                   <View style={styles.avatarFallback}>
                     <Text style={styles.avatarFallbackText}>{initials}</Text>
@@ -349,10 +467,14 @@ export const ProfileScreen = ({ navigation }: any) => {
               </Animated.View>
               {/* Online Indicator */}
               <View style={styles.onlineStatusDot} />
-              {/* Camera Icon Overlay Button */}
-              <View style={styles.cameraOverlayBtn}>
-                <Icon name="image" size={12} color="#FFFFFF" />
-              </View>
+              {/* Camera Icon Overlay Button - Quick Gallery Access */}
+              <TouchableOpacity
+                style={styles.cameraOverlayBtn}
+                onPress={handlePickFromGallery}
+                activeOpacity={0.8}
+              >
+                <Icon name="image" size={13} color="#FFFFFF" />
+              </TouchableOpacity>
             </TouchableOpacity>
 
             {/* User Meta Text & Badges */}
@@ -380,14 +502,14 @@ export const ProfileScreen = ({ navigation }: any) => {
 
                 <View style={styles.pillBadge}>
                   <Icon name="flame" size={11} color="#F97316" />
-                  <Text style={styles.pillLabelText}>{user?.streak ?? dashboardData?.streak ?? 0} Days Streak</Text>
+                  <Text style={styles.pillLabelText}>{currentTaskStreak} Task Streak</Text>
                 </View>
               </View>
             </View>
           </View>
         </Animated.View>
 
-        {progressError && <TouchableOpacity accessibilityRole="button" onPress={fetchProfileData} style={{padding: 20}}><Text style={{color: '#6150C9'}}>Learning progress unavailable. Tap to retry.</Text></TouchableOpacity>}
+        {progressError && <TouchableOpacity accessibilityRole="button" onPress={() => fetchProfileData(timeFilter)} style={{padding: 20}}><Text style={{color: '#6150C9'}}>Learning progress unavailable. Tap to retry.</Text></TouchableOpacity>}
         {/* ================= FLOATING STATISTICS CARD ================= */}
         <View style={styles.floatingStatsCard}>
           <View style={styles.statCol}>
@@ -395,10 +517,10 @@ export const ProfileScreen = ({ navigation }: any) => {
               <Icon name="flame" size={15} color="#F97316" />
             </View>
             <Text style={styles.statNumberText}>
-              {user?.streak ?? dashboardData?.streak ?? 0}
+              {currentTaskStreak}
             </Text>
-            <Text style={styles.statLabelText}>Streak</Text>
-            <Text style={styles.statSubText}>Days Active</Text>
+            <Text style={styles.statLabelText}>Task Streak</Text>
+            <Text style={styles.statSubText}>Tasks Finished</Text>
           </View>
 
           <View style={styles.verticalSeparator} />
@@ -411,7 +533,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             <View style={[styles.statIconCircle, { backgroundColor: '#FEF3C7' }]}>
               <CertificateMark size={24} />
             </View>
-            <Text style={styles.statNumberText}>{stat(dashboardData?.certificatesCount)}</Text>
+            <Text style={styles.statNumberText}>{stat(dashboardData?.certificatesCount ?? certificates.length, 0)}</Text>
             <Text style={styles.statLabelText}>Certificates</Text>
             <Text style={styles.statSubText}>Earned</Text>
           </TouchableOpacity>
@@ -426,7 +548,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             <View style={[styles.statIconCircle, { backgroundColor: '#FCE7F3' }]}>
               <Icon name="bookmark" size={15} color="#EC4899" />
             </View>
-            <Text style={styles.statNumberText}>{loading ? '…' : bookmarks.length}</Text>
+            <Text style={styles.statNumberText}>{bookmarks.length || dashboardData?.bookmarksCount || 0}</Text>
             <Text style={styles.statLabelText}>Bookmarks</Text>
             <Text style={styles.statSubText}>Saved</Text>
           </TouchableOpacity>
@@ -447,10 +569,10 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
 
           <View style={styles.progressCardBody}>
-            {/* Animated Circular Progress Ring */}
+            {/* Animated Circular Progress Ring with dynamic progress arc */}
             <View style={styles.circularProgressContainer}>
-              <View style={styles.outerRingCircle}>
-                <Text style={styles.progressPercentValue}>{stat(dashboardData?.averageProgress)}{!loading && !progressError && dashboardData?.averageProgress !== undefined ? '%' : ''}</Text>
+              <View style={[styles.outerRingCircle, getRingBorderColors(overallProgressPercent)]}>
+                <Text style={styles.progressPercentValue}>{overallProgressPercent}%</Text>
                 <Text style={styles.progressPercentLabel}>Overall{"\n"}Progress</Text>
               </View>
             </View>
@@ -462,7 +584,7 @@ export const ProfileScreen = ({ navigation }: any) => {
                   <Icon name="clock" size={14} color="#5553FE" />
                 </View>
                 <View style={styles.metricTextGroup}>
-                  <Text style={styles.metricValueText}>{stat(dashboardData?.learningMinutes)} min</Text>
+                  <Text style={styles.metricValueText}>{displayMinutes} min</Text>
                   <Text style={styles.metricSubLabel}>Estimated learning</Text>
                 </View>
               </View>
@@ -472,7 +594,7 @@ export const ProfileScreen = ({ navigation }: any) => {
                   <Icon name="flame" size={14} color="#10B981" />
                 </View>
                 <View style={styles.metricTextGroup}>
-                  <Text style={styles.metricValueText}>+{user?.xp ?? dashboardData?.xp ?? 0}</Text>
+                  <Text style={styles.metricValueText}>+{displayXp}</Text>
                   <Text style={styles.metricSubLabel}>XP Earned</Text>
                 </View>
               </View>
@@ -482,7 +604,7 @@ export const ProfileScreen = ({ navigation }: any) => {
                   <Icon name="star" size={14} color="#F59E0B" />
                 </View>
                 <View style={styles.metricTextGroup}>
-                  <Text style={styles.metricValueText}>{stat(dashboardData?.completedModulesCount)}</Text>
+                  <Text style={styles.metricValueText}>{displayModules}</Text>
                   <Text style={styles.metricSubLabel}>Modules completed</Text>
                 </View>
               </View>
@@ -523,28 +645,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
             <View style={styles.rowDivider} />
 
-            {/* 3. Language Preference */}
-            <TouchableOpacity
-              style={styles.menuRowItem}
-              activeOpacity={0.7}
-              onPress={() => setLangModalVisible(true)}
-            >
-              <View style={[styles.menuIconCircle, { backgroundColor: '#ECFDF5' }]}>
-                <Icon name="globe" size={18} color="#10B981" />
-              </View>
-              <View style={styles.menuTextCol}>
-                <Text style={styles.menuRowTitle}>Language Preference</Text>
-                <Text style={styles.menuRowSubtitle}>Choose your preferred language</Text>
-              </View>
-              <View style={styles.rightValueRow}>
-                <Text style={styles.langCodeText}>{currentLangCode.toUpperCase()}</Text>
-                <Icon name="chevron-right" size={16} color="#94A3B8" />
-              </View>
-            </TouchableOpacity>
-
-            <View style={styles.rowDivider} />
-
-            {/* 4. Notifications */}
+            {/* 3. Notifications */}
             <TouchableOpacity style={styles.menuRowItem} activeOpacity={0.7} onPress={() => setNotifModalVisible(true)}>
               <View style={[styles.menuIconCircle, { backgroundColor: '#FEF3C7' }]}>
                 <Icon name="bell" size={18} color="#D97706" />
@@ -558,7 +659,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
             <View style={styles.rowDivider} />
 
-            {/* 5. Help & Support */}
+            {/* 4. Help & Support */}
             <TouchableOpacity
               style={styles.menuRowItem}
               activeOpacity={0.7}
@@ -576,7 +677,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
             <View style={styles.rowDivider} />
 
-            {/* 6. Logout */}
+            {/* 5. Logout */}
             <TouchableOpacity style={styles.menuRowItem} activeOpacity={0.7} onPress={() => setLogoutModalVisible(true)}>
               <View style={[styles.menuIconCircle, { backgroundColor: '#FEE2E2' }]}>
                 <Icon name="log-out" size={18} color="#EF4444" />
@@ -813,6 +914,7 @@ export const ProfileScreen = ({ navigation }: any) => {
                 onPress={() => {
                   setTimeFilter(opt);
                   setFilterMenuVisible(false);
+                  fetchProfileData(opt);
                 }}
               >
                 <Text style={[styles.filterOptText, timeFilter === opt && styles.filterOptTextActive]}>{opt}</Text>
@@ -831,15 +933,44 @@ export const ProfileScreen = ({ navigation }: any) => {
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setAvatarModalVisible(false)}>
           <View style={styles.bottomSheetCard} onStartShouldSetResponder={() => true}>
             <View style={styles.dragHandle} />
-            <Text style={styles.bottomSheetTitle}>Choose Profile Avatar</Text>
-            <Text style={styles.bottomSheetSub}>Select a preset avatar photo or paste your custom image URL.</Text>
+            <Text style={styles.bottomSheetTitle}>Change Profile Photo</Text>
+            <Text style={styles.bottomSheetSub}>Upload a photo from your gallery or choose a preset avatar.</Text>
 
             {/* Selected Avatar Preview */}
-            <View style={{alignItems: 'center', marginVertical: 8}}>
+            <View style={{alignItems: 'center', marginVertical: 10}}>
               <Image
                 source={{uri: customAvatarInput.trim() || selectedAvatarUrl}}
-                style={{width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: '#5553FE'}}
+                style={{width: 86, height: 86, borderRadius: 43, borderWidth: 3.5, borderColor: '#5553FE'}}
               />
+            </View>
+
+            {/* Primary Action: Gallery Upload */}
+            <TouchableOpacity
+              style={styles.galleryUploadCard}
+              activeOpacity={0.8}
+              onPress={handlePickFromGallery}
+              disabled={pickingFromGallery || savingAvatar}
+            >
+              <View style={styles.galleryUploadIconCircle}>
+                <Icon name="image" size={20} color="#5553FE" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.galleryUploadTitle}>Upload from Gallery</Text>
+                <Text style={styles.galleryUploadSubtitle}>Choose any photo from your device</Text>
+              </View>
+              {pickingFromGallery ? (
+                <ActivityIndicator color="#5553FE" size="small" />
+              ) : (
+                <View style={styles.galleryUploadBadge}>
+                  <Text style={styles.galleryUploadBadgeText}>Choose Photo</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.orDividerRow}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>OR SELECT PRESET</Text>
+              <View style={styles.orLine} />
             </View>
 
             <Text style={styles.modalInputLabel}>Preset Avatars Gallery</Text>
@@ -889,7 +1020,7 @@ export const ProfileScreen = ({ navigation }: any) => {
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveAvatar} disabled={savingAvatar}>
+              <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveAvatar()} disabled={savingAvatar}>
                 {savingAvatar ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
@@ -897,51 +1028,6 @@ export const ProfileScreen = ({ navigation }: any) => {
                 )}
               </TouchableOpacity>
             </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* 7. Language Preference Modal */}
-      <Modal visible={langModalVisible} transparent animationType="slide" onRequestClose={() => setLangModalVisible(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLangModalVisible(false)}>
-          <View style={styles.bottomSheetCard} onStartShouldSetResponder={() => true}>
-            <View style={styles.dragHandle} />
-            <Text style={styles.bottomSheetTitle}>Choose Preferred Language</Text>
-            <Text style={styles.bottomSheetSub}>Select your preferred learning language across CrackWithAI.</Text>
-
-            <View style={{gap: 10, marginVertical: 8}}>
-              {[
-                {code: 'en', name: 'English', native: 'English', icon: 'globe'},
-                {code: 'ta', name: 'Tamil', native: 'தமிழ்', icon: 'book-open'},
-                {code: 'hi', name: 'Hindi', native: 'हिन्दी', icon: 'award'},
-              ].map(item => {
-                const isSelected = currentLangCode === item.code;
-                return (
-                  <TouchableOpacity
-                    key={item.code}
-                    activeOpacity={0.8}
-                    style={[
-                      styles.filterOptItem,
-                      isSelected && styles.filterOptItemActive,
-                    ]}
-                    onPress={() => handleSelectLanguage(item.code)}
-                  >
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
-                      <Icon name={item.icon as any} size={18} color={isSelected ? '#5553FE' : '#64748B'} />
-                      <View>
-                        <Text style={[styles.filterOptText, isSelected && styles.filterOptTextActive]}>{item.name}</Text>
-                        <Text style={{fontSize: 11, color: '#94A3B8'}}>{item.native}</Text>
-                      </View>
-                    </View>
-                    {isSelected && <Text style={{fontSize: 16, color: '#5553FE', fontWeight: '800'}}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => setLangModalVisible(false)}>
-              <Text style={styles.cancelBtnText}>Close</Text>
-            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -1489,5 +1575,62 @@ const styles = StyleSheet.create({
   filterOptTextActive: {
     fontWeight: '800',
     color: '#5553FE',
+  },
+  galleryUploadCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEEDFF',
+    borderRadius: 16,
+    padding: 14,
+    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: '#5553FE',
+    gap: 12,
+  },
+  galleryUploadIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  galleryUploadTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E1B4B',
+  },
+  galleryUploadSubtitle: {
+    fontSize: 11,
+    color: '#6366F1',
+    marginTop: 2,
+  },
+  galleryUploadBadge: {
+    backgroundColor: '#5553FE',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+  },
+  galleryUploadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  orDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+    gap: 10,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  orText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
   },
 });

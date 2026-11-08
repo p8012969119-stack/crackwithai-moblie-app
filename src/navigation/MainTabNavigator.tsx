@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Keyboard, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen } from '../screens/dashboard/HomeScreen';
 import { AIScreen } from '../screens/ai/AIScreen';
 import { ToolsScreen } from '../screens/tools/ToolsScreen';
 import { FullStackOverviewScreen } from '../screens/fullstack/FullStackOverviewScreen';
+import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { TabIcon, TabIconName } from '../components/TabIcon';
 
 const Tab = createBottomTabNavigator();
@@ -78,8 +79,10 @@ export const MainTabNavigator = () => {
   const [keyboardVisible, setKeyboardVisible] = React.useState(false);
 
   useEffect(() => {
-    const show = Keyboard.addListener('keyboardWillShow', () => setKeyboardVisible(true));
-    const hide = Keyboard.addListener('keyboardWillHide', () => setKeyboardVisible(false));
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
     return () => {
       show.remove();
       hide.remove();
@@ -147,8 +150,8 @@ export const MainTabNavigator = () => {
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
       <Tab.Screen name="FullStackTab" component={FullStackOverviewScreen} options={{ tabBarLabel: 'Learning' }} />
-      <Tab.Screen name="AITab" component={AIScreen} options={{ tabBarLabel: 'AI Workspace' }} />
-      <Tab.Screen name="ToolsTab" component={ToolsScreen} options={{ tabBarLabel: 'Tools' }} />
+      <Tab.Screen name="AITab" component={AIScreen} options={{ tabBarLabel: 'Workshop' }} />
+      <Tab.Screen name="ToolsTab" component={ToolsScreen} options={{ tabBarLabel: 'AI Tools' }} />
     </Tab.Navigator>
   );
 };

@@ -21,7 +21,6 @@ import { DashboardData, AiTool } from '../../types';
 import { FullStackCourseProgress } from '../../types/fullstack';
 import { LoadingView } from '../../components/LoadingView';
 import { ErrorState } from '../../components/ErrorState';
-import { FirstTimeLanguageModal } from '../../components/FirstTimeLanguageModal';
 import { QuickMenuModal } from '../../components/QuickMenuModal';
 import { storage } from '../../services/storage';
 import { Icon } from '../../components/Icon';
@@ -38,20 +37,7 @@ export const HomeScreen = ({ navigation }: any) => {
   const [tools, setTools] = useState<AiTool[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [showFirstTimeLangModal, setShowFirstTimeLangModal] = useState<boolean>(false);
   const [showQuickMenu, setShowQuickMenu] = useState<boolean>(false);
-
-  useEffect(() => {
-    const checkOneTimeLanguage = async () => {
-      if (!user?._id) return;
-      const key = `@crackwithai_lang_configured_${user._id}`;
-      const configured = await storage.getItem(key);
-      if (!configured) {
-        setShowFirstTimeLangModal(true);
-      }
-    };
-    void checkOneTimeLanguage();
-  }, [user?._id]);
 
   const request = useRef<AbortController | null>(null);
   const fetchDashboard = useCallback(async () => {
@@ -130,6 +116,10 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const totalLessonsCount = fullstackProgress?.totalLessons || dashboardData?.totalLessonsCount || 171;
   const completedLessonsCount = fullstackProgress?.completedLessons ?? dashboardData?.completedLessonsCount ?? 0;
+  const taskStreakCount = Math.max(
+    completedLessonsCount,
+    (user as any)?.taskStreak ?? user?.streak ?? user?.learningStreak ?? dashboardData?.streak ?? 0
+  );
   const progressPercent = totalLessonsCount > 0
     ? Math.min(100, Math.round((completedLessonsCount / totalLessonsCount) * 100))
     : (typeof fullstackProgress?.overallPercentage === 'number'
@@ -147,24 +137,64 @@ export const HomeScreen = ({ navigation }: any) => {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#5653FE" />}
           showsVerticalScrollIndicator={false}
         >
-          {/* HEADER ROW WITH SPACING & 3-LINE HAMBURGER MENU BUTTON */}
+          {/* HEADER ROW WITH SPACING, STREAK BADGE, PROFILE AVATAR & 3-LINE HAMBURGER MENU BUTTON */}
           <View style={styles.headerRow}>
-            <View style={styles.greetingTextCol}>
+            <TouchableOpacity
+              style={styles.greetingTextCol}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('Profile')}
+            >
               <Text style={styles.greetingTitle}>Hi, {firstName} 👋</Text>
               <Text style={styles.greetingSubtitle}>Ready to learn something new today?</Text>
-            </View>
-
-            {/* 3-Line Hamburger Menu Button */}
-            <TouchableOpacity
-              style={styles.hamburgerMenuCircle}
-              activeOpacity={0.8}
-              onPress={() => setShowQuickMenu(true)}
-              accessibilityLabel="Quick Menu"
-            >
-              <View style={styles.hamburgerLine} />
-              <View style={styles.hamburgerLine} />
-              <View style={styles.hamburgerLine} />
             </TouchableOpacity>
+
+            <View style={styles.headerRightActions}>
+              {/* Task Streak Pill */}
+              <TouchableOpacity
+                style={styles.headerStreakBadge}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('Profile')}
+                accessibilityLabel="View Task Streak"
+              >
+                <Text style={styles.headerStreakFire}>🔥</Text>
+                <Text style={styles.headerStreakText}>
+                  {taskStreakCount} Tasks
+                </Text>
+              </TouchableOpacity>
+
+              {/* Profile Avatar Button */}
+              <TouchableOpacity
+                style={styles.headerAvatarBtn}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('Profile')}
+                accessibilityLabel="Go to Profile"
+              >
+                {user?.avatar || user?.profileImage ? (
+                  <Image
+                    source={{ uri: user.avatar || user.profileImage }}
+                    style={styles.headerAvatarImg}
+                  />
+                ) : (
+                  <View style={styles.headerAvatarPlaceholder}>
+                    <Text style={styles.headerAvatarInitial}>
+                      {(firstName[0] || 'P').toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* 3-Line Hamburger Menu Button */}
+              <TouchableOpacity
+                style={styles.hamburgerMenuCircle}
+                activeOpacity={0.8}
+                onPress={() => setShowQuickMenu(true)}
+                accessibilityLabel="Quick Menu"
+              >
+                <View style={styles.hamburgerLine} />
+                <View style={styles.hamburgerLine} />
+                <View style={styles.hamburgerLine} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* AI STUDY ASSISTANT HERO CARD */}
@@ -196,62 +226,6 @@ export const HomeScreen = ({ navigation }: any) => {
               />
             </TouchableOpacity>
           </View>
-
-          {/* CONTINUE LEARNING SECTION */}
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Continue Learning</Text>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('FullStackOverview')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            style={styles.continueCard}
-            activeOpacity={0.88}
-            onPress={() => navigation.navigate('FullStackOverview')}
-          >
-            <View style={styles.continueLeftCol}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <Text style={[styles.continueBadgeText, progressPercent >= 100 && styles.continueBadgeTextCompleted]}>
-                  {progressPercent >= 100 ? 'CURRICULUM COMPLETED 🏆' : 'FULL STACK TRACK'}
-                </Text>
-              </View>
-
-              <Text style={styles.continueCourseTitle}>
-                Full Stack Development{'\n'}with AI
-              </Text>
-
-              <Text style={styles.continueLessonsSub}>
-                {completedLessonsCount} of {totalLessonsCount} Lessons Completed ({progressPercent}%)
-              </Text>
-
-              {/* Real Progress Bar & Percentage */}
-              <View style={styles.progressRow}>
-                <View style={styles.progressBarTrack}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${progressPercent}%`,
-                        minWidth: progressPercent > 0 ? 8 : 0,
-                        backgroundColor: progressPercent >= 100 ? '#10B981' : '#5653FE',
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={[styles.progressPercentText, progressPercent >= 100 && { color: '#10B981', fontWeight: '800' }]}>
-                  {progressPercent}%
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.continueRightCol}>
-              <LaptopTechIllustration size={92} />
-            </View>
-          </TouchableOpacity>
 
           {/* EXPLORE COURSES SECTION */}
           <View style={styles.sectionHeaderRow}>
@@ -697,12 +671,6 @@ export const HomeScreen = ({ navigation }: any) => {
         onClose={() => setShowQuickMenu(false)}
         onNavigate={(screenName) => navigation.navigate(screenName)}
       />
-
-      <FirstTimeLanguageModal
-        visible={showFirstTimeLangModal}
-        userId={user?._id}
-        onComplete={() => setShowFirstTimeLangModal(false)}
-      />
     </SafeAreaView>
   );
 };
@@ -746,6 +714,55 @@ const styles = StyleSheet.create({
   },
 
   /* 3-Line Hamburger Menu Button */
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerStreakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1.2,
+    borderColor: '#FED7AA',
+    borderRadius: 18,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    gap: 4,
+  },
+  headerStreakFire: {
+    fontSize: 14,
+  },
+  headerStreakText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#EA580C',
+  },
+  headerAvatarBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1.8,
+    borderColor: '#5553FE',
+  },
+  headerAvatarImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
+  },
+  headerAvatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#EEEDFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerAvatarInitial: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#5553FE',
+  },
   hamburgerMenuCircle: {
     width: 44,
     height: 44,

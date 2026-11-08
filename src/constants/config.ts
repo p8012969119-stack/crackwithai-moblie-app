@@ -1,19 +1,20 @@
 import { NativeModules, Platform } from 'react-native';
 
-const TUNNEL_URL = 'https://sorry-developmental-obligation-continue.trycloudflare.com/api';
+const TUNNEL_URL = 'https://troops-aggregate-bookmark-parcel.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
-const DEV_LAN_IP = '172.168.7.189';
-const DEV_LAN_URL = `http://${DEV_LAN_IP}:5001/api`;
+const DEV_LAN_URL = 'http://10.22.112.1:5001/api';
+const DEV_LAN_URL_ALT = 'http://172.168.7.188:5001/api';
 const USB_URL = 'http://169.254.33.184:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
-// Prioritize local loopback and LAN endpoints for rapid dev iteration, with tunnel for remote access
+// Prioritize responsive local, LAN, emulator and tunnel endpoints for mobile devices and simulators
 export const CANDIDATE_URLS = [
   LOCAL_URL,
   DEV_LAN_URL,
+  EMULATOR_URL,
+  DEV_LAN_URL_ALT,
   TUNNEL_URL,
   USB_URL,
-  EMULATOR_URL,
 ];
 
 let dynamicApiBaseUrl: string | null = null;
@@ -52,13 +53,21 @@ export const probeFastestApiUrl = async (): Promise<string> => {
       }
     };
 
-    // Fast probe: Test Local, LAN, and Tunnel in parallel
+    // Fast probe: Test Local, Emulator, LAN, and Tunnel in parallel
     try {
-      const fastest = await Promise.any([
-        probe(LOCAL_URL, 1500),
-        probe(DEV_LAN_URL, 2000),
-        probe(TUNNEL_URL, 3000),
-      ]);
+      const candidates = Platform.OS === 'android'
+        ? [
+            probe(LOCAL_URL, 1500),
+            probe(EMULATOR_URL, 1500),
+            probe(DEV_LAN_URL, 2000),
+            probe(TUNNEL_URL, 2500),
+          ]
+        : [
+            probe(LOCAL_URL, 1500),
+            probe(DEV_LAN_URL, 2000),
+            probe(TUNNEL_URL, 2500),
+          ];
+      const fastest = await Promise.any(candidates);
       if (fastest) {
         setDynamicApiBaseUrl(fastest);
         return fastest;
@@ -67,7 +76,7 @@ export const probeFastestApiUrl = async (): Promise<string> => {
       // Probing failed; fallback safely
     }
 
-    const fallback = Platform.OS === 'ios' ? LOCAL_URL : TUNNEL_URL;
+    const fallback = Platform.OS === 'android' ? EMULATOR_URL : LOCAL_URL;
     setDynamicApiBaseUrl(fallback);
     return fallback;
   })();
@@ -84,7 +93,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return Platform.OS === 'ios' ? LOCAL_URL : TUNNEL_URL;
+  return Platform.OS === 'android' ? EMULATOR_URL : LOCAL_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -99,7 +108,7 @@ export const getDevApiBaseUrl = (): string => {
   // Pre-probe in background to detect fastest connection immediately
   void probeFastestApiUrl();
 
-  // Extract host IP from Metro bundle URL if on iOS
+  // Extract host IP from Metro bundle URL
   const scriptURL = typeof NativeModules !== 'undefined' ? NativeModules?.SourceCode?.scriptURL : undefined;
   if (scriptURL && typeof scriptURL === 'string' && /^https?:\/\//i.test(scriptURL)) {
     try {
@@ -107,19 +116,14 @@ export const getDevApiBaseUrl = (): string => {
       if (match && match[1]) {
         const host = match[1];
         if (host === 'localhost' || host === '127.0.0.1') {
-          return LOCAL_URL;
+          return Platform.OS === 'android' ? EMULATOR_URL : LOCAL_URL;
         }
         return `http://${host}:5001/api`;
       }
     } catch (_) {}
   }
 
-  // On iOS Simulator / local devices, default to LOCAL_URL
-  if (Platform.OS === 'ios') {
-    return LOCAL_URL;
-  }
-
-  return TUNNEL_URL;
+  return Platform.OS === 'android' ? EMULATOR_URL : LOCAL_URL;
 };
 
 // Environment & App Configuration

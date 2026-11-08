@@ -70,16 +70,16 @@ export const QuickMenuModal: React.FC<QuickMenuModalProps> = ({
                   <Text style={styles.chevron}>›</Text>
                 </TouchableOpacity>
 
-                {/* 2. Settings & Language */}
+                {/* 2. Preferences */}
                 <TouchableOpacity
                   style={styles.menuItem}
                   activeOpacity={0.72}
-                  onPress={() => handleItemPress('LanguageSelection')}
+                  onPress={() => handleItemPress('Profile')}
                 >
                   <Image source={MENU_ICONS.settings} style={styles.menuIconImg} resizeMode="contain" />
                   <View style={styles.itemTextCol}>
-                    <Text style={styles.itemTitle}>Settings & Language</Text>
-                    <Text style={styles.itemSubtitle}>App preferences & language</Text>
+                    <Text style={styles.itemTitle}>Preferences</Text>
+                    <Text style={styles.itemSubtitle}>Account settings & security</Text>
                   </View>
                   <Text style={styles.chevron}>›</Text>
                 </TouchableOpacity>
