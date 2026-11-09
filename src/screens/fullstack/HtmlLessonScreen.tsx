@@ -17,7 +17,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { fullstackApi } from '../../api/fullstackApi';
 import { HtmlLesson } from '../../types/fullstack';
-import { getFallbackLessonById, getCourseForTech } from '../../data/fullstackHtmlData';
+import { getFallbackLessonById, getCourseForTech, FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
 import {
   validateHtml,
   validateCode,
@@ -587,6 +587,16 @@ export const HtmlLessonScreen: React.FC = () => {
   const prevLesson = currentIndex > 0 ? techLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex >= 0 && currentIndex < techLessons.length - 1 ? techLessons[currentIndex + 1] : null;
 
+  const currentTrackIndex = useMemo(() => {
+    return FULLSTACK_TRACKS.findIndex(
+      t => t.id === activeTech || t.id.toLowerCase() === activeTech.toLowerCase()
+    );
+  }, [activeTech]);
+
+  const nextTrack = currentTrackIndex >= 0 && currentTrackIndex < FULLSTACK_TRACKS.length - 1
+    ? FULLSTACK_TRACKS[currentTrackIndex + 1]
+    : null;
+
   const navigateToSiblingLesson = (sibling: HtmlLesson) => {
     const target = sibling._id || sibling.id || sibling.slug || '';
     if (target) {
@@ -1078,22 +1088,38 @@ export const HtmlLessonScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.siblingNavBtn}
               onPress={() => navigateToSiblingLesson(prevLesson)}
+              activeOpacity={0.8}
             >
               <Text style={styles.siblingNavText} numberOfLines={1}>Previous</Text>
             </TouchableOpacity>
-          ) : <View style={{ flex: 1 }} />}
+          ) : null}
 
           {nextLesson ? (
             <TouchableOpacity
-              style={[styles.nextLessonDarkBtn, { backgroundColor: '#0F172A' }]}
+              style={[
+                styles.nextLessonDarkBtn,
+                { backgroundColor: '#0F172A' },
+                !prevLesson && { flex: 1 }
+              ]}
               onPress={() => handleCompleteAndNext(nextLesson)}
               activeOpacity={0.85}
             >
-              <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Next Lesson ➔</Text>
+              <Text
+                style={styles.nextLessonDarkBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                Next Lesson ➔
+              </Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.nextLessonDarkBtn, { backgroundColor: '#10B981' }]}
+              style={[
+                styles.nextLessonDarkBtn,
+                { backgroundColor: '#10B981' },
+                !prevLesson && { flex: 1 }
+              ]}
               onPress={async () => {
                 const lessonResolvedId = resolveLessonId(lesson, currentId);
                 if (lessonResolvedId) {
@@ -1101,11 +1127,22 @@ export const HtmlLessonScreen: React.FC = () => {
                     await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
                   } catch (e) {}
                 }
-                navigation.goBack();
+                if (nextTrack) {
+                  navigation.replace('HtmlCourse', { tech: nextTrack.id });
+                } else {
+                  navigation.goBack();
+                }
               }}
               activeOpacity={0.85}
             >
-              <Text style={styles.nextLessonDarkBtnText} numberOfLines={1}>Complete & Back to Course ➔</Text>
+              <Text
+                style={styles.nextLessonDarkBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
+                {nextTrack ? `Next: ${nextTrack.title} ➔` : 'Complete Course 🏆'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1669,20 +1706,20 @@ const styles = StyleSheet.create({
   /* BOTTOM NAVIGATION BUTTONS */
   bottomNavRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 4,
-    marginBottom: 20
+    gap: 10,
+    marginTop: 8,
+    marginBottom: 24
   },
   siblingNavBtn: {
-    flex: 1,
+    flex: 0.65,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 4,
     backgroundColor: '#FFFFFF',
-    paddingVertical: 13,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0'
@@ -1693,12 +1730,13 @@ const styles = StyleSheet.create({
     color: '#64748B'
   },
   nextLessonDarkBtn: {
-    flex: 1.2,
+    flex: 1.35,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 13,
+    gap: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1707,9 +1745,10 @@ const styles = StyleSheet.create({
     elevation: 3
   },
   nextLessonDarkBtnText: {
-    fontSize: 13.5,
-    fontWeight: '800',
-    color: '#FFFFFF'
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center'
   },
 
   /* POPUP MODAL STYLES */

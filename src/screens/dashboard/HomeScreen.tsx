@@ -35,7 +35,6 @@ export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [fullstackProgress, setFullstackProgress] = useState<FullStackCourseProgress | null>(null);
-  const [completedCoursesList, setCompletedCoursesList] = useState<Array<{ id: string; title: string; tech?: string; isAcademy?: boolean; slug?: string; logoUrl?: string }>>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [tools, setTools] = useState<AiTool[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -49,51 +48,15 @@ export const HomeScreen = ({ navigation }: any) => {
     request.current = controller;
     setError(null);
     try {
-      const [dashboard, toolResult, fsResult, allCoursesRes] = await Promise.allSettled([
+      const [dashboard, toolResult, fsResult] = await Promise.allSettled([
         userApi.getDashboard(controller.signal),
         aiApi.getTools(controller.signal),
         fullstackApi.getFullStackProgress(),
-        courseApi.getAllCourses(controller.signal),
       ]);
       if (controller.signal.aborted) return;
       if (dashboard.status === 'fulfilled') setDashboardData(dashboard.value.data);
       if (toolResult.status === 'fulfilled') setTools(toolResult.value.data);
       if (fsResult.status === 'fulfilled') setFullstackProgress(fsResult.value);
-
-      const completedList: Array<{ id: string; title: string; tech?: string; isAcademy?: boolean; slug?: string; logoUrl?: string }> = [];
-
-      // Check Full Stack modules
-      if (fsResult.status === 'fulfilled' && fsResult.value?.modules) {
-        for (const mod of fsResult.value.modules) {
-          const isDone = Boolean(mod.isCompleted || (mod.totalLessons > 0 && mod.completedLessons >= mod.totalLessons));
-          if (isDone) {
-            completedList.push({
-              id: mod.id,
-              title: mod.title || `${mod.id.toUpperCase()} Course`,
-              tech: mod.id.toLowerCase(),
-              isAcademy: false,
-            });
-          }
-        }
-      }
-
-      // Check Academy courses
-      if (allCoursesRes.status === 'fulfilled' && Array.isArray(allCoursesRes.value?.data)) {
-        for (const c of allCoursesRes.value.data) {
-          const isDone = c.courseCompleted || c.certified || (c.progressPercentage !== undefined && c.progressPercentage >= 100) || c.learningStatus === 'completed';
-          if (isDone && !completedList.some(item => item.id === c._id || item.title.toLowerCase() === c.title.toLowerCase())) {
-            completedList.push({
-              id: c._id,
-              title: c.title,
-              isAcademy: true,
-              slug: c.slug,
-              logoUrl: c.logoUrl,
-            });
-          }
-        }
-      }
-
-      setCompletedCoursesList(completedList);
     } catch {
       if (!controller.signal.aborted) {
         try {
@@ -265,79 +228,6 @@ export const HomeScreen = ({ navigation }: any) => {
               />
             </TouchableOpacity>
           </View>
-
-          {/* COMPLETED COURSES SECTION */}
-          {completedCoursesList.length > 0 && (
-            <View style={styles.completedSectionContainer}>
-              <View style={styles.sectionHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={{ fontSize: 16 }}>🏆</Text>
-                  <Text style={styles.sectionTitle}>Completed Courses ({completedCoursesList.length})</Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('Certificates')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.viewAllText}>Certificates ➔</Text>
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.coursesHorizontalRow}
-              >
-                {completedCoursesList.map((item) => (
-                  <View key={`comp-${item.id}`} style={styles.completedCourseCard}>
-                    <View style={styles.completedCardTopRow}>
-                      {item.isAcademy ? (
-                        <ToolLogo courseKey={item.title} slug={item.slug} logoUrl={item.logoUrl} size={38} />
-                      ) : (
-                        <View style={styles.completedTechBadge}>
-                          <Text style={styles.completedTechText}>{(item.tech || 'AI').toUpperCase()}</Text>
-                        </View>
-                      )}
-                      <View style={styles.completedDonePill}>
-                        <Text style={styles.completedDonePillText}>100% DONE ✓</Text>
-                      </View>
-                    </View>
-
-                    <Text style={styles.completedCourseTitle} numberOfLines={2}>
-                      {item.title}
-                    </Text>
-
-                    <Text style={styles.completedCourseSub}>
-                      All modules & lessons completed!
-                    </Text>
-
-                    <View style={styles.completedCardBtnRow}>
-                      <TouchableOpacity
-                        style={styles.completedActionBtn}
-                        activeOpacity={0.8}
-                        onPress={() => {
-                          if (item.isAcademy) {
-                            navigation.navigate('CoursesTab', { screen: 'CourseDetails', params: { courseId: item.id } });
-                          } else {
-                            navigation.navigate('HtmlCourse', { tech: item.tech });
-                          }
-                        }}
-                      >
-                        <Text style={styles.completedActionBtnText}>Review Course ➔</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.completedCertBtn}
-                        activeOpacity={0.8}
-                        onPress={() => navigation.navigate('Certificates')}
-                      >
-                        <Text style={styles.completedCertBtnText}>Certificate</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )}
 
           {/* EXPLORE COURSES SECTION */}
           <View style={styles.sectionHeaderRow}>
@@ -1432,105 +1322,5 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
     fontFamily: SANS_SERIF_FONT,
     fontStyle: 'normal',
-  },
-
-  /* COMPLETED COURSES SHOWCASE SECTION */
-  completedSectionContainer: {
-    marginBottom: 28,
-  },
-  completedCourseCard: {
-    width: 250,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    marginRight: 14,
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  completedCardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  completedTechBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  completedTechText: {
-    color: '#059669',
-    fontSize: 11,
-    fontWeight: '800',
-    fontFamily: SANS_SERIF_FONT,
-  },
-  completedDonePill: {
-    backgroundColor: '#059669',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  completedDonePillText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  completedCourseTitle: {
-    fontSize: 15.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  completedCourseSub: {
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: 14,
-    fontFamily: SANS_SERIF_FONT,
-  },
-  completedCardBtnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  completedActionBtn: {
-    flex: 1,
-    backgroundColor: '#059669',
-    paddingVertical: 9,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  completedActionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 11.5,
-    fontWeight: '700',
-    fontFamily: SANS_SERIF_FONT,
-  },
-  completedCertBtn: {
-    paddingVertical: 9,
-    paddingHorizontal: 11,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  completedCertBtnText: {
-    color: '#D97706',
-    fontSize: 11.5,
-    fontWeight: '700',
-    fontFamily: SANS_SERIF_FONT,
   },
 });

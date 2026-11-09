@@ -171,6 +171,16 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
   const completedLessonsCount = allLessons.filter(l => completedSet.has(l._id || l.id || l.slug || '')).length;
   const percent = totalLessonsCount > 0 ? Math.min(100, Math.round((completedLessonsCount / totalLessonsCount) * 100)) : 0;
 
+  const currentTrackIndex = useMemo(() => {
+    return FULLSTACK_TRACKS.findIndex(
+      t => t.id === tech || t.id.toLowerCase() === (tech || '').toLowerCase()
+    );
+  }, [tech]);
+
+  const nextTrack = currentTrackIndex >= 0 && currentTrackIndex < FULLSTACK_TRACKS.length - 1
+    ? FULLSTACK_TRACKS[currentTrackIndex + 1]
+    : null;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -270,21 +280,35 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
                 </View>
               </View>
 
-              <TouchableOpacity
-                style={styles.celebrationCertBtn}
-                activeOpacity={0.85}
-                onPress={() => {
-                  if (tech === 'fullstack') {
-                    navigation.navigate('FullStackCertificate');
-                  } else {
-                    navigation.navigate('Certificates');
-                  }
-                }}
-              >
-                <Text style={styles.celebrationCertBtnText} numberOfLines={1}>
-                  View Official Certificate ➔
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.celebrationBtnRow}>
+                <TouchableOpacity
+                  style={[styles.celebrationCertBtn, nextTrack && { flex: 1 }]}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    if (tech === 'fullstack') {
+                      navigation.navigate('FullStackCertificate');
+                    } else {
+                      navigation.navigate('Certificates');
+                    }
+                  }}
+                >
+                  <Text style={styles.celebrationCertBtnText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                    {nextTrack ? 'Certificate 🏆' : 'View Official Certificate ➔'}
+                  </Text>
+                </TouchableOpacity>
+
+                {nextTrack && (
+                  <TouchableOpacity
+                    style={[styles.celebrationCertBtn, styles.celebrationNextBtn]}
+                    activeOpacity={0.85}
+                    onPress={() => navigation.navigate('HtmlCourse', { tech: nextTrack.id })}
+                  >
+                    <Text style={styles.celebrationNextBtnText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                      Next: {nextTrack.title} ➔
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           )}
         </View>
@@ -749,14 +773,29 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 16,
   },
+  celebrationBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6
+  },
   celebrationCertBtn: {
     backgroundColor: '#0F172A',
-    paddingVertical: 11,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   celebrationCertBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  celebrationNextBtn: {
+    backgroundColor: '#059669',
+  },
+  celebrationNextBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
