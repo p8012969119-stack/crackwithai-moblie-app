@@ -238,6 +238,12 @@ const buildPreviewHtml = (rawHtml: string) => {
 </html>`;
 };
 
+const resolveLessonId = (l: HtmlLesson | null, fallbackId?: string): string => {
+  if (!l) return fallbackId || '';
+  if (l._id && /^[0-9a-fA-F]{24}$/.test(l._id)) return l._id;
+  return l.slug || l.id || l._id || fallbackId || '';
+};
+
 export const HtmlLessonScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -507,7 +513,7 @@ export const HtmlLessonScreen: React.FC = () => {
           return;
         }
 
-        const lessonResolvedId = lesson._id || lesson.id || lesson.slug || currentId;
+        const lessonResolvedId = resolveLessonId(lesson, currentId);
         await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode).catch(() => null);
 
         setIsCompleted(true);
@@ -551,7 +557,7 @@ export const HtmlLessonScreen: React.FC = () => {
       }
 
       // 3. Save Progress to Database via API
-      const lessonResolvedId = lesson._id || lesson.id || lesson.slug || currentId;
+      const lessonResolvedId = resolveLessonId(lesson, currentId);
       await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode).catch(() => null);
 
       setIsCompleted(true);
@@ -597,7 +603,7 @@ export const HtmlLessonScreen: React.FC = () => {
   };
 
   const handleCompleteAndNext = async (sibling: HtmlLesson) => {
-    const lessonResolvedId = lesson?._id || lesson?.id || lesson?.slug || currentId;
+    const lessonResolvedId = resolveLessonId(lesson, currentId);
     if (lessonResolvedId) {
       try {
         await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
@@ -675,7 +681,7 @@ export const HtmlLessonScreen: React.FC = () => {
           style={[styles.completeCheckBtn, isCompleted && styles.completeCheckBtnActive]}
           activeOpacity={0.7}
           onPress={async () => {
-            const lessonResolvedId = lesson?._id || lesson?.id || lesson?.slug || currentId;
+            const lessonResolvedId = resolveLessonId(lesson, currentId);
             if (lessonResolvedId) {
               try {
                 await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
@@ -1089,7 +1095,7 @@ export const HtmlLessonScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.nextLessonDarkBtn, { backgroundColor: '#10B981' }]}
               onPress={async () => {
-                const lessonResolvedId = lesson?._id || lesson?.id || lesson?.slug || currentId;
+                const lessonResolvedId = resolveLessonId(lesson, currentId);
                 if (lessonResolvedId) {
                   try {
                     await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
