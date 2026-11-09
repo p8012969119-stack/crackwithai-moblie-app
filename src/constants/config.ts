@@ -1,7 +1,9 @@
 import { NativeModules, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TUNNEL_URL = 'https://telling-explosion-enormous-participant.trycloudflare.com/api';
+const TUNNEL_LHR_URL = 'https://2bd246a5366640.lhr.life/api';
+const TUNNEL_LOCA_URL = 'https://little-forks-sing.loca.lt/api';
+const TUNNEL_CF_URL = 'https://telling-explosion-enormous-participant.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const DEV_LAN_URL = 'http://172.168.7.186:5001/api';
 const DEV_LAN_URL_ALT = 'http://172.168.7.188:5001/api';
@@ -10,9 +12,11 @@ const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
 const FASTEST_URL_KEY = '@crackwithai_fastest_api_url';
 
-// Prioritize the live public HTTPS Cloudflare tunnel first so all physical devices and networks succeed immediately
+// Multi-tier resilient public endpoints (lhr.life and loca.lt are unblocked on Indian 4G/5G mobile carriers)
 export const CANDIDATE_URLS = [
-  TUNNEL_URL,
+  TUNNEL_LHR_URL,
+  TUNNEL_LOCA_URL,
+  TUNNEL_CF_URL,
   DEV_LAN_URL,
   EMULATOR_URL,
   LOCAL_URL,
@@ -20,7 +24,7 @@ export const CANDIDATE_URLS = [
   USB_URL,
 ];
 
-let dynamicApiBaseUrl: string | null = TUNNEL_URL;
+let dynamicApiBaseUrl: string | null = TUNNEL_LHR_URL;
 let probePromise: Promise<string> | null = null;
 
 // Only restore cached URL if it is a valid, secure public URL to prevent trapped local IP issues
@@ -33,7 +37,7 @@ try {
 } catch (_) {}
 
 export const setDynamicApiBaseUrl = (url: string | null) => {
-  dynamicApiBaseUrl = url || TUNNEL_URL;
+  dynamicApiBaseUrl = url || TUNNEL_LHR_URL;
   if (url) {
     AsyncStorage.setItem(FASTEST_URL_KEY, url).catch(() => {});
   }
@@ -55,6 +59,7 @@ export const probeFastestApiUrl = async (): Promise<string> => {
         const clean = url.replace(/\/+$/, '');
         const res = await fetch(`${clean}/health`, {
           method: 'GET',
+          headers: { 'Bypass-Tunnel-Reminder': 'true' },
           signal: controller.signal,
         });
         clearTimeout(timer);
@@ -70,7 +75,9 @@ export const probeFastestApiUrl = async (): Promise<string> => {
 
     try {
       const candidates = [
-        probe(TUNNEL_URL, 3500),
+        probe(TUNNEL_LHR_URL, 3500),
+        probe(TUNNEL_LOCA_URL, 3500),
+        probe(TUNNEL_CF_URL, 3500),
         probe(DEV_LAN_URL, 1500),
         probe(EMULATOR_URL, 1200),
         probe(LOCAL_URL, 1200),
@@ -84,7 +91,7 @@ export const probeFastestApiUrl = async (): Promise<string> => {
       // Probing failed; fallback safely to public tunnel
     }
 
-    const fallback = TUNNEL_URL;
+    const fallback = TUNNEL_LHR_URL;
     setDynamicApiBaseUrl(fallback);
     return fallback;
   })();
@@ -101,7 +108,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return TUNNEL_URL;
+  return TUNNEL_LHR_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -113,7 +120,7 @@ export const getDevApiBaseUrl = (): string => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  return TUNNEL_URL;
+  return TUNNEL_LHR_URL;
 };
 
 // Environment & App Configuration
@@ -121,7 +128,7 @@ export const CONFIG = {
   get API_BASE_URL(): string {
     return getDevApiBaseUrl();
   },
-  TIMEOUT: 10000,
+  TIMEOUT: 15000,
   STORAGE_KEYS: {
     AUTH_TOKEN: '@crackwithai_auth_token',
     USER_DATA: '@crackwithai_user_data',
@@ -132,11 +139,11 @@ export const CONFIG = {
 };
 
 export const getPublicCertificateUrl = (code: string): string => {
-  const base = (dynamicApiBaseUrl || TUNNEL_URL).replace(/\/api\/?$/, '');
+  const base = (dynamicApiBaseUrl || TUNNEL_LHR_URL).replace(/\/api\/?$/, '');
   return `${base}/verify/${encodeURIComponent(code)}`;
 };
 
 export const getPublicCertificatePdfUrl = (code: string): string => {
-  const base = (dynamicApiBaseUrl || TUNNEL_URL).replace(/\/api\/?$/, '');
+  const base = (dynamicApiBaseUrl || TUNNEL_LHR_URL).replace(/\/api\/?$/, '');
   return `${base}/verify/${encodeURIComponent(code)}/pdf`;
 };
