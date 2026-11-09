@@ -62,8 +62,13 @@ apiClient.interceptors.response.use(
       const candidates = CANDIDATE_URLS.map(u => u.replace(/\/+$/, '')).filter(u => u && u !== currentBase);
 
       try {
+        const { signal, ...cleanConfig } = config;
         const racePromises = candidates.map(async (altBase) => {
-          const attemptConfig = { ...config, baseURL: altBase, timeout: 2500 };
+          const attemptConfig: InternalAxiosRequestConfig = {
+            ...(cleanConfig as InternalAxiosRequestConfig),
+            baseURL: altBase,
+            timeout: 6000,
+          };
           try {
             const res = await axios(attemptConfig);
             return { res, altBase, error: null };
