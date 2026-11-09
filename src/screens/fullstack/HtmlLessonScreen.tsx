@@ -31,6 +31,7 @@ import {
 import { aiApi } from '../../api/aiApi';
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
+import { CourseCompletionStreakModal } from '../../components/learning/CourseCompletionStreakModal';
 
 // Omit invalid font strings on Android to prevent system cursive theme fallback
 const FONT_FAMILY = Platform.OS === 'android' ? undefined : 'System';
@@ -275,6 +276,24 @@ export const HtmlLessonScreen: React.FC = () => {
   const [promptEvalResult, setPromptEvalResult] = useState<PromptEvaluationResult | null>(null);
   const [showErrorCard, setShowErrorCard] = useState<boolean>(false);
   const [submissionFeedback, setSubmissionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showStreakModal, setShowStreakModal] = useState<boolean>(false);
+  const [streakCount, setStreakCount] = useState<number>(1);
+
+  const fetchStreakCount = useCallback(async () => {
+    try {
+      const res = await fullstackApi.getFullStackProgress();
+      if (res?.modules) {
+        const done = res.modules.filter(
+          m => Boolean(m.isCompleted || (m.totalLessons > 0 && m.completedLessons >= m.totalLessons))
+        ).length;
+        setStreakCount(Math.max(1, done));
+      }
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    fetchStreakCount();
+  }, [fetchStreakCount]);
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -566,6 +585,11 @@ export const HtmlLessonScreen: React.FC = () => {
         type: 'success',
         message: '✓ Perfect! Your code passed all checks and progress is saved.'
       });
+
+      if (!nextLesson) {
+        setStreakCount(prev => Math.max(1, prev + 1));
+        setShowStreakModal(true);
+      }
     } catch (err: any) {
       setSubmissionFeedback({
         type: 'error',
@@ -1127,11 +1151,8 @@ export const HtmlLessonScreen: React.FC = () => {
                     await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
                   } catch (e) {}
                 }
-                if (nextTrack) {
-                  navigation.replace('HtmlCourse', { tech: nextTrack.id });
-                } else {
-                  navigation.goBack();
-                }
+                setStreakCount(prev => Math.max(1, prev + 1));
+                setShowStreakModal(true);
               }}
               activeOpacity={0.85}
             >
@@ -1255,6 +1276,30 @@ export const HtmlLessonScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+      {/* COURSE COMPLETION & FLYING FLAMES STREAK POPUP */}
+      <CourseCompletionStreakModal
+        visible={showStreakModal}
+        courseTitle={activeCourse?.title || `${activeTech.toUpperCase()} Course`}
+        newStreak={streakCount}
+        onClose={() => setShowStreakModal(false)}
+        onViewCertificate={() => {
+          setShowStreakModal(false);
+          if (activeTech === 'fullstack') {
+            navigation.navigate('FullStackCertificate');
+          } else {
+            navigation.navigate('Certificates');
+          }
+        }}
+        nextCourseTitle={nextTrack ? nextTrack.title : null}
+        onNextCourse={() => {
+          setShowStreakModal(false);
+          if (nextTrack) {
+            navigation.replace('HtmlCourse', { tech: nextTrack.id });
+          } else {
+            navigation.goBack();
+          }
+        }}
+      />
     </SafeAreaView>
   );
 };

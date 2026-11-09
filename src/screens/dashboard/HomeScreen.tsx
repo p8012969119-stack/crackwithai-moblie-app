@@ -118,10 +118,21 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const totalLessonsCount = fullstackProgress?.totalLessons || dashboardData?.totalLessonsCount || 171;
   const completedLessonsCount = fullstackProgress?.completedLessons ?? dashboardData?.completedLessonsCount ?? 0;
-  const taskStreakCount = Math.max(
-    completedLessonsCount,
-    (user as any)?.taskStreak ?? user?.streak ?? user?.learningStreak ?? dashboardData?.streak ?? 0
-  );
+
+  // Streak calculated strictly by completed courses count (1 course done = 1 streak)
+  const courseStreakCount = useMemo(() => {
+    let count = 0;
+    if (fullstackProgress?.modules) {
+      count += fullstackProgress.modules.filter(
+        mod => Boolean(mod.isCompleted || (mod.totalLessons > 0 && mod.completedLessons >= mod.totalLessons))
+      ).length;
+    }
+    if (Array.isArray(dashboardData?.completedCourses)) {
+      count += dashboardData.completedCourses.length;
+    }
+    return Math.max(count, user?.streak ?? 0);
+  }, [fullstackProgress?.modules, dashboardData?.completedCourses, user?.streak]);
+
   const progressPercent = totalLessonsCount > 0
     ? Math.min(100, Math.round((completedLessonsCount / totalLessonsCount) * 100))
     : (typeof fullstackProgress?.overallPercentage === 'number'
@@ -139,50 +150,38 @@ export const HomeScreen = ({ navigation }: any) => {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#5653FE" />}
           showsVerticalScrollIndicator={false}
         >
-          {/* HEADER ROW WITH SPACING, STREAK BADGE, PROFILE AVATAR & 3-LINE HAMBURGER MENU BUTTON */}
+          {/* HEADER ROW WITH NAME, STREAK BADGE & 3-LINE HAMBURGER MENU BUTTON */}
           <View style={styles.headerRow}>
             <TouchableOpacity
               style={styles.greetingTextCol}
               activeOpacity={0.8}
               onPress={() => navigation.navigate('Profile')}
             >
-              <Text style={styles.greetingTitle}>Hi, {firstName} 👋</Text>
-              <Text style={styles.greetingSubtitle}>Ready to learn something new today?</Text>
+              <Text
+                style={styles.greetingTitle}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                Hi, {firstName} 👋
+              </Text>
+              <Text style={styles.greetingSubtitle} numberOfLines={1}>
+                Ready to learn something new today?
+              </Text>
             </TouchableOpacity>
 
             <View style={styles.headerRightActions}>
-              {/* Task Streak Pill */}
+              {/* Course Streak Pill */}
               <TouchableOpacity
                 style={styles.headerStreakBadge}
                 activeOpacity={0.8}
                 onPress={() => navigation.navigate('Profile')}
-                accessibilityLabel="View Task Streak"
+                accessibilityLabel="View Course Streak"
               >
                 <Text style={styles.headerStreakFire}>🔥</Text>
                 <Text style={styles.headerStreakText}>
-                  {taskStreakCount} Tasks
+                  {courseStreakCount} {courseStreakCount === 1 ? 'Streak' : 'Streaks'}
                 </Text>
-              </TouchableOpacity>
-
-              {/* Profile Avatar Button */}
-              <TouchableOpacity
-                style={styles.headerAvatarBtn}
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('Profile')}
-                accessibilityLabel="Go to Profile"
-              >
-                {user?.avatar || user?.profileImage ? (
-                  <Image
-                    source={{ uri: user.avatar || user.profileImage }}
-                    style={styles.headerAvatarImg}
-                  />
-                ) : (
-                  <View style={styles.headerAvatarPlaceholder}>
-                    <Text style={styles.headerAvatarInitial}>
-                      {(firstName[0] || 'P').toUpperCase()}
-                    </Text>
-                  </View>
-                )}
               </TouchableOpacity>
 
               {/* 3-Line Hamburger Menu Button */}
@@ -697,25 +696,34 @@ const styles = StyleSheet.create({
   },
   greetingTextCol: {
     flex: 1,
+    marginRight: 10,
   },
   greetingTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
     color: '#0F172A',
-    letterSpacing: -0.4,
-    fontFamily: SANS_SERIF_FONT,
+    letterSpacing: -0.3,
+    fontFamily: Platform.select({
+      ios: 'System',
+      android: 'sans-serif-medium',
+    }),
     fontStyle: 'normal',
+    includeFontPadding: false,
   },
   greetingSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748B',
-    fontWeight: '400',
-    marginTop: 4,
-    fontFamily: SANS_SERIF_FONT,
+    fontWeight: '500',
+    marginTop: 2,
+    fontFamily: Platform.select({
+      ios: 'System',
+      android: 'sans-serif',
+    }),
     fontStyle: 'normal',
+    includeFontPadding: false,
   },
 
-  /* 3-Line Hamburger Menu Button */
+  /* 3-Line Hamburger Menu Button & Course Streak Pill */
   headerRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -727,10 +735,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF7ED',
     borderWidth: 1.2,
     borderColor: '#FED7AA',
-    borderRadius: 18,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    gap: 4,
+    borderRadius: 20,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    gap: 5,
   },
   headerStreakFire: {
     fontSize: 14,
@@ -739,31 +747,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#EA580C',
-  },
-  headerAvatarBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1.8,
-    borderColor: '#5553FE',
-  },
-  headerAvatarImg: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 18,
-  },
-  headerAvatarPlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#EEEDFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerAvatarInitial: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#5553FE',
+    fontFamily: Platform.select({
+      ios: 'System',
+      android: 'sans-serif-medium',
+    }),
   },
   hamburgerMenuCircle: {
     width: 44,

@@ -20,6 +20,7 @@ import { getFastCourse, normalizeCourse, cacheCourseData } from '../../utils/cou
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
 import { PromptEngineeringScreen } from '../prompt/PromptEngineeringScreen';
+import { CourseCompletionStreakModal } from '../../components/learning/CourseCompletionStreakModal';
 
 const COURSE_LOGOS: Record<string, any> = {
   html: require('../../assets/courses/html.png'),
@@ -79,6 +80,7 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
   const [progress, setProgress] = useState<FullStackProgress | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [showStreakModal, setShowStreakModal] = useState<boolean>(false);
 
   // Expanded state for accordion modules
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
@@ -284,16 +286,10 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
                 <TouchableOpacity
                   style={[styles.celebrationCertBtn, nextTrack && { flex: 1 }]}
                   activeOpacity={0.85}
-                  onPress={() => {
-                    if (tech === 'fullstack') {
-                      navigation.navigate('FullStackCertificate');
-                    } else {
-                      navigation.navigate('Certificates');
-                    }
-                  }}
+                  onPress={() => setShowStreakModal(true)}
                 >
                   <Text style={styles.celebrationCertBtnText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-                    {nextTrack ? 'Certificate 🏆' : 'View Official Certificate ➔'}
+                    {nextTrack ? 'Certificate & Streak 🔥' : 'View Official Certificate ➔'}
                   </Text>
                 </TouchableOpacity>
 
@@ -418,6 +414,29 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
           </View>
         )}
       </ScrollView>
+
+      {/* COURSE COMPLETION & FLYING FLAME STREAK POPUP */}
+      <CourseCompletionStreakModal
+        visible={showStreakModal}
+        courseTitle={activeCourse?.title || `${activeTrack.title} Course`}
+        newStreak={1}
+        onClose={() => setShowStreakModal(false)}
+        onViewCertificate={() => {
+          setShowStreakModal(false);
+          if (tech === 'fullstack') {
+            navigation.navigate('FullStackCertificate');
+          } else {
+            navigation.navigate('Certificates');
+          }
+        }}
+        nextCourseTitle={nextTrack ? nextTrack.title : null}
+        onNextCourse={() => {
+          setShowStreakModal(false);
+          if (nextTrack) {
+            navigation.navigate('HtmlCourse', { tech: nextTrack.id });
+          }
+        }}
+      />
     </SafeAreaView>
   );
 };
