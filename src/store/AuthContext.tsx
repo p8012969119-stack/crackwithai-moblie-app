@@ -32,9 +32,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setIsRestoringSession(true);
       setSessionError(null);
+
+      // Fast-path: immediately restore cached session so reloading is instantaneous
+      const [cachedUser, cachedToken] = await Promise.all([
+        storage.getUser(),
+        storage.getToken(),
+      ]);
+
+      if (cachedToken && cachedUser) {
+        setToken(cachedToken);
+        setUser(cachedUser);
+        setIsRestoringSession(false);
+        setIsLoading(false);
+      }
+
+      // Validate session with server in background
       const session = await restoreValidatedSession();
-      setToken(session?.token ?? null);
-      setUser(session?.user ?? null);
+      if (session) {
+        setToken(session.token);
+        setUser(session.user);
+      } else if (!cachedToken) {
+        setToken(null);
+        setUser(null);
+      }
     } catch (error: any) {
       const cachedUser = await storage.getUser();
       const cachedToken = await storage.getToken();
@@ -105,17 +125,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     setIsLoading(true);
+    // Instant client-side state and storage purge for immediate navigation
+    setToken(null);
+    setUser(null);
+    setSessionError(null);
     try {
-      await authApi.logout();
-    } catch (e) {
-      console.warn('[AuthContext] Server logout call error:', e);
-    } finally {
-      setToken(null);
-      setUser(null);
-      setSessionError(null);
       await storage.clearAll();
-      setIsLoading(false);
-    }
+    } catch (_) {}
+    setIsLoading(false);
+
+    // Asynchronously notify server fire-and-forget without blocking user
+    void authApi.logout().catch((e) => {
+      console.warn('[AuthContext] Background logout notice:', e);
+    });
   };
 
   const refreshProfile = async () => {

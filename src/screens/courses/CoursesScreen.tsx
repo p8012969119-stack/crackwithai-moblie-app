@@ -57,7 +57,7 @@ export const CoursesScreen = ({
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'my-learning'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'my-learning' | 'completed'>('all');
   const [expanded, setExpanded] = useState(false);
   const listRef = useRef<FlatList<Course>>(null);
   const [loading, setLoading] = useState(true);
@@ -103,29 +103,75 @@ export const CoursesScreen = ({
     }, [fetchCourses]),
   );
 
+  const completedCount = useMemo(
+    () =>
+      courses.filter(
+        (c) =>
+          c.courseCompleted ||
+          c.certified ||
+          (c.progressPercentage !== undefined && c.progressPercentage >= 100) ||
+          c.learningStatus === 'completed'
+      ).length,
+    [courses]
+  );
+
+  const inProgressCount = useMemo(
+    () =>
+      courses.filter(
+        (c) =>
+          c.isEnrolled &&
+          !c.courseCompleted &&
+          !c.certified &&
+          !(c.progressPercentage !== undefined && c.progressPercentage >= 100) &&
+          c.learningStatus !== 'completed'
+      ).length,
+    [courses]
+  );
+
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return courses.filter(
-      (course) =>
-        (activeTab === 'all' || course.isEnrolled) &&
-        (!query || [course.title, course.description, course.shortDescription].some(value => value?.toLowerCase().includes(query))),
-    );
+    return courses.filter((course) => {
+      const isCompleted =
+        course.courseCompleted ||
+        course.certified ||
+        (course.progressPercentage !== undefined && course.progressPercentage >= 100) ||
+        course.learningStatus === 'completed';
+
+      const matchesTab =
+        activeTab === 'all'
+          ? true
+          : activeTab === 'completed'
+          ? isCompleted
+          : Boolean(course.isEnrolled && !isCompleted);
+
+      const matchesQuery =
+        !query ||
+        [course.title, course.description, course.shortDescription].some((value) =>
+          value?.toLowerCase().includes(query)
+        );
+
+      return matchesTab && matchesQuery;
+    });
   }, [courses, searchQuery, activeTab]);
 
   const fatalError = !loaded.current
     ? error
-    : activeTab === 'my-learning' && !progressAvailable
+    : (activeTab === 'my-learning' || activeTab === 'completed') && !progressAvailable
     ? learningError
     : undefined;
   const notice = !fatalError ? error || learningError : undefined;
   const searching = Boolean(searchQuery.trim());
   const emptyTitle = searching
     ? 'No matching courses'
+    : activeTab === 'completed'
+    ? 'No completed courses yet'
     : activeTab === 'my-learning'
     ? 'Your next chapter starts here'
     : 'No courses available yet';
   const emptyMessage = searching
     ? 'Try another course title or clear your search.'
+    : activeTab === 'completed'
+    ? 'Finish all lessons and quizzes in a course to earn your verified certificate and view completed courses here.'
     : activeTab === 'my-learning'
     ? 'Choose a course to begin. Your progress will appear here.'
     : 'New learning opportunities will appear here when they are published.';
@@ -154,21 +200,25 @@ export const CoursesScreen = ({
       </Text>
 
       <View style={styles.tabs}>
-        {(['all', 'my-learning'] as const).map((tab) => (
+        {[
+          { key: 'all' as const, label: `All (${courses.length})` },
+          { key: 'my-learning' as const, label: `In Progress (${inProgressCount})` },
+          { key: 'completed' as const, label: `Completed (${completedCount})` },
+        ].map((tab) => (
           <Pressable
-            key={tab}
+            key={tab.key}
             accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === tab }}
-            onPress={() => {setActiveTab(tab); setExpanded(false);}}
-            style={[styles.tab, activeTab === tab && styles.selectedTab]}
+            accessibilityState={{ selected: activeTab === tab.key }}
+            onPress={() => {setActiveTab(tab.key); setExpanded(false);}}
+            style={[styles.tab, activeTab === tab.key && styles.selectedTab]}
           >
             <Text
               style={[
                 styles.tabText,
-                { color: activeTab === tab ? palette.ink : palette.muted },
+                { color: activeTab === tab.key ? palette.ink : palette.muted },
               ]}
             >
-              {tab === 'all' ? 'All Courses' : 'My Learning'}
+              {tab.label}
             </Text>
           </Pressable>
         ))}
@@ -208,7 +258,9 @@ export const CoursesScreen = ({
               ? 'Search Results'
               : activeTab === 'all'
               ? 'All Academy Courses'
-              : 'Enrolled Courses'}
+              : activeTab === 'completed'
+              ? 'Completed Courses'
+              : 'Courses in Progress'}
           </Text>
           <Text style={styles.collectionCount}>
             {filtered.length} {filtered.length === 1 ? 'course' : 'courses'}
@@ -256,7 +308,7 @@ export const CoursesScreen = ({
               onRetry={
                 searching
                   ? () => setSearchQuery('')
-                  : activeTab === 'my-learning'
+                  : activeTab !== 'all'
                   ? () => setActiveTab('all')
                   : undefined
               }

@@ -1,18 +1,21 @@
 import { NativeModules, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TUNNEL_URL = 'https://copyrights-worker-differently-tiffany.trycloudflare.com/api';
+const TUNNEL_URL = 'https://telling-explosion-enormous-participant.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
-const DEV_LAN_URL = 'http://10.22.112.1:5001/api';
+const DEV_LAN_URL = 'http://172.168.7.186:5001/api';
 const DEV_LAN_URL_ALT = 'http://172.168.7.188:5001/api';
 const USB_URL = 'http://169.254.33.184:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
-// Prioritize responsive live tunnel, LAN, localhost (with adb reverse), and emulator
+const FASTEST_URL_KEY = '@crackwithai_fastest_api_url';
+
+// Prioritize responsive endpoints: LAN, Emulator, Localhost, then live cloudflare tunnel
 export const CANDIDATE_URLS = [
-  TUNNEL_URL,
   DEV_LAN_URL,
-  LOCAL_URL,
   EMULATOR_URL,
+  LOCAL_URL,
+  TUNNEL_URL,
   DEV_LAN_URL_ALT,
   USB_URL,
 ];
@@ -20,8 +23,20 @@ export const CANDIDATE_URLS = [
 let dynamicApiBaseUrl: string | null = null;
 let probePromise: Promise<string> | null = null;
 
+// Immediately restore cached fastest URL from storage to avoid any probe delay on startup or reload
+try {
+  AsyncStorage.getItem(FASTEST_URL_KEY).then((cached) => {
+    if (cached && !dynamicApiBaseUrl) {
+      dynamicApiBaseUrl = cached;
+    }
+  }).catch(() => {});
+} catch (_) {}
+
 export const setDynamicApiBaseUrl = (url: string | null) => {
   dynamicApiBaseUrl = url || null;
+  if (url) {
+    AsyncStorage.setItem(FASTEST_URL_KEY, url).catch(() => {});
+  }
 };
 
 export const probeFastestApiUrl = async (): Promise<string> => {
@@ -53,19 +68,19 @@ export const probeFastestApiUrl = async (): Promise<string> => {
       }
     };
 
-    // Fast probe: Test Local, Emulator, LAN, and Tunnel in parallel
+    // Fast parallel race across top candidates
     try {
       const candidates = Platform.OS === 'android'
         ? [
-            probe(LOCAL_URL, 1500),
-            probe(EMULATOR_URL, 1500),
-            probe(DEV_LAN_URL, 2000),
-            probe(TUNNEL_URL, 2500),
+            probe(DEV_LAN_URL, 1200),
+            probe(EMULATOR_URL, 1200),
+            probe(LOCAL_URL, 1200),
+            probe(TUNNEL_URL, 1800),
           ]
         : [
-            probe(LOCAL_URL, 1500),
-            probe(DEV_LAN_URL, 2000),
-            probe(TUNNEL_URL, 2500),
+            probe(DEV_LAN_URL, 1200),
+            probe(LOCAL_URL, 1200),
+            probe(TUNNEL_URL, 1800),
           ];
       const fastest = await Promise.any(candidates);
       if (fastest) {
@@ -76,7 +91,7 @@ export const probeFastestApiUrl = async (): Promise<string> => {
       // Probing failed; fallback safely
     }
 
-    const fallback = TUNNEL_URL;
+    const fallback = DEV_LAN_URL;
     setDynamicApiBaseUrl(fallback);
     return fallback;
   })();
@@ -108,7 +123,7 @@ export const getDevApiBaseUrl = (): string => {
   // Pre-probe in background to detect fastest connection immediately
   void probeFastestApiUrl();
 
-  // Extract host IP from Metro bundle URL
+  // Extract host IP from Metro bundle URL if available
   const scriptURL = typeof NativeModules !== 'undefined' ? NativeModules?.SourceCode?.scriptURL : undefined;
   if (scriptURL && typeof scriptURL === 'string' && /^https?:\/\//i.test(scriptURL)) {
     try {
@@ -116,14 +131,14 @@ export const getDevApiBaseUrl = (): string => {
       if (match && match[1]) {
         const host = match[1];
         if (host === 'localhost' || host === '127.0.0.1') {
-          return LOCAL_URL;
+          return Platform.OS === 'android' ? DEV_LAN_URL : LOCAL_URL;
         }
         return `http://${host}:5001/api`;
       }
     } catch (_) {}
   }
 
-  return TUNNEL_URL;
+  return DEV_LAN_URL;
 };
 
 // Environment & App Configuration
@@ -131,21 +146,22 @@ export const CONFIG = {
   get API_BASE_URL(): string {
     return getDevApiBaseUrl();
   },
-  TIMEOUT: 12000,
+  TIMEOUT: 6000,
   STORAGE_KEYS: {
     AUTH_TOKEN: '@crackwithai_auth_token',
     USER_DATA: '@crackwithai_user_data',
     LANGUAGE: '@crackwithai_user_language',
     SETTINGS: '@crackwithai_settings',
+    FASTEST_API_URL: FASTEST_URL_KEY,
   },
 };
 
 export const getPublicCertificateUrl = (code: string): string => {
-  const base = TUNNEL_URL.replace(/\/api\/?$/, '');
+  const base = (dynamicApiBaseUrl || TUNNEL_URL).replace(/\/api\/?$/, '');
   return `${base}/verify/${encodeURIComponent(code)}`;
 };
 
 export const getPublicCertificatePdfUrl = (code: string): string => {
-  const base = TUNNEL_URL.replace(/\/api\/?$/, '');
+  const base = (dynamicApiBaseUrl || TUNNEL_URL).replace(/\/api\/?$/, '');
   return `${base}/verify/${encodeURIComponent(code)}/pdf`;
 };

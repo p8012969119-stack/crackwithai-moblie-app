@@ -52,15 +52,25 @@ export function normalizeCourses(value: unknown): Course[] {
 export function mergeCourseLearning(courses: Course[], progress?: RecordData[], certificates?: RecordData[]): Course[] {
   return courses.map(course => {
     const record = progress?.find(item => courseEntityId(item.course) === course._id);
-    const certified = certificates?.some(cert => courseEntityId(cert.course) === course._id && cert.status === 'active');
+    const certified = Boolean(certificates?.some(cert => {
+      const cId = courseEntityId(cert.course);
+      const titleMatch = cert.courseTitle === course.title || cert.courseName === course.title;
+      return (cId === course._id || titleMatch) && cert.status !== 'revoked';
+    }));
     const percentage = number(record?.progressPercentage);
+    const isCompleted = record?.courseCompleted === true ||
+      record?.status === 'completed' ||
+      record?.isCompleted === true ||
+      (percentage !== undefined && percentage >= 100) ||
+      certified;
+
     return {...course,
-      isEnrolled: progress ? Boolean(record) : undefined,
-      progressPercentage: percentage === undefined ? undefined : Math.min(100, percentage),
+      isEnrolled: progress ? (Boolean(record) || isCompleted) : undefined,
+      progressPercentage: percentage !== undefined ? Math.min(100, percentage) : (isCompleted ? 100 : undefined),
       completedLessonsCount: Array.isArray(record?.completedLessons) ? new Set(record.completedLessons.map(courseEntityId).filter(Boolean)).size : undefined,
-      courseCompleted: record?.courseCompleted === true,
+      courseCompleted: Boolean(isCompleted),
       lastAccessedAt: text(record?.lastAccessedAt),
-      learningStatus: record?.courseCompleted === true ? 'completed' : record ? 'in_progress' : progress ? 'not_started' : undefined,
+      learningStatus: isCompleted ? 'completed' : record ? 'in_progress' : progress ? 'not_started' : undefined,
       certified,
     };
   });

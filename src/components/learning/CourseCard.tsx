@@ -12,7 +12,11 @@ import {
 
 export const CourseCard = React.memo(
   ({ course, onPress }: { course: Course; onPress: () => void }) => {
-    const completed = course.courseCompleted === true || course.certified === true;
+    const completed = course.courseCompleted === true ||
+      course.certified === true ||
+      (course.progressPercentage !== undefined && course.progressPercentage >= 100) ||
+      course.learningStatus === 'completed' ||
+      (course as any).isCompleted === true;
     const locked = course.isLocked === true;
     const active = course.isEnrolled || Boolean(course.progressPercentage);
     const status = locked

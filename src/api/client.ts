@@ -61,23 +61,30 @@ apiClient.interceptors.response.use(
       const currentBase = (config.baseURL || CONFIG.API_BASE_URL || '').replace(/\/+$/, '');
       const candidates = CANDIDATE_URLS.map(u => u.replace(/\/+$/, '')).filter(u => u && u !== currentBase);
 
-      for (const altBase of candidates) {
-        config.baseURL = altBase;
-        config.timeout = 4000;
-        try {
-          const res = await axios(config);
-          setDynamicApiBaseUrl(altBase);
-          return res;
-        } catch (altError: any) {
-          // If the candidate server answered with an HTTP response (e.g. 401, 400, 404, 500),
-          // this candidate IS reachable and responsive.
-          if (altError?.response) {
-            setDynamicApiBaseUrl(altBase);
-            error = altError;
-            break;
+      try {
+        const racePromises = candidates.map(async (altBase) => {
+          const attemptConfig = { ...config, baseURL: altBase, timeout: 2500 };
+          try {
+            const res = await axios(attemptConfig);
+            return { res, altBase, error: null };
+          } catch (altError: any) {
+            if (altError?.response) {
+              return { res: null, altBase, error: altError };
+            }
+            throw altError;
           }
-          // Continue cycling through remaining candidates
+        });
+
+        const winner = await Promise.any(racePromises);
+        if (winner.res) {
+          setDynamicApiBaseUrl(winner.altBase);
+          return winner.res;
+        } else if (winner.error) {
+          setDynamicApiBaseUrl(winner.altBase);
+          error = winner.error;
         }
+      } catch (_) {
+        // Parallel failover exhausted; proceed to default error formatting
       }
     }
     if (error.response?.status === 401) {
