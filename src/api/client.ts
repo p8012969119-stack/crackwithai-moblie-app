@@ -55,8 +55,15 @@ apiClient.interceptors.response.use(
 
     // Automatic transparent failover on alternate network hosts (e.g. Localhost -> LAN IP -> Tunnel)
     const config = error.config as (InternalAxiosRequestConfig & { _retryAttempted?: boolean }) | undefined;
-    const isNetworkOrTimeout = !error.response || error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT';
-    if (config && !config._retryAttempted && isNetworkOrTimeout) {
+    const isNetworkOrProxyFailure = !error.response ||
+      error.code === 'ERR_NETWORK' ||
+      error.code === 'ECONNABORTED' ||
+      error.code === 'ETIMEDOUT' ||
+      error.response.status === 502 ||
+      error.response.status === 503 ||
+      error.response.status === 504;
+
+    if (config && !config._retryAttempted && isNetworkOrProxyFailure) {
       config._retryAttempted = true;
       const currentBase = (config.baseURL || CONFIG.API_BASE_URL || '').replace(/\/+$/, '');
       const candidates = CANDIDATE_URLS.map(u => u.replace(/\/+$/, '')).filter(u => u && u !== currentBase);
@@ -71,9 +78,13 @@ apiClient.interceptors.response.use(
           };
           try {
             const res = await axios(attemptConfig);
-            return { res, altBase, error: null };
+            if (res.status >= 200 && res.status < 500) {
+              return { res, altBase, error: null };
+            }
+            throw new Error(`Proxy error HTTP ${res.status}`);
           } catch (altError: any) {
-            if (altError?.response) {
+            // Valid HTTP responses from backend (400, 401, 404, etc.) mean the endpoint is live
+            if (altError?.response && altError.response.status < 500) {
               return { res: null, altBase, error: altError };
             }
             throw altError;

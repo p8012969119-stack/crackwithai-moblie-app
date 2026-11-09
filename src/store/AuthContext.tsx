@@ -4,6 +4,7 @@ import { authApi } from '../api/authApi';
 import { storage } from '../services/storage';
 import { setUnauthorizedListener } from '../api/client';
 import { restoreValidatedSession } from '../services/session';
+import { probeFastestApiUrl } from '../constants/config';
 
 interface AuthContextType {
   user: User | null;
@@ -71,6 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
+    probeFastestApiUrl().catch(() => {});
     setUnauthorizedListener(() => {
       setToken(null);
       setUser(null);

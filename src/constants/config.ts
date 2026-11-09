@@ -1,7 +1,7 @@
 import { NativeModules, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TUNNEL_LHR_URL = 'https://2bd246a5366640.lhr.life/api';
+const TUNNEL_LHR_URL = 'https://e1d334cc13abac.lhr.life/api';
 const TUNNEL_LOCA_URL = 'https://little-forks-sing.loca.lt/api';
 const TUNNEL_CF_URL = 'https://telling-explosion-enormous-participant.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
@@ -10,41 +10,43 @@ const DEV_LAN_URL_ALT = 'http://172.168.7.188:5001/api';
 const USB_URL = 'http://169.254.33.184:5001/api';
 const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
-const FASTEST_URL_KEY = '@crackwithai_fastest_api_url';
+const FASTEST_URL_KEY = '@crackwithai_fastest_api_url_v2';
 
 // Multi-tier resilient public endpoints (lhr.life and loca.lt are unblocked on Indian 4G/5G mobile carriers)
 export const CANDIDATE_URLS = [
-  TUNNEL_LHR_URL,
-  TUNNEL_LOCA_URL,
   TUNNEL_CF_URL,
-  DEV_LAN_URL,
-  EMULATOR_URL,
+  TUNNEL_LHR_URL,
   LOCAL_URL,
+  DEV_LAN_URL,
+  TUNNEL_LOCA_URL,
   DEV_LAN_URL_ALT,
   USB_URL,
+  EMULATOR_URL,
 ];
 
-let dynamicApiBaseUrl: string | null = TUNNEL_LHR_URL;
+let dynamicApiBaseUrl: string | null = TUNNEL_CF_URL;
 let probePromise: Promise<string> | null = null;
+let lastProbeTime = 0;
 
 // Only restore cached URL if it is a valid, secure public URL to prevent trapped local IP issues
 try {
   AsyncStorage.getItem(FASTEST_URL_KEY).then((cached) => {
-    if (cached && cached.startsWith('https://')) {
+    if (cached && (cached.startsWith('https://') || cached === LOCAL_URL)) {
       dynamicApiBaseUrl = cached;
     }
   }).catch(() => {});
 } catch (_) {}
 
 export const setDynamicApiBaseUrl = (url: string | null) => {
-  dynamicApiBaseUrl = url || TUNNEL_LHR_URL;
+  dynamicApiBaseUrl = url || TUNNEL_CF_URL;
   if (url) {
     AsyncStorage.setItem(FASTEST_URL_KEY, url).catch(() => {});
   }
 };
 
-export const probeFastestApiUrl = async (): Promise<string> => {
-  if (dynamicApiBaseUrl && dynamicApiBaseUrl.startsWith('https://')) {
+export const probeFastestApiUrl = async (force: boolean = false): Promise<string> => {
+  const now = Date.now();
+  if (!force && lastProbeTime > 0 && now - lastProbeTime < 30000 && dynamicApiBaseUrl) {
     return dynamicApiBaseUrl;
   }
   if (probePromise) {
@@ -63,7 +65,7 @@ export const probeFastestApiUrl = async (): Promise<string> => {
           signal: controller.signal,
         });
         clearTimeout(timer);
-        if (res.ok || res.status === 200 || res.status === 404) {
+        if (res.ok || res.status === 200) {
           return url;
         }
         throw new Error('HTTP ' + res.status);
@@ -75,15 +77,14 @@ export const probeFastestApiUrl = async (): Promise<string> => {
 
     try {
       const candidates = [
-        probe(TUNNEL_LHR_URL, 3500),
-        probe(TUNNEL_LOCA_URL, 3500),
+        probe(LOCAL_URL, 1000),
         probe(TUNNEL_CF_URL, 3500),
+        probe(TUNNEL_LHR_URL, 3500),
         probe(DEV_LAN_URL, 1500),
-        probe(EMULATOR_URL, 1200),
-        probe(LOCAL_URL, 1200),
       ];
       const fastest = await Promise.any(candidates);
       if (fastest) {
+        lastProbeTime = Date.now();
         setDynamicApiBaseUrl(fastest);
         return fastest;
       }
@@ -91,7 +92,7 @@ export const probeFastestApiUrl = async (): Promise<string> => {
       // Probing failed; fallback safely to public tunnel
     }
 
-    const fallback = TUNNEL_LHR_URL;
+    const fallback = TUNNEL_CF_URL;
     setDynamicApiBaseUrl(fallback);
     return fallback;
   })();
@@ -108,7 +109,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return TUNNEL_LHR_URL;
+  return TUNNEL_CF_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {
@@ -120,7 +121,7 @@ export const getDevApiBaseUrl = (): string => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  return TUNNEL_LHR_URL;
+  return TUNNEL_CF_URL;
 };
 
 // Environment & App Configuration
@@ -139,11 +140,11 @@ export const CONFIG = {
 };
 
 export const getPublicCertificateUrl = (code: string): string => {
-  const base = (dynamicApiBaseUrl || TUNNEL_LHR_URL).replace(/\/api\/?$/, '');
+  const base = (dynamicApiBaseUrl || TUNNEL_CF_URL).replace(/\/api\/?$/, '');
   return `${base}/verify/${encodeURIComponent(code)}`;
 };
 
 export const getPublicCertificatePdfUrl = (code: string): string => {
-  const base = (dynamicApiBaseUrl || TUNNEL_LHR_URL).replace(/\/api\/?$/, '');
+  const base = (dynamicApiBaseUrl || TUNNEL_CF_URL).replace(/\/api\/?$/, '');
   return `${base}/verify/${encodeURIComponent(code)}/pdf`;
 };
