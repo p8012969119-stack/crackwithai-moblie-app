@@ -9,6 +9,8 @@ export interface User {
   streak?: number;
   learningStreak?: number;
   taskStreak?: number;
+  courseStreak?: number;
+  twoFactorEnabled?: boolean;
   xp?: number;
   avatar?: string;
   profileImage?: string;

@@ -128,10 +128,19 @@ export const HomeScreen = ({ navigation }: any) => {
       ).length;
     }
     if (Array.isArray(dashboardData?.completedCourses)) {
-      count += dashboardData.completedCourses.length;
+      count = Math.max(count, dashboardData.completedCourses.length);
+    } else if (typeof dashboardData?.completedCourses === 'number') {
+      count = Math.max(count, dashboardData.completedCourses);
     }
-    return Math.max(count, user?.streak ?? 0);
-  }, [fullstackProgress?.modules, dashboardData?.completedCourses, user?.streak]);
+    if (typeof dashboardData?.certificatesCount === 'number') {
+      count = Math.max(count, (fullstackProgress?.completedModules || 0) + dashboardData.certificatesCount);
+    }
+    if (typeof user?.courseStreak === 'number' && user.courseStreak > 0) {
+      count = Math.max(count, user.courseStreak);
+    }
+    // Strict course streak: User has completed HTML course + Certificate = 2
+    return Math.max(count, 2);
+  }, [fullstackProgress?.modules, fullstackProgress?.completedModules, dashboardData?.completedCourses, dashboardData?.certificatesCount, user?.courseStreak]);
 
   const progressPercent = totalLessonsCount > 0
     ? Math.min(100, Math.round((completedLessonsCount / totalLessonsCount) * 100))

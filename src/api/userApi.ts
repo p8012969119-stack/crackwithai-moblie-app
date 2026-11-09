@@ -90,7 +90,7 @@ export const userApi = {
     };
   },
 
-  updateProfile: async (payload: Partial<User>): Promise<ApiResponse<User>> => {
+  updateProfile: async (payload: Partial<User> & { currentPassword?: string; newPassword?: string; twoFactorEnabled?: boolean }): Promise<ApiResponse<User>> => {
     try {
       const response = await apiClient.put<ApiResponse<User>>('/auth/profile', payload);
       if (response.data && response.data.success) {
@@ -101,8 +101,11 @@ export const userApi = {
         }
         return response.data;
       }
-    } catch (err) {
-      console.log('[userApi.updateProfile] notice:', err);
+    } catch (err: any) {
+      console.log('[userApi.updateProfile] notice:', err?.response?.data || err?.message || err);
+      if (err?.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
     }
     const stored = await storage.getUser();
     const fallbackUser: User = {

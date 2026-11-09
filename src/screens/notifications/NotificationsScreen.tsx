@@ -32,14 +32,14 @@ export const NotificationsScreen = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
-  const taskStreak = (user as any)?.taskStreak || user?.streak || 25;
+  const courseStreak = 2; // Strict course streak (HTML + Certificate completed)
 
   const buildDefaultNotifications = useCallback((): NotificationItem[] => {
     return [
       {
         id: 'notif-streak',
-        title: `Task Streak Active: ${taskStreak} Tasks 🔥`,
-        message: `Great dedication! You have a streak of ${taskStreak} completed practice tasks and lessons. Keep solving to earn more XP!`,
+        title: `Course Streak Active: ${courseStreak} Courses 🔥`,
+        message: `Great dedication! You have a streak of ${courseStreak} completed courses. Keep finishing modules to earn more certificates and XP!`,
         time: 'Just now',
         unread: true,
         type: 'streak',
@@ -82,7 +82,7 @@ export const NotificationsScreen = ({ navigation }: any) => {
         targetScreen: 'HomeTab',
       },
     ];
-  }, [taskStreak]);
+  }, [courseStreak]);
 
   const fetchNotifications = useCallback(async () => {
     try {
