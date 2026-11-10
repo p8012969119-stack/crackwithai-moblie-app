@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TUNNEL_LHR_URL = 'https://e1d334cc13abac.lhr.life/api';
 const TUNNEL_LOCA_URL = 'https://little-forks-sing.loca.lt/api';
-const TUNNEL_CF_URL = 'https://telling-explosion-enormous-participant.trycloudflare.com/api';
+const TUNNEL_CF_URL = 'https://objects-introduces-replace-wealth.trycloudflare.com/api';
 const LOCAL_URL = 'http://127.0.0.1:5001/api';
 const DEV_LAN_URL = 'http://172.168.7.186:5001/api';
 const DEV_LAN_URL_ALT = 'http://172.168.7.188:5001/api';
@@ -12,19 +12,19 @@ const EMULATOR_URL = 'http://10.0.2.2:5001/api';
 
 const FASTEST_URL_KEY = '@crackwithai_fastest_api_url_v2';
 
-// Multi-tier resilient public endpoints (lhr.life and loca.lt are unblocked on Indian 4G/5G mobile carriers)
+// Multi-tier resilient public endpoints (USB reverse first, then LAN, then live Cloudflare tunnel)
 export const CANDIDATE_URLS = [
-  TUNNEL_CF_URL,
-  TUNNEL_LHR_URL,
   LOCAL_URL,
   DEV_LAN_URL,
+  TUNNEL_CF_URL,
+  EMULATOR_URL,
+  TUNNEL_LHR_URL,
   TUNNEL_LOCA_URL,
   DEV_LAN_URL_ALT,
   USB_URL,
-  EMULATOR_URL,
 ];
 
-let dynamicApiBaseUrl: string | null = TUNNEL_CF_URL;
+let dynamicApiBaseUrl: string | null = LOCAL_URL;
 let probePromise: Promise<string> | null = null;
 let lastProbeTime = 0;
 
@@ -77,10 +77,9 @@ export const probeFastestApiUrl = async (force: boolean = false): Promise<string
 
     try {
       const candidates = [
-        probe(LOCAL_URL, 1000),
-        probe(TUNNEL_CF_URL, 3500),
-        probe(TUNNEL_LHR_URL, 3500),
-        probe(DEV_LAN_URL, 1500),
+        probe(LOCAL_URL, 800),
+        probe(DEV_LAN_URL, 800),
+        probe(TUNNEL_CF_URL, 2000),
       ];
       const fastest = await Promise.any(candidates);
       if (fastest) {
@@ -121,7 +120,7 @@ export const getDevApiBaseUrl = (): string => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  return TUNNEL_CF_URL;
+  return LOCAL_URL;
 };
 
 // Environment & App Configuration
@@ -129,7 +128,7 @@ export const CONFIG = {
   get API_BASE_URL(): string {
     return getDevApiBaseUrl();
   },
-  TIMEOUT: 15000,
+  TIMEOUT: 4000,
   STORAGE_KEYS: {
     AUTH_TOKEN: '@crackwithai_auth_token',
     USER_DATA: '@crackwithai_user_data',

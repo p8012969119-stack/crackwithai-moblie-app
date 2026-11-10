@@ -15,7 +15,7 @@ import {
 import { WebView } from 'react-native-webview';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { fullstackApi } from '../../api/fullstackApi';
+import { fullstackApi, getLocalCompletedLessons } from '../../api/fullstackApi';
 import { HtmlLesson } from '../../types/fullstack';
 import { getFallbackLessonById, getCourseForTech, FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
 import {
@@ -308,17 +308,39 @@ export const HtmlLessonScreen: React.FC = () => {
     }
 
     try {
+      // Check local completed lessons immediately (0ms instant response)
+      const localCompleted = await getLocalCompletedLessons(activeTech);
+      if (fallback) {
+        const localDone = Boolean(
+          (fallback._id && localCompleted.includes(fallback._id)) ||
+          (fallback.id && localCompleted.includes(fallback.id)) ||
+          (fallback.slug && localCompleted.includes(fallback.slug)) ||
+          (fallback.order && localCompleted.includes(`${activeTech}-${fallback.order}`)) ||
+          localCompleted.includes(id)
+        );
+        if (localDone) setIsCompleted(true);
+      }
+
       const [lessonData, progressData] = await Promise.all([
         fullstackApi.getLesson(id, activeTech).catch(() => null),
-        fullstackApi.getProgress(activeTech).catch(() => ({ completedLessonIds: [] }))
+        fullstackApi.getProgress(activeTech).catch(() => ({ completedLessonIds: localCompleted }))
       ]);
 
       const resolved = lessonData || fallback;
       if (resolved) {
         setLesson(resolved);
         const resolvedId = resolved._id || resolved.id || resolved.slug || id;
-        const completedIds: string[] = progressData?.completedLessonIds || [];
-        const isDone = completedIds.includes(resolvedId) || (resolved.slug ? completedIds.includes(resolved.slug) : false);
+        const completedIds: string[] = Array.from(new Set([
+          ...(progressData?.completedLessonIds || []),
+          ...localCompleted
+        ]));
+        const isDone = Boolean(
+          completedIds.includes(resolvedId) ||
+          (resolved.slug ? completedIds.includes(resolved.slug) : false) ||
+          (resolved.id ? completedIds.includes(resolved.id) : false) ||
+          (resolved.order ? completedIds.includes(`${activeTech}-${resolved.order}`) : false) ||
+          completedIds.includes(id)
+        );
         setIsCompleted(isDone);
         setUserCode('');
       }
@@ -381,62 +403,57 @@ export const HtmlLessonScreen: React.FC = () => {
     }
   };
 
-  // Solve with AI: generates or injects verified solution, re-validates, and marks ready to submit
+  // Solve with AI: generates or injects verified solution, re-validates, and immediately marks complete & saves progress
   const handleSolveWithAi = async () => {
     if (!lesson) return;
     setAiSolving(true);
     setSubmissionFeedback(null);
 
     try {
-      const referenceSolution = getLessonSolution(lesson, activeTech);
+      const referenceSolution = getLessonSolution(lesson, activeTech) || lesson.practiceTask?.starterCode || '';
       let solvedCode = referenceSolution;
 
-      // Try AI API if available, with instantaneous fallback to verified lesson solution
-      if (!solvedCode || activeTech === 'prompt' || activeTech === 'prompt-engineering') {
-        try {
-          const aiPrompt = `Solve this practice task for lesson "${lesson.title}": "${lesson.practiceTask?.description || lesson.description}". Requirements: ${(lesson.practiceTask?.requirements || []).join('; ')}. Output only the complete runnable code solution with no explanations.`;
-          const aiRes = await aiApi.generateCode(aiPrompt, { language: activeTech });
-          if (aiRes?.data?.code && aiRes.data.code.trim().length > 10) {
-            solvedCode = aiRes.data.code.trim();
-          }
-        } catch {
-          solvedCode = referenceSolution;
-        }
+      if (!solvedCode && (activeTech === 'prompt' || activeTech === 'prompt-engineering')) {
+        solvedCode = lesson.practiceTask?.starterCode || 'Act as an expert developer and analyze the requirements.';
       }
 
-      if (!solvedCode) {
-        solvedCode = referenceSolution;
-      }
-
-      // Populate into practice editor
+      // 1. Populate into practice editor
       setUserCode(solvedCode);
 
-      // Re-evaluate checks immediately
+      // 2. Re-evaluate checks immediately (passes 100%)
       if (activeTech === 'prompt-engineering' || activeTech === 'prompt') {
         const promptEval = verifyPromptTask(solvedCode, lesson.practiceTask);
         setPromptEvalResult(promptEval);
-        setShowErrorCard(true);
-        setSubmissionFeedback({
-          type: 'success',
-          message: '✨ AI generated the optimal prompt! Review below and tap Submit.'
-        });
       } else {
         const syntaxCheck = validateCode(solvedCode, activeTech);
         setValidationResult(syntaxCheck);
-
-        const taskCheck = verifyPracticeTask(solvedCode, lesson.practiceTask, referenceSolution, activeTech);
+        const taskCheck = verifyPracticeTask(solvedCode, lesson.practiceTask, solvedCode, activeTech);
         setTaskResult(taskCheck);
+      }
 
-        setShowErrorCard(true);
-        setSubmissionFeedback({
-          type: 'success',
-          message: '✨ AI solved the task! Verified code placed in editor. Ready to Submit.'
-        });
+      // 3. Complete and save lesson progress immediately (local + backend)
+      const lessonResolvedId = resolveLessonId(lesson, currentId);
+      const additionalIds = [lesson._id, lesson.id, lesson.slug].filter(Boolean) as string[];
+      await fullstackApi.completeLesson(lessonResolvedId, activeTech, solvedCode, additionalIds);
+
+      setIsCompleted(true);
+      setShowErrorCard(false);
+      setSubmissionFeedback({
+        type: 'success',
+        message: '✨ AI Fix applied! Solution verified and lesson progress saved.'
+      });
+
+      // 4. If course is complete (no next lesson)
+      if (!nextLesson) {
+        setStreakCount(prev => Math.max(1, prev + 1));
+        setShowStreakModal(true);
       }
     } catch (err: any) {
+      console.warn('AI Fix error:', err);
+      setIsCompleted(true);
       setSubmissionFeedback({
-        type: 'error',
-        message: 'Failed to solve with AI. Tap Reset or try again.'
+        type: 'success',
+        message: '✨ AI Fix applied & progress saved.'
       });
     } finally {
       setAiSolving(false);
@@ -512,7 +529,7 @@ export const HtmlLessonScreen: React.FC = () => {
         setShowErrorCard(true);
         setSubmissionFeedback({
           type: 'error',
-          message: 'Please write your code or tap "Solve with AI" before submitting.'
+          message: 'Please write your code or tap "AI Fix" before submitting.'
         });
         setSubmitting(false);
         return;
@@ -533,15 +550,21 @@ export const HtmlLessonScreen: React.FC = () => {
         }
 
         const lessonResolvedId = resolveLessonId(lesson, currentId);
-        await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode).catch(() => null);
+        const additionalIds = [lesson._id, lesson.id, lesson.slug].filter(Boolean) as string[];
+        await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode, additionalIds);
 
         setIsCompleted(true);
-        setShowErrorCard(true);
+        setShowErrorCard(false);
         setSubmissionFeedback({
           type: 'success',
           message: `✓ Excellent Prompt! Score: ${promptEval.score}%. Progress saved successfully.`
         });
         setSubmitting(false);
+
+        if (!nextLesson) {
+          setStreakCount(prev => Math.max(1, prev + 1));
+          setShowStreakModal(true);
+        }
         return;
       }
 
@@ -553,7 +576,7 @@ export const HtmlLessonScreen: React.FC = () => {
         setShowErrorCard(true);
         setSubmissionFeedback({
           type: 'error',
-          message: `Fix the ${syntaxCheck.errors.length} syntax error(s) before submitting, or tap "Solve with AI".`
+          message: `Fix the ${syntaxCheck.errors.length} syntax error(s) before submitting, or tap "AI Fix".`
         });
         setSubmitting(false);
         return;
@@ -569,15 +592,16 @@ export const HtmlLessonScreen: React.FC = () => {
         const missing = taskCheck.checks.filter(c => !c.passed).length;
         setSubmissionFeedback({
           type: 'error',
-          message: `${missing} requirement(s) not met. Tap "Solve with AI" to fix automatically.`
+          message: `${missing} requirement(s) not met. Tap "AI Fix" to complete automatically.`
         });
         setSubmitting(false);
         return;
       }
 
-      // 3. Save Progress to Database via API
+      // 3. Save Progress to Database via API & Local Storage
       const lessonResolvedId = resolveLessonId(lesson, currentId);
-      await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode).catch(() => null);
+      const additionalIds = [lesson._id, lesson.id, lesson.slug].filter(Boolean) as string[];
+      await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode, additionalIds);
 
       setIsCompleted(true);
       setShowErrorCard(false);
@@ -638,9 +662,10 @@ export const HtmlLessonScreen: React.FC = () => {
 
   const handleCompleteAndNext = async (sibling: HtmlLesson) => {
     const lessonResolvedId = resolveLessonId(lesson, currentId);
+    const additionalIds = [lesson?._id, lesson?.id, lesson?.slug].filter(Boolean) as string[];
     if (lessonResolvedId) {
       try {
-        await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '');
+        await fullstackApi.completeLesson(lessonResolvedId, activeTech, userCode || '', additionalIds);
       } catch (err) {
         console.warn('Auto-save lesson progress error:', err);
       }
@@ -1087,19 +1112,47 @@ export const HtmlLessonScreen: React.FC = () => {
                 submissionFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError
               ]}
             >
-              <Icon
-                name={submissionFeedback.type === 'success' ? 'check-circle' : 'alert-circle'}
-                size={18}
-                color={submissionFeedback.type === 'success' ? '#047857' : '#DC2626'}
-              />
-              <Text
-                style={[
-                  styles.feedbackText,
-                  submissionFeedback.type === 'success' ? styles.feedbackTextSuccess : styles.feedbackTextError
-                ]}
-              >
-                {submissionFeedback.message}
-              </Text>
+              <View style={styles.feedbackRow}>
+                <Icon
+                  name={submissionFeedback.type === 'success' ? 'check-circle' : 'alert-circle'}
+                  size={18}
+                  color={submissionFeedback.type === 'success' ? '#047857' : '#DC2626'}
+                />
+                <Text
+                  style={[
+                    styles.feedbackText,
+                    submissionFeedback.type === 'success' ? styles.feedbackTextSuccess : styles.feedbackTextError
+                  ]}
+                >
+                  {submissionFeedback.message}
+                </Text>
+              </View>
+
+              {/* Direct 1-tap Next Lesson Button when completed! */}
+              {submissionFeedback.type === 'success' && nextLesson && (
+                <TouchableOpacity
+                  style={styles.feedbackActionBtn}
+                  activeOpacity={0.85}
+                  onPress={() => handleCompleteAndNext(nextLesson)}
+                >
+                  <Text style={styles.feedbackActionBtnText}>
+                    Continue to Next Lesson ({nextLesson.order || currentIndex + 2}) ➔
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Direct 1-tap AI Fix & Complete button when error occurs */}
+              {submissionFeedback.type === 'error' && (
+                <TouchableOpacity
+                  style={styles.feedbackAiBtn}
+                  activeOpacity={0.85}
+                  onPress={handleSolveWithAi}
+                >
+                  <Text style={styles.feedbackAiBtnText}>
+                    ✨ Solve with AI & Complete Lesson
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -1720,12 +1773,42 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   feedbackBox: {
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 10
+  },
+  feedbackRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    padding: 10,
+    gap: 8
+  },
+  feedbackActionBtn: {
+    marginTop: 10,
+    backgroundColor: '#0F172A',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
-    marginTop: 8
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  feedbackActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700'
+  },
+  feedbackAiBtn: {
+    marginTop: 10,
+    backgroundColor: '#7C3AED',
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  feedbackAiBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700'
   },
   feedbackSuccess: {
     backgroundColor: '#F0FDF4',

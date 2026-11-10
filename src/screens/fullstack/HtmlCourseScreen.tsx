@@ -13,10 +13,19 @@ import {
   Image
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
-import { fullstackApi } from '../../api/fullstackApi';
+import { fullstackApi, getLocalCompletedLessons } from '../../api/fullstackApi';
 import { HtmlCourse, HtmlModule, HtmlLesson, FullStackProgress } from '../../types/fullstack';
 import { getCourseForTech, FULLSTACK_TRACKS } from '../../data/fullstackHtmlData';
 import { getFastCourse, normalizeCourse, cacheCourseData } from '../../utils/courseNormalization';
+
+const isLessonFinished = (l: HtmlLesson, set: Set<string>, courseTech?: string): boolean => {
+  if (!l || !set || set.size === 0) return false;
+  if (l._id && set.has(l._id)) return true;
+  if (l.id && set.has(l.id)) return true;
+  if (l.slug && set.has(l.slug)) return true;
+  if (courseTech && l.order && set.has(`${courseTech}-${l.order}`)) return true;
+  return false;
+};
 import { Icon } from '../../components/Icon';
 import { COLORS } from '../../constants/theme';
 import { PromptEngineeringScreen } from '../prompt/PromptEngineeringScreen';
@@ -91,6 +100,25 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
 
   const loadData = useCallback(async () => {
     try {
+      // 1. Immediately read local progress from device storage (0ms instant render)
+      const localCompleted = await getLocalCompletedLessons(tech);
+      if (localCompleted.length > 0) {
+        setProgress(prev => {
+          if (!prev || prev.completedLessonIds.length < localCompleted.length) {
+            return {
+              courseId: tech,
+              completedLessonIds: localCompleted,
+              totalLessons: prev?.totalLessons || 0,
+              completedCount: localCompleted.length,
+              percentage: prev?.percentage || 0,
+              lastLessonId: undefined,
+            };
+          }
+          return prev;
+        });
+      }
+
+      // 2. Fetch course data & fresh backend progress concurrently
       const [courseData, progressData] = await Promise.all([
         (tech === 'html' ? fullstackApi.getHtmlCourse() : fullstackApi.getCourse(tech)).catch(() => null),
         fullstackApi.getProgress(tech).catch(() => null)
@@ -170,7 +198,7 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
   }, [sortedModules]);
 
   const totalLessonsCount = activeCourse?.totalLessons || allLessons.length || activeTrack.lessonsCount || 25;
-  const completedLessonsCount = allLessons.filter(l => completedSet.has(l._id || l.id || l.slug || '')).length;
+  const completedLessonsCount = allLessons.filter(l => isLessonFinished(l, completedSet, tech)).length;
   const percent = totalLessonsCount > 0 ? Math.min(100, Math.round((completedLessonsCount / totalLessonsCount) * 100)) : 0;
 
   const currentTrackIndex = useMemo(() => {
@@ -326,7 +354,7 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
               const moduleId = module._id || module.id || `mod-${modIndex}`;
               const isExpanded = expandedModules[moduleId] ?? (modIndex === 0);
               const moduleLessons = module.lessons || [];
-              const completedInModule = moduleLessons.filter(l => completedSet.has(l._id || l.id || l.slug || '')).length;
+              const completedInModule = moduleLessons.filter(l => isLessonFinished(l, completedSet, tech)).length;
               const moduleNum = module.order || modIndex + 1;
 
               return (
@@ -362,7 +390,7 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
                     <View style={styles.lessonsList}>
                       {moduleLessons.map((lesson: HtmlLesson, lessonIdx: number) => {
                         const lessonId = lesson._id || lesson.id || lesson.slug || `les-${lessonIdx}`;
-                        const isCompleted = completedSet.has(lessonId) || completedSet.has(lesson.slug);
+                        const isCompleted = isLessonFinished(lesson, completedSet, tech);
                         const lessonNum = lesson.order || lessonIdx + 1;
 
                         return (

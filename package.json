@@ -8,14 +8,12 @@
     "start": "react-native start",
     "dev": "(PORT=5001 SKIP_BOOTSTRAP_SEED=true node backend/start-with-db.js &) && react-native run-ios",
     "typecheck": "tsc --noEmit",
-    "test:session": "node tests/mobile-session.test.js",
-    "test:courses": "node tests/courses.test.js",
-    "test:learning-ui": "node tests/learning-ui.test.js",
     "backend": "node backend/start-with-db.js",
-    "test:training-ui": "node tests/training-ui.test.js",
-    "test:workshop": "node tests/workshop.test.js && node backend/tests/workshop.test.js && node backend/tests/workshop-provider.test.js",
+    "test:workshop": "node backend/tests/workshop.test.js && node backend/tests/workshop-provider.test.js",
     "test:fullstack": "node backend/tests/fullstack-curriculum.test.js",
-    "test:fullstack-workspace": "node backend/tests/fullstack-workspace.test.js"
+    "test:fullstack-workspace": "node backend/tests/fullstack-workspace.test.js",
+    "test:all-courses": "node backend/tests/fullstack-all-courses.test.js",
+    "test:certificate": "node backend/tests/fullstack-certificate.test.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.23.1",

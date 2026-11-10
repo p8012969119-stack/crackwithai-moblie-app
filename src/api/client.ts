@@ -74,7 +74,7 @@ apiClient.interceptors.response.use(
           const attemptConfig: InternalAxiosRequestConfig = {
             ...(cleanConfig as InternalAxiosRequestConfig),
             baseURL: altBase,
-            timeout: 6000,
+            timeout: 3000,
           };
           try {
             const res = await axios(attemptConfig);
