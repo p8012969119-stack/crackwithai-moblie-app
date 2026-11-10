@@ -25,6 +25,7 @@ export const OtpVerificationScreen = ({ route, navigation }: any) => {
   const password = route?.params?.password || '';
   const fromRegister = route?.params?.fromRegister ?? false;
   const fromForgot = route?.params?.fromForgot ?? !fromRegister;
+  const devOtp = route?.params?.devOtp || '';
 
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
@@ -197,6 +198,25 @@ export const OtpVerificationScreen = ({ route, navigation }: any) => {
               })}
             </View>
 
+            {/* Quick Autofill Helper for Instant Testing / Dev */}
+            <TouchableOpacity
+              style={s.autofillBanner}
+              activeOpacity={0.8}
+              onPress={() => {
+                const fillCode = devOtp || '123456';
+                const digits = fillCode.split('').slice(0, 6);
+                while (digits.length < 6) digits.push('');
+                setOtpDigits(digits);
+                setErrorMessage(null);
+                inputRefs.current[5]?.focus();
+              }}
+            >
+              <Icon name="sparkles" size={14} color="#7655B8" />
+              <Text style={s.autofillText}>
+                {devOtp ? `Tap to autofill code: ${devOtp}` : 'Tap to autofill demo code (123456)'}
+              </Text>
+            </TouchableOpacity>
+
             {/* Signature Violet Submit Button */}
             <Button
               title={loading ? 'Verifying OTP…' : 'Verify OTP'}
@@ -352,6 +372,24 @@ const s = StyleSheet.create({
   otpBoxActive: {
     borderColor: '#7655B8',
     backgroundColor: '#FAF7FD',
+  },
+  autofillBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#F3EEFD',
+    borderWidth: 1,
+    borderColor: '#DDD0F7',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+  },
+  autofillText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#7655B8',
   },
   submitBtn: {
     backgroundColor: '#7655B8',

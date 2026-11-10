@@ -74,12 +74,14 @@ export const RegisterScreen = ({ navigation }: any) => {
 
     try {
       setLoading(true);
-      await authApi.register({ name: trimmedName, email: trimmedEmail, password });
+      const res = await authApi.register({ name: trimmedName, email: trimmedEmail, password });
+      const devOtp = (res as any)?.devOtp || (res as any)?.data?.devOtp;
 
       navigation.navigate('OtpVerification', {
         email: trimmedEmail,
         password: password,
         fromRegister: true,
+        devOtp,
       });
     } catch (err: any) {
       setErrorMessage(err.message || 'Registration failed. Account may already exist.');

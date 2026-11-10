@@ -40,10 +40,15 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
 
     try {
       setLoading(true);
-      await authApi.forgotPassword(trimmedEmail);
-      navigation.navigate('OtpVerification', { email: trimmedEmail, fromForgot: true });
+      const res: any = await authApi.forgotPassword(trimmedEmail);
+      const devOtp = res?.devOtp;
+      navigation.navigate('OtpVerification', { email: trimmedEmail, fromForgot: true, devOtp });
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to send reset code. Please try again.');
+      if (err?.message?.toLowerCase().includes('not found')) {
+        setErrorMessage('No account found with this email. Please check your email or tap Create Account below.');
+      } else {
+        setErrorMessage(err.message || 'Failed to send reset code. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
