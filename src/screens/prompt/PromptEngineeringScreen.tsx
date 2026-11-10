@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -57,7 +58,7 @@ export const PromptEngineeringScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
 
-  const [completedStageIds, setCompletedStageIds] = useState<number[]>([1]);
+  const [completedStageIds, setCompletedStageIds] = useState<number[]>([]);
   const [activeStageId, setActiveStageId] = useState<number>(1);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -68,25 +69,60 @@ export const PromptEngineeringScreen: React.FC = () => {
 
   const loadProgress = useCallback(async () => {
     try {
+      let localList: number[] = [];
+
+      // 1. Read user-specific prompt progress storage
       const stored = await storage.getItem(storageKey);
       if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed.completedStageIds) && parsed.completedStageIds.length > 0) {
-          setCompletedStageIds(parsed.completedStageIds);
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed.completedStageIds)) {
+            localList = parsed.completedStageIds;
+          }
           if (parsed.activeStageId) {
             setActiveStageId(parsed.activeStageId);
           }
-        }
+        } catch {}
       }
 
+      // 2. Read fast local storage from fullstackApi
+      const rawStoredLessons = await storage.getItem('@cwa_completed_lessons_prompt-engineering');
+      if (rawStoredLessons) {
+        try {
+          const parsedSlugs = JSON.parse(rawStoredLessons);
+          if (Array.isArray(parsedSlugs)) {
+            parsedSlugs.forEach((s: string) => {
+              const matched = PROMPT_STAGES.find(stg => stg.slug === s || String(stg.id) === s);
+              if (matched && !localList.includes(matched.id)) {
+                localList.push(matched.id);
+              }
+            });
+          }
+        } catch {}
+      }
+
+      // 3. Sync with backend progress
       try {
         const backendProgress = await fullstackApi.getProgress('prompt-engineering');
         if (backendProgress?.completedLessonIds?.length) {
-          const count = Math.min(12, Math.max(1, Math.ceil((backendProgress.completedLessonIds.length / 12) * 12)));
-          const stageList = Array.from({ length: count }, (_, i) => i + 1);
-          setCompletedStageIds((prev) => Array.from(new Set([...prev, ...stageList])));
+          backendProgress.completedLessonIds.forEach((s: string) => {
+            const matched = PROMPT_STAGES.find(stg => stg.slug === s || String(stg.id) === s);
+            if (matched && !localList.includes(matched.id)) {
+              localList.push(matched.id);
+            }
+          });
         }
       } catch {}
+
+      const finalList = Array.from(new Set(localList));
+      setCompletedStageIds(finalList);
+
+      const nextUncompleted = PROMPT_STAGES.find(s => !finalList.includes(s.id));
+      if (nextUncompleted) {
+        setActiveStageId(nextUncompleted.id);
+      } else if (finalList.length >= 12) {
+        setActiveStageId(12);
+      }
     } catch {} finally {
       setRefreshing(false);
     }
@@ -107,6 +143,18 @@ export const PromptEngineeringScreen: React.FC = () => {
   const isAllCompleted = completedCount >= totalStages;
 
   const handleOpenStage = (stageId: number) => {
+    const isUnlocked = stageId === 1 || completedStageIds.includes(stageId - 1) || completedStageIds.includes(stageId);
+    if (!isUnlocked) {
+      Alert.alert(
+        'Lesson Locked 🔒',
+        `Please complete Lesson ${stageId - 1} (${PROMPT_STAGES[stageId - 2]?.title || ''}) before starting this lesson.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: `Go to Lesson ${stageId - 1}`, onPress: () => navigation.navigate('PromptStageDetail', { stageId: stageId - 1 }) }
+        ]
+      );
+      return;
+    }
     navigation.navigate('PromptStageDetail', { stageId });
   };
 
@@ -115,6 +163,31 @@ export const PromptEngineeringScreen: React.FC = () => {
       setCertificateModalVisible(true);
       return;
     }
+
+    try {
+      const courseCert = await fullstackApi.getCertificate('prompt-engineering');
+      if (courseCert) {
+        const certData: Certificate = {
+          _id: courseCert.id || `cert-prompt-${Date.now()}`,
+          user: user?._id || 'guest',
+          course: 'prompt-engineering',
+          certificateId: courseCert.verificationId || courseCert.id,
+          certificateNumber: courseCert.verificationId || courseCert.id,
+          verificationCode: courseCert.verificationId || courseCert.id,
+          recipientName: courseCert.studentName || user?.fullName || user?.name || 'AI Prompt Engineer',
+          userName: courseCert.studentName || user?.fullName || user?.name || 'AI Prompt Engineer',
+          courseName: courseCert.courseTitle || 'Prompt Engineering Mastery',
+          issueDate: courseCert.completedDate || new Date().toISOString(),
+          issuedAt: courseCert.completedDate || new Date().toISOString(),
+          percentage: 100,
+          status: 'active',
+        };
+        setEarnedCertificate(certData);
+        setCertificateModalVisible(true);
+        return;
+      }
+    } catch {}
+
     try {
       const myCerts = await certificateApi.getMyCertificates();
       const promptCert = myCerts?.data?.find(
@@ -190,12 +263,43 @@ export const PromptEngineeringScreen: React.FC = () => {
         {/* VIEW 1: MODULE CARDS */}
         {selectedModuleId === null ? (
           <View style={styles.viewBlock}>
+            {/* COURSE COMPLETION HERO BANNER */}
+            {isAllCompleted && (
+              <View style={styles.courseCompleteHeroCard}>
+                <View style={styles.courseCompleteTopRow}>
+                  <Text style={styles.courseCompleteTrophy}>🏆</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.courseCompleteTitle}>Course 100% Completed!</Text>
+                    <Text style={styles.courseCompleteSubtitle}>All 12 Prompt Engineering Lessons Mastered</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.heroCertBtn}
+                  activeOpacity={0.85}
+                  onPress={handleViewCertificate}
+                >
+                  <Icon name="award" size={18} color="#FFFFFF" />
+                  <Text style={styles.heroCertBtnText}>View Official Certificate 🎉</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* SECTION HEADING */}
-            <Text style={styles.sectionHeaderTitle}>Prompt Modules</Text>
+            <View style={styles.sectionHeadingRow}>
+              <Text style={styles.sectionHeaderTitle}>Prompt Modules</Text>
+              <View style={styles.overallProgressPill}>
+                <Text style={styles.overallProgressPillText}>
+                  {completedCount}/{totalStages} Done ({Math.min(100, Math.round((completedCount / totalStages) * 100))}%)
+                </Text>
+              </View>
+            </View>
 
             {/* COMPACT CLEAN MODULE CARDS */}
             <View style={styles.modulesStack}>
               {MODULE_CARDS.map((mod) => {
+                const modCompleted = completedStageIds.filter(id => mod.stageIds.includes(id)).length;
+                const isModDone = modCompleted >= mod.stageIds.length;
+
                 return (
                   <TouchableOpacity
                     key={`module-card-${mod.id}`}
@@ -204,24 +308,27 @@ export const PromptEngineeringScreen: React.FC = () => {
                     onPress={() => setSelectedModuleId(mod.id)}
                   >
                     <View style={styles.cardMainRow}>
-                      <View style={styles.logoSquareContainer}>
-                        <Icon name={mod.icon as any} size={26} color="#7C3AED" />
+                      <View style={[styles.logoSquareContainer, isModDone && { backgroundColor: '#DCFCE7' }]}>
+                        <Icon name={isModDone ? 'check' : (mod.icon as any)} size={26} color={isModDone ? '#059669' : '#7C3AED'} />
                       </View>
 
                       <View style={styles.cardCenterBlock}>
                         <Text style={styles.courseName}>{mod.title}</Text>
                         <Text style={styles.courseSubtext}>{mod.shortDesc}</Text>
+                        <Text style={styles.modProgressText}>
+                          {modCompleted} of {mod.lessonCount} lessons completed {isModDone ? '✓' : ''}
+                        </Text>
                       </View>
                     </View>
 
                     <View style={styles.cardFooterRow}>
                       <TouchableOpacity
-                        style={styles.startBtnPill}
+                        style={[styles.startBtnPill, isModDone && { backgroundColor: '#059669' }]}
                         activeOpacity={0.85}
                         onPress={() => setSelectedModuleId(mod.id)}
                       >
-                        <Text style={styles.startBtnPillText}>Explore Module</Text>
-                        <Icon name="arrow-right" size={13} color="#FFFFFF" />
+                        <Text style={styles.startBtnPillText}>{isModDone ? 'Review Module' : 'Explore Module'}</Text>
+                        <Icon name={isModDone ? 'check' : 'arrow-right'} size={13} color="#FFFFFF" />
                       </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
@@ -255,7 +362,8 @@ export const PromptEngineeringScreen: React.FC = () => {
             <View style={styles.lessonsStack}>
               {moduleLessons.map((stg) => {
                 const isCompleted = completedStageIds.includes(stg.id);
-                const isActive = activeStageId === stg.id;
+                const isUnlocked = stg.id === 1 || completedStageIds.includes(stg.id - 1) || isCompleted;
+                const isActive = activeStageId === stg.id && isUnlocked;
                 const stageNumFormatted = stg.id < 10 ? `0${stg.id}` : `${stg.id}`;
 
                 return (
@@ -263,22 +371,25 @@ export const PromptEngineeringScreen: React.FC = () => {
                     key={`lesson-card-${stg.id}`}
                     style={[
                       styles.colorLessonCard,
-                      isActive && { borderColor: '#7C3AED', borderWidth: 2 }
+                      isActive && { borderColor: '#7C3AED', borderWidth: 2 },
+                      !isUnlocked && { opacity: 0.65, backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }
                     ]}
                     activeOpacity={0.88}
                     onPress={() => handleOpenStage(stg.id)}
                   >
                     <View style={styles.cardInnerContent}>
                       <View style={styles.cardTopRow}>
-                        <View style={styles.numBadgePill}>
-                          <Text style={styles.numBadgeText}>LESSON {stageNumFormatted}</Text>
+                        <View style={[styles.numBadgePill, !isUnlocked && { backgroundColor: '#E2E8F0' }]}>
+                          <Text style={[styles.numBadgeText, !isUnlocked && { color: '#64748B' }]}>
+                            LESSON {stageNumFormatted}
+                          </Text>
                         </View>
                         <View style={styles.diffBadge}>
                           <Text style={styles.diffBadgeText}>{stg.category}</Text>
                         </View>
                       </View>
 
-                      <Text style={styles.stageTitleText}>{stg.title}</Text>
+                      <Text style={[styles.stageTitleText, !isUnlocked && { color: '#64748B' }]}>{stg.title}</Text>
                       <Text style={styles.stageSubtitleText} numberOfLines={2}>
                         {stg.subtitle}
                       </Text>
@@ -288,19 +399,25 @@ export const PromptEngineeringScreen: React.FC = () => {
                           style={[
                             styles.statusPill,
                             isCompleted && { backgroundColor: '#10B981' },
-                            isActive && !isCompleted && { backgroundColor: '#7C3AED' }
+                            isActive && !isCompleted && { backgroundColor: '#7C3AED' },
+                            !isUnlocked && { backgroundColor: '#E2E8F0' }
                           ]}
                         >
                           <Text
                             style={[
                               styles.statusPillText,
-                              (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' }
+                              (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' },
+                              !isUnlocked && { color: '#64748B' }
                             ]}
                           >
-                            {isCompleted ? 'Completed ✓' : isActive ? 'In Progress ⚡' : 'Read & Practice ▶'}
+                            {isCompleted ? 'Completed ✓' : !isUnlocked ? `Locked 🔒 (Finish L${stg.id - 1})` : isActive ? 'In Progress ⚡' : 'Start Lesson ▶'}
                           </Text>
                         </View>
-                        <Icon name="chevron-right" size={18} color="#0F172A" />
+                        <Icon
+                          name={!isUnlocked ? 'lock' : isCompleted ? 'check' : 'chevron-right'}
+                          size={18}
+                          color={!isUnlocked ? '#94A3B8' : isCompleted ? '#10B981' : '#0F172A'}
+                        />
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -554,5 +671,80 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     color: '#64748B',
+  },
+  courseCompleteHeroCard: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+    borderWidth: 1.5,
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 8,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  courseCompleteTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
+  },
+  courseCompleteTrophy: {
+    fontSize: 34,
+  },
+  courseCompleteTitle: {
+    fontFamily: FONT_FAMILY,
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#92400E',
+  },
+  courseCompleteSubtitle: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 13,
+    color: '#B45309',
+    marginTop: 2,
+  },
+  heroCertBtn: {
+    backgroundColor: '#D97706',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  heroCertBtnText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  sectionHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    marginBottom: 6,
+  },
+  overallProgressPill: {
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  overallProgressPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#7C3AED',
+  },
+  modProgressText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 11.5,
+    color: '#7C3AED',
+    marginTop: 6,
+    fontWeight: '700',
   },
 });

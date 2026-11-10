@@ -10,7 +10,8 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
-  Modal
+  Modal,
+  Alert
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -1175,10 +1176,22 @@ export const HtmlLessonScreen: React.FC = () => {
             <TouchableOpacity
               style={[
                 styles.nextLessonDarkBtn,
-                { backgroundColor: '#0F172A' },
+                { backgroundColor: isCompleted ? '#059669' : '#0F172A' },
                 !prevLesson && { flex: 1 }
               ]}
-              onPress={() => handleCompleteAndNext(nextLesson)}
+              onPress={() => {
+                if (!isCompleted) {
+                  Alert.alert(
+                    'Complete Current Lesson 🔒',
+                    'Please check and submit your code for this lesson before proceeding to the next lesson.',
+                    [
+                      { text: 'Check Code Now', onPress: handleSubmitSolution }
+                    ]
+                  );
+                } else {
+                  handleCompleteAndNext(nextLesson);
+                }
+              }}
               activeOpacity={0.85}
             >
               <Text
@@ -1187,7 +1200,7 @@ export const HtmlLessonScreen: React.FC = () => {
                 adjustsFontSizeToFit
                 minimumFontScale={0.8}
               >
-                Next Lesson ➔
+                {isCompleted ? 'Next Lesson ➔' : 'Next Lesson 🔒'}
               </Text>
             </TouchableOpacity>
           ) : (

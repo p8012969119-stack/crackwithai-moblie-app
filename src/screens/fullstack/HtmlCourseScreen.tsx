@@ -10,7 +10,8 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
-  Image
+  Image,
+  Alert
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { fullstackApi, getLocalCompletedLessons } from '../../api/fullstackApi';
@@ -392,24 +393,58 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
                         const lessonId = lesson._id || lesson.id || lesson.slug || `les-${lessonIdx}`;
                         const isCompleted = isLessonFinished(lesson, completedSet, tech);
                         const lessonNum = lesson.order || lessonIdx + 1;
+                        const overallIndex = allLessons.findIndex(l =>
+                          (l._id && l._id === lesson._id) ||
+                          (l.slug && l.slug === lesson.slug) ||
+                          (l.order && l.order === lesson.order)
+                        );
+                        const isUnlocked = overallIndex <= 0 || isCompleted || (overallIndex > 0 && isLessonFinished(allLessons[overallIndex - 1], completedSet, tech));
 
                         return (
                           <TouchableOpacity
                             key={`les-${tech}-${lessonIdx}-${lessonId}`}
-                            style={[styles.lessonRow, isCompleted && styles.lessonRowCompleted]}
+                            style={[
+                              styles.lessonRow,
+                              isCompleted && styles.lessonRowCompleted,
+                              !isUnlocked && { opacity: 0.65, backgroundColor: '#F8FAFC' }
+                            ]}
                             activeOpacity={0.75}
-                            onPress={() => handleOpenLesson(lesson)}
+                            onPress={() => {
+                              if (!isUnlocked) {
+                                const prev = allLessons[overallIndex - 1];
+                                Alert.alert(
+                                  'Lesson Locked 🔒',
+                                  `Please finish the preceding lesson (${prev?.title || 'previous lesson'}) before unlocking this lesson.`,
+                                  [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { text: 'Go to Preceding Lesson', onPress: () => prev && handleOpenLesson(prev) }
+                                  ]
+                                );
+                                return;
+                              }
+                              handleOpenLesson(lesson);
+                            }}
                           >
                             <View style={styles.lessonRowLeft}>
-                              <View style={[styles.lessonNumCircle, isCompleted && styles.lessonNumCircleCompleted]}>
+                              <View style={[
+                                styles.lessonNumCircle,
+                                isCompleted && styles.lessonNumCircleCompleted,
+                                !isUnlocked && { backgroundColor: '#E2E8F0' }
+                              ]}>
                                 {isCompleted ? (
                                   <Icon name="check" size={13} color="#FFFFFF" />
+                                ) : !isUnlocked ? (
+                                  <Icon name="lock" size={12} color="#94A3B8" />
                                 ) : (
                                   <Text style={styles.lessonNumText}>{lessonNum}</Text>
                                 )}
                               </View>
                               <View style={styles.lessonTextWrap}>
-                                <Text style={[styles.lessonTitle, isCompleted && styles.lessonTitleCompleted]}>
+                                <Text style={[
+                                  styles.lessonTitle,
+                                  isCompleted && styles.lessonTitleCompleted,
+                                  !isUnlocked && { color: '#64748B' }
+                                ]}>
                                   {lesson.title}
                                 </Text>
                                 <Text style={styles.lessonDesc} numberOfLines={2}>
@@ -421,13 +456,13 @@ const HtmlCourseMainScreen: React.FC<{ tech: string }> = ({ tech }) => {
                             <View style={styles.lessonRowRight}>
                               <View style={[
                                 styles.startBadgePill,
-                                isCompleted ? styles.startBadgeCompleted : { backgroundColor: brandColor.pillBg }
+                                isCompleted ? styles.startBadgeCompleted : !isUnlocked ? { backgroundColor: '#E2E8F0' } : { backgroundColor: brandColor.pillBg }
                               ]}>
                                 <Text style={[
                                   styles.startBadgeText,
-                                  isCompleted ? styles.startBadgeTextCompleted : { color: brandColor.pillText }
+                                  isCompleted ? styles.startBadgeTextCompleted : !isUnlocked ? { color: '#94A3B8' } : { color: brandColor.pillText }
                                 ]} numberOfLines={1}>
-                                  {isCompleted ? 'Done' : 'Start ➔'}
+                                  {isCompleted ? 'Done ✓' : !isUnlocked ? 'Locked 🔒' : 'Start ➔'}
                                 </Text>
                               </View>
                             </View>

@@ -86,7 +86,14 @@ export const fullstackApi = {
     courseSlug: string = 'html',
     code?: string,
     additionalIds: string[] = []
-  ): Promise<{ success: boolean; completedLessonIds: string[]; percentage: number }> {
+  ): Promise<{
+    success: boolean;
+    completedLessonIds: string[];
+    percentage: number;
+    courseCompleted?: boolean;
+    completedCount?: number;
+    totalLessons?: number;
+  }> {
     const slug = (courseSlug || 'html').toLowerCase();
     // 1. Instant local persistence (0ms delay)
     const localSaved = await saveLocalCompletedLesson(slug, lessonId, additionalIds);
@@ -105,16 +112,24 @@ export const fullstackApi = {
       return {
         success: true,
         completedLessonIds: merged,
-        percentage: progress.progressPercentage || 0
+        percentage: progress.progressPercentage || 0,
+        courseCompleted: Boolean(progress.courseCompleted || (progress.progressPercentage || 0) >= 100),
+        completedCount: progress.completedCount,
+        totalLessons: progress.totalLessons
       };
     } catch (err) {
       console.warn('[completeLesson] Local progress saved, backend sync deferred:', err);
       return {
         success: true,
         completedLessonIds: localSaved,
-        percentage: 0
+        percentage: 0,
+        courseCompleted: false
       };
     }
+  },
+  async getCertificate(courseSlug: string = 'html'): Promise<any> {
+    const slug = (courseSlug || 'html').toLowerCase();
+    return unwrap(await apiClient.get(`/fullstack/${slug}/certificate`));
   },
   async saveCode(lessonId:string,code:string,title?:string): Promise<boolean> {
     unwrap(await apiClient.post('/fullstack/html/save-code',{lessonId,code,title:title || 'HTML Practice Code'}));return true;

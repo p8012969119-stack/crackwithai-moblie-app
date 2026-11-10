@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   StatusBar,
   Platform,
-  Modal
+  Modal,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -18,6 +19,9 @@ import { useAuth } from '../../store/AuthContext';
 import { fullstackApi } from '../../api/fullstackApi';
 import { storage } from '../../services/storage';
 import { Icon } from '../../components/Icon';
+import { Certificate } from '../../types';
+import { CertificateModal } from '../../components/CertificateModal';
+import { CourseCompletionStreakModal } from '../../components/learning/CourseCompletionStreakModal';
 import { PROMPT_STAGES, PromptStage } from './promptCourseData';
 import { PromptEvaluator, PromptEvaluationResult } from './PromptEvaluator';
 
@@ -48,10 +52,65 @@ export const PromptStageDetailScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submissionFeedback, setSubmissionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  const [completedStageIds, setCompletedStageIds] = useState<number[]>([]);
+  const [showStreakModal, setShowStreakModal] = useState<boolean>(false);
+  const [showCertificateModal, setShowCertificateModal] = useState<boolean>(false);
+  const [earnedCertificate, setEarnedCertificate] = useState<Certificate | null>(null);
+  const [newStreak, setNewStreak] = useState<number>(1);
+
   const scrollViewRef = useRef<ScrollView>(null);
 
   const currentStage: PromptStage =
     PROMPT_STAGES.find((s) => s.id === currentStageId) || PROMPT_STAGES[0];
+
+  const loadStageProgress = useCallback(async () => {
+    try {
+      const storageKey = `@crackwithai_prompt_progress_${user?._id || 'guest'}`;
+      const stored = await storage.getItem(storageKey);
+      let localList: number[] = [];
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed.completedStageIds)) {
+            localList = parsed.completedStageIds;
+          }
+        } catch {}
+      }
+
+      const rawStoredLessons = await storage.getItem('@cwa_completed_lessons_prompt-engineering');
+      if (rawStoredLessons) {
+        try {
+          const parsedSlugs = JSON.parse(rawStoredLessons);
+          if (Array.isArray(parsedSlugs)) {
+            parsedSlugs.forEach((s: string) => {
+              const matched = PROMPT_STAGES.find(stg => stg.slug === s || String(stg.id) === s);
+              if (matched && !localList.includes(matched.id)) {
+                localList.push(matched.id);
+              }
+            });
+          }
+        } catch {}
+      }
+
+      try {
+        const bg = await fullstackApi.getProgress('prompt-engineering');
+        if (bg?.completedLessonIds?.length) {
+          bg.completedLessonIds.forEach((s: string) => {
+            const matched = PROMPT_STAGES.find(stg => stg.slug === s || String(stg.id) === s);
+            if (matched && !localList.includes(matched.id)) {
+              localList.push(matched.id);
+            }
+          });
+        }
+      } catch {}
+
+      setCompletedStageIds(Array.from(new Set(localList)));
+    } catch {}
+  }, [user?._id]);
+
+  useEffect(() => {
+    loadStageProgress();
+  }, [loadStageProgress, currentStageId]);
 
   useEffect(() => {
     const initialText = currentStage.engineered_prompt || currentStage.starterCode || '';
@@ -111,26 +170,17 @@ export const PromptStageDetailScreen: React.FC = () => {
       if (result.score < 50) {
         setSubmissionFeedback({
           type: 'error',
-          message: 'Prompt quality score is too low. Review suggestions and try again.'
+          message: 'Prompt quality score is too low. Review suggestions or tap Apply Suggested Improvement.'
         });
         setSubmitting(false);
         return;
       }
 
-      // Save progress locally
-      const storageKey = `@crackwithai_prompt_progress_${user?._id || 'guest'}`;
-      const stored = await storage.getItem(storageKey);
-      let completedList: number[] = [1];
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed.completedStageIds)) {
-            completedList = parsed.completedStageIds;
-          }
-        } catch {}
-      }
+      // 1. Instant local persistence
+      const updated = Array.from(new Set([...completedStageIds, currentStageId]));
+      setCompletedStageIds(updated);
 
-      const updated = Array.from(new Set([...completedList, currentStageId]));
+      const storageKey = `@crackwithai_prompt_progress_${user?._id || 'guest'}`;
       const nextId = Math.min(12, currentStageId + 1);
       await storage.setItem(storageKey, JSON.stringify({
         completedStageIds: updated,
@@ -138,13 +188,71 @@ export const PromptStageDetailScreen: React.FC = () => {
         updatedAt: new Date().toISOString()
       }));
 
-      // Sync backend
-      await fullstackApi.completeLesson(currentStage.slug, 'prompt-engineering', promptText).catch(() => null);
+      // 2. Concurrently push to server backend
+      const apiRes = await fullstackApi.completeLesson(
+        currentStage.slug,
+        'prompt-engineering',
+        promptText,
+        [String(currentStageId), currentStage.slug]
+      ).catch(() => null);
 
       setSubmissionFeedback({
         type: 'success',
         message: `🎉 Lesson ${currentStageId} Completed! Score: ${result.score}%. Progress saved.`
       });
+
+      // 3. CHECK FOR COMPLETE COURSE MASTERY (All 12 stages finished!)
+      if (updated.length >= 12 || currentStageId === 12 || apiRes?.courseCompleted) {
+        const calculatedStreak = (user?.courseStreak || user?.streak || 0) + 1;
+        setNewStreak(calculatedStreak);
+
+        // Fetch / generate certificate
+        let certObj: Certificate | null = null;
+        try {
+          const certRes = await fullstackApi.getCertificate('prompt-engineering').catch(() => null);
+          if (certRes) {
+            certObj = {
+              _id: certRes.id || `cert-prompt-${Date.now()}`,
+              user: user?._id || 'guest',
+              course: 'prompt-engineering',
+              certificateId: certRes.verificationId || certRes.id,
+              certificateNumber: certRes.verificationId || certRes.id,
+              verificationCode: certRes.verificationId || certRes.id,
+              recipientName: certRes.studentName || user?.fullName || user?.name || 'AI Prompt Engineer',
+              userName: certRes.studentName || user?.fullName || user?.name || 'AI Prompt Engineer',
+              courseName: 'Prompt Engineering Mastery',
+              issueDate: certRes.completedDate || new Date().toISOString(),
+              issuedAt: certRes.completedDate || new Date().toISOString(),
+              percentage: 100,
+              status: 'active',
+            };
+            setEarnedCertificate(certObj);
+          }
+        } catch {}
+
+        if (!certObj) {
+          const certNumber = `CWA-PROMPT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          const fallbackCert: Certificate = {
+            _id: `cert-prompt-${Date.now()}`,
+            user: user?._id || 'guest',
+            course: 'prompt-engineering',
+            certificateId: certNumber,
+            certificateNumber: certNumber,
+            verificationCode: certNumber,
+            recipientName: user?.fullName || user?.name || 'AI Prompt Engineer',
+            userName: user?.fullName || user?.name || 'AI Prompt Engineer',
+            courseName: 'Prompt Engineering Mastery',
+            issueDate: new Date().toISOString(),
+            issuedAt: new Date().toISOString(),
+            percentage: 100,
+            status: 'active',
+          };
+          setEarnedCertificate(fallbackCert);
+        }
+
+        // Trigger Streak Celebration Modal!
+        setShowStreakModal(true);
+      }
     } catch (err: any) {
       setSubmissionFeedback({
         type: 'error',
@@ -162,6 +270,7 @@ export const PromptStageDetailScreen: React.FC = () => {
     }
   };
 
+  const isCurrentCompleted = completedStageIds.includes(currentStageId);
   const isFirstStage = currentStageId <= 1;
   const isLastStage = currentStageId >= 12;
 
@@ -441,14 +550,36 @@ export const PromptStageDetailScreen: React.FC = () => {
               {/* Feedback Banner */}
               {submissionFeedback && (
                 <View style={[styles.bannerBox, submissionFeedback.type === 'success' ? styles.bannerSuccess : styles.bannerError]}>
-                  <Icon
-                    name={submissionFeedback.type === 'success' ? 'check-circle' : 'alert-circle'}
-                    size={16}
-                    color={submissionFeedback.type === 'success' ? '#047857' : '#DC2626'}
-                  />
-                  <Text style={[styles.bannerText, { color: submissionFeedback.type === 'success' ? '#047857' : '#DC2626' }]}>
-                    {submissionFeedback.message}
-                  </Text>
+                  <View style={styles.bannerRow}>
+                    <Icon
+                      name={submissionFeedback.type === 'success' ? 'check-circle' : 'alert-circle'}
+                      size={18}
+                      color={submissionFeedback.type === 'success' ? '#047857' : '#DC2626'}
+                    />
+                    <Text style={[styles.bannerText, { color: submissionFeedback.type === 'success' ? '#047857' : '#DC2626' }]}>
+                      {submissionFeedback.message}
+                    </Text>
+                  </View>
+
+                  {submissionFeedback.type === 'success' && (
+                    currentStageId < 12 ? (
+                      <TouchableOpacity
+                        style={styles.continueNextBannerBtn}
+                        activeOpacity={0.85}
+                        onPress={() => setCurrentStageId(prev => Math.min(12, prev + 1))}
+                      >
+                        <Text style={styles.continueNextBannerBtnText}>Continue to Next Lesson ➔</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.continueNextBannerBtn, { backgroundColor: '#7C3AED' }]}
+                        activeOpacity={0.85}
+                        onPress={() => setShowStreakModal(true)}
+                      >
+                        <Text style={styles.continueNextBannerBtnText}>🏆 View Course Streak & Certificate 🎉</Text>
+                      </TouchableOpacity>
+                    )
+                  )}
                 </View>
               )}
             </View>
@@ -468,20 +599,53 @@ export const PromptStageDetailScreen: React.FC = () => {
           ) : <View style={{ flex: 1 }} />}
 
           {!isLastStage ? (
-            <TouchableOpacity
-              style={styles.navNextBtn}
-              onPress={() => setCurrentStageId(prev => Math.min(12, prev + 1))}
-            >
-              <Text style={styles.navNextText}>Next Lesson</Text>
-              <Icon name="arrow-right" size={15} color="#FFFFFF" />
-            </TouchableOpacity>
+            isCurrentCompleted ? (
+              <TouchableOpacity
+                style={styles.navNextBtn}
+                onPress={() => setCurrentStageId(prev => Math.min(12, prev + 1))}
+              >
+                <Text style={styles.navNextText}>Next Lesson</Text>
+                <Icon name="arrow-right" size={15} color="#FFFFFF" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.navNextBtn, styles.navNextBtnLocked]}
+                onPress={() => {
+                  Alert.alert(
+                    'Lesson Locked 🔒',
+                    `Please submit and complete the practice task for Lesson ${currentStageId} before going to Lesson ${currentStageId + 1}.`,
+                    [
+                      { text: 'Practice Now', onPress: () => setActiveTab('practice') }
+                    ]
+                  );
+                }}
+              >
+                <Text style={[styles.navNextText, styles.navNextTextLocked]}>Next Lesson</Text>
+                <Icon name="lock" size={15} color="#94A3B8" />
+              </TouchableOpacity>
+            )
           ) : (
             <TouchableOpacity
-              style={[styles.navNextBtn, { backgroundColor: '#059669' }]}
-              onPress={() => navigation.goBack()}
+              style={[
+                styles.navNextBtn,
+                { backgroundColor: isCurrentCompleted ? '#059669' : '#94A3B8' }
+              ]}
+              onPress={() => {
+                if (!isCurrentCompleted) {
+                  Alert.alert(
+                    'Complete Final Lesson 🔒',
+                    'Please submit and complete this final lesson to claim your Certificate & Course Streak!',
+                    [{ text: 'Practice Now', onPress: () => setActiveTab('practice') }]
+                  );
+                } else {
+                  setShowStreakModal(true);
+                }
+              }}
             >
-              <Text style={styles.navNextText}>Back to Roadmap</Text>
-              <Icon name="check" size={15} color="#FFFFFF" />
+              <Text style={styles.navNextText}>
+                {isCurrentCompleted ? 'Claim Certificate 🎓' : 'Finish Course 🔒'}
+              </Text>
+              <Icon name={isCurrentCompleted ? 'award' : 'lock'} size={15} color="#FFFFFF" />
             </TouchableOpacity>
           )}
         </View>
@@ -522,6 +686,32 @@ export const PromptStageDetailScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Course Completion Streak Modal */}
+      <CourseCompletionStreakModal
+        visible={showStreakModal}
+        courseTitle="Prompt Engineering Mastery"
+        newStreak={newStreak}
+        onViewCertificate={() => {
+          setShowStreakModal(false);
+          setShowCertificateModal(true);
+        }}
+        onClose={() => setShowStreakModal(false)}
+        nextCourseTitle="Context Engineering"
+        onNextCourse={() => {
+          setShowStreakModal(false);
+          navigation.navigate('HtmlCourse', { tech: 'context-engineering' });
+        }}
+      />
+
+      {/* Official Certificate Modal */}
+      {earnedCertificate && (
+        <CertificateModal
+          visible={showCertificateModal}
+          certificate={earnedCertificate}
+          onClose={() => setShowCertificateModal(false)}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -1010,6 +1200,33 @@ const styles = StyleSheet.create({
   },
   bannerError: {
     backgroundColor: '#FEE2E2',
+  },
+  bannerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  continueNextBannerBtn: {
+    backgroundColor: '#059669',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  continueNextBannerBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  navNextBtnLocked: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  navNextTextLocked: {
+    color: '#94A3B8',
   },
   bannerText: {
     fontSize: 13,
