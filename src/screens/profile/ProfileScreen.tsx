@@ -328,17 +328,18 @@ export const ProfileScreen = ({ navigation }: any) => {
     }
   }, [timeFilter]);
 
-  useFocusEffect(useCallback(() => {
-    void fetchProfileData();
-    if (refreshProfile) {
-      void refreshProfile();
-    }
-    scrollViewRef.current?.scrollTo({y: 0, animated: false});
-    return () => {profileRequest.current?.abort(); profileRequest.current = null;};
-  }, [fetchProfileData, refreshProfile]));
+  useFocusEffect(
+    useCallback(() => {
+      void fetchProfileData();
+      return () => {
+        profileRequest.current?.abort();
+        profileRequest.current = null;
+      };
+    }, [fetchProfileData])
+  );
 
   useEffect(() => {
-    // Trigger smooth entrance animations
+    // Trigger smooth entrance animations once on mount
     Animated.parallel([
       Animated.timing(headerFadeAnim, {
         toValue: 1,
@@ -357,7 +358,7 @@ export const ProfileScreen = ({ navigation }: any) => {
         useNativeDriver: false,
       }),
     ]).start();
-  }, [fetchProfileData, headerFadeAnim, avatarScaleAnim, ringProgressAnim]);
+  }, [headerFadeAnim, avatarScaleAnim, ringProgressAnim]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -456,28 +457,21 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          nestedScrollEnabled={true}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          showsVerticalScrollIndicator={false}
-          bounces={true}
-          alwaysBounceVertical={true}
-          overScrollMode="always"
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#5553FE"
-              colors={['#5553FE']}
-              progressBackgroundColor="#FFFFFF"
-            />
-          }
-        >
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#5553FE"
+            colors={['#5553FE']}
+          />
+        }
+      >
         {/* ================= TOP HEADER (Purple Gradient) ================= */}
         <Animated.View style={[styles.topGradientHeader, { paddingTop: Math.max(insets.top, 12), opacity: headerFadeAnim }]}>
           {/* Header Action Controls */}
@@ -775,9 +769,8 @@ export const ProfileScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
 
-    {/* Logout Confirmation Bottom Sheet Modal */}
+      {/* Logout Confirmation Bottom Sheet Modal */}
       <Modal visible={logoutModalVisible} transparent animationType="slide" onRequestClose={() => setLogoutModalVisible(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLogoutModalVisible(false)}>
           <View style={styles.bottomSheetCard}>
@@ -1151,7 +1144,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: Platform.OS === 'ios' ? 140 : 120,
+    paddingBottom: 160,
   },
   /* TOP HEADER STYLES */
   topGradientHeader: {

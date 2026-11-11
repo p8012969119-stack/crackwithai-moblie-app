@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { User } from '../types';
 import { authApi } from '../api/authApi';
 import { storage } from '../services/storage';
@@ -142,7 +142,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     try {
       const res = await authApi.getProfile();
       if (res.success && res.data) {
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (err) {
       console.warn('[AuthContext] Refresh profile failed:', err);
     }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
