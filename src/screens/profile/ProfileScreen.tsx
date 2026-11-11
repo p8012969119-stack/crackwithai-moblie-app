@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -455,12 +456,28 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        ref={scrollViewRef}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#5553FE" />}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          nestedScrollEnabled={true}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+          alwaysBounceVertical={true}
+          overScrollMode="always"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#5553FE"
+              colors={['#5553FE']}
+              progressBackgroundColor="#FFFFFF"
+            />
+          }
+        >
         {/* ================= TOP HEADER (Purple Gradient) ================= */}
         <Animated.View style={[styles.topGradientHeader, { paddingTop: Math.max(insets.top, 12), opacity: headerFadeAnim }]}>
           {/* Header Action Controls */}
@@ -758,8 +775,9 @@ export const ProfileScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+    </KeyboardAvoidingView>
 
-      {/* Logout Confirmation Bottom Sheet Modal */}
+    {/* Logout Confirmation Bottom Sheet Modal */}
       <Modal visible={logoutModalVisible} transparent animationType="slide" onRequestClose={() => setLogoutModalVisible(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setLogoutModalVisible(false)}>
           <View style={styles.bottomSheetCard}>
@@ -1128,7 +1146,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
+    flexGrow: 1,
     paddingBottom: Platform.OS === 'ios' ? 140 : 120,
   },
   /* TOP HEADER STYLES */
