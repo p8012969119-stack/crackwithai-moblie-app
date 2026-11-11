@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -18,10 +19,17 @@ import { certificateApi } from '../../api/certificateApi';
 import { Certificate } from '../../types';
 import { Icon } from '../../components/Icon';
 import { CertificateModal } from '../../components/CertificateModal';
+import { VectorCheckmark, CompletedBadge } from '../../components/VectorCheckmark';
 import { CONTEXT_STAGES } from './contextCourseData';
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
+
+const CONTEXT_MODULE_LOGOS: Record<number, any> = {
+  1: require('../../assets/module-logos/context_mod1.png'),
+  2: require('../../assets/module-logos/context_mod2.png'),
+  3: require('../../assets/module-logos/context_mod3.png'),
+};
 
 const MODULE_CARDS = [
   {
@@ -196,6 +204,9 @@ export const ContextEngineeringScreen: React.FC = () => {
             {/* COMPACT CLEAN MODULE CARDS */}
             <View style={styles.modulesStack}>
               {MODULE_CARDS.map((mod) => {
+                const modCompleted = completedStageIds.filter(id => mod.stageIds.includes(id)).length;
+                const isModDone = modCompleted >= mod.stageIds.length;
+
                 return (
                   <TouchableOpacity
                     key={`module-card-${mod.id}`}
@@ -205,23 +216,43 @@ export const ContextEngineeringScreen: React.FC = () => {
                   >
                     <View style={styles.cardMainRow}>
                       <View style={styles.logoSquareContainer}>
-                        <Icon name={mod.icon as any} size={26} color="#0284C7" />
+                        {isModDone ? (
+                          <CompletedBadge size={46} badgeColor="#10B981" />
+                        ) : (
+                          <Image
+                            source={CONTEXT_MODULE_LOGOS[mod.id]}
+                            style={styles.moduleLogoImg}
+                            resizeMode="contain"
+                          />
+                        )}
                       </View>
 
                       <View style={styles.cardCenterBlock}>
                         <Text style={styles.courseName}>{mod.title}</Text>
                         <Text style={styles.courseSubtext}>{mod.shortDesc}</Text>
+                        <View style={styles.progressRow}>
+                          <Text style={styles.modProgressText}>
+                            {modCompleted} of {mod.lessonCount} lessons completed
+                          </Text>
+                          {isModDone && (
+                            <VectorCheckmark size={13} color="#059669" strokeWidth={2.4} />
+                          )}
+                        </View>
                       </View>
                     </View>
 
                     <View style={styles.cardFooterRow}>
                       <TouchableOpacity
-                        style={styles.startBtnPill}
+                        style={[styles.startBtnPill, isModDone && { backgroundColor: '#059669' }]}
                         activeOpacity={0.85}
                         onPress={() => setSelectedModuleId(mod.id)}
                       >
-                        <Text style={styles.startBtnPillText}>Explore Module</Text>
-                        <Icon name="arrow-right" size={13} color="#FFFFFF" />
+                        <Text style={styles.startBtnPillText}>{isModDone ? 'Review Module' : 'Explore Module'}</Text>
+                        {isModDone ? (
+                          <VectorCheckmark size={14} color="#FFFFFF" strokeWidth={2.5} />
+                        ) : (
+                          <Icon name="arrow-right" size={13} color="#FFFFFF" />
+                        )}
                       </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
@@ -291,14 +322,21 @@ export const ContextEngineeringScreen: React.FC = () => {
                             isActive && !isCompleted && { backgroundColor: '#0284C7' }
                           ]}
                         >
-                          <Text
-                            style={[
-                              styles.statusPillText,
-                              (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' }
-                            ]}
-                          >
-                            {isCompleted ? 'Completed ✓' : isActive ? 'In Progress ⚡' : 'Read & Practice ▶'}
-                          </Text>
+                          {isCompleted ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Text style={[styles.statusPillText, { color: '#FFFFFF' }]}>Completed</Text>
+                              <VectorCheckmark size={11} color="#FFFFFF" strokeWidth={2.4} />
+                            </View>
+                          ) : (
+                            <Text
+                              style={[
+                                styles.statusPillText,
+                                (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' }
+                              ]}
+                            >
+                              {isActive ? 'In Progress ⚡' : 'Read & Practice ▶'}
+                            </Text>
+                          )}
                         </View>
                         <Icon name="chevron-right" size={18} color="#0F172A" />
                       </View>
@@ -394,10 +432,27 @@ const styles = StyleSheet.create({
   logoSquareContainer: {
     width: 46,
     height: 46,
-    borderRadius: 12,
-    backgroundColor: '#E0F2FE',
+    borderRadius: 13,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  moduleLogoImg: {
+    width: 46,
+    height: 46,
+    borderRadius: 13,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  modProgressText: {
+    fontFamily: FONT_FAMILY_MEDIUM,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0284C7',
   },
   cardCenterBlock: {
     flex: 1

@@ -8,7 +8,8 @@ import {
   RefreshControl,
   StatusBar,
   Platform,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -19,10 +20,17 @@ import { certificateApi } from '../../api/certificateApi';
 import { Certificate } from '../../types';
 import { Icon } from '../../components/Icon';
 import { CertificateModal } from '../../components/CertificateModal';
+import { VectorCheckmark, CompletedBadge } from '../../components/VectorCheckmark';
 import { PROMPT_STAGES } from './promptCourseData';
 
 const FONT_FAMILY = Platform.OS === 'android' ? 'sans-serif' : 'System';
 const FONT_FAMILY_MEDIUM = Platform.OS === 'android' ? 'sans-serif-medium' : 'System';
+
+const PROMPT_MODULE_LOGOS: Record<number, any> = {
+  1: require('../../assets/module-logos/prompt_mod1.png'),
+  2: require('../../assets/module-logos/prompt_mod2.png'),
+  3: require('../../assets/module-logos/prompt_mod3.png'),
+};
 
 const MODULE_CARDS = [
   {
@@ -308,16 +316,29 @@ export const PromptEngineeringScreen: React.FC = () => {
                     onPress={() => setSelectedModuleId(mod.id)}
                   >
                     <View style={styles.cardMainRow}>
-                      <View style={[styles.logoSquareContainer, isModDone && { backgroundColor: '#DCFCE7' }]}>
-                        <Icon name={isModDone ? 'check' : (mod.icon as any)} size={26} color={isModDone ? '#059669' : '#7C3AED'} />
+                      <View style={styles.logoSquareContainer}>
+                        {isModDone ? (
+                          <CompletedBadge size={46} badgeColor="#10B981" />
+                        ) : (
+                          <Image
+                            source={PROMPT_MODULE_LOGOS[mod.id]}
+                            style={styles.moduleLogoImg}
+                            resizeMode="contain"
+                          />
+                        )}
                       </View>
 
                       <View style={styles.cardCenterBlock}>
                         <Text style={styles.courseName}>{mod.title}</Text>
                         <Text style={styles.courseSubtext}>{mod.shortDesc}</Text>
-                        <Text style={styles.modProgressText}>
-                          {modCompleted} of {mod.lessonCount} lessons completed {isModDone ? '✓' : ''}
-                        </Text>
+                        <View style={styles.progressRow}>
+                          <Text style={styles.modProgressText}>
+                            {modCompleted} of {mod.lessonCount} lessons completed
+                          </Text>
+                          {isModDone && (
+                            <VectorCheckmark size={13} color="#059669" strokeWidth={2.4} />
+                          )}
+                        </View>
                       </View>
                     </View>
 
@@ -328,23 +349,16 @@ export const PromptEngineeringScreen: React.FC = () => {
                         onPress={() => setSelectedModuleId(mod.id)}
                       >
                         <Text style={styles.startBtnPillText}>{isModDone ? 'Review Module' : 'Explore Module'}</Text>
-                        <Icon name={isModDone ? 'check' : 'arrow-right'} size={13} color="#FFFFFF" />
+                        {isModDone ? (
+                          <VectorCheckmark size={14} color="#FFFFFF" strokeWidth={2.5} />
+                        ) : (
+                          <Icon name="arrow-right" size={13} color="#FFFFFF" />
+                        )}
                       </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
                 );
               })}
-
-              {isAllCompleted && (
-                <TouchableOpacity
-                  style={styles.certBtn}
-                  activeOpacity={0.85}
-                  onPress={handleViewCertificate}
-                >
-                  <Icon name="award" size={18} color="#FFFFFF" />
-                  <Text style={styles.certBtnText}>View Official Certificate 🎉</Text>
-                </TouchableOpacity>
-              )}
             </View>
           </View>
         ) : (
@@ -403,21 +417,30 @@ export const PromptEngineeringScreen: React.FC = () => {
                             !isUnlocked && { backgroundColor: '#E2E8F0' }
                           ]}
                         >
-                          <Text
-                            style={[
-                              styles.statusPillText,
-                              (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' },
-                              !isUnlocked && { color: '#64748B' }
-                            ]}
-                          >
-                            {isCompleted ? 'Completed ✓' : !isUnlocked ? `Locked 🔒 (Finish L${stg.id - 1})` : isActive ? 'In Progress ⚡' : 'Start Lesson ▶'}
-                          </Text>
+                          {isCompleted ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Text style={[styles.statusPillText, { color: '#FFFFFF' }]}>Completed</Text>
+                              <VectorCheckmark size={11} color="#FFFFFF" strokeWidth={2.4} />
+                            </View>
+                          ) : (
+                            <Text
+                              style={[
+                                styles.statusPillText,
+                                (isCompleted || (isActive && !isCompleted)) && { color: '#FFFFFF' },
+                                !isUnlocked && { color: '#64748B' }
+                              ]}
+                            >
+                              {!isUnlocked ? `Locked 🔒 (Finish L${stg.id - 1})` : isActive ? 'In Progress ⚡' : 'Start Lesson ▶'}
+                            </Text>
+                          )}
                         </View>
-                        <Icon
-                          name={!isUnlocked ? 'lock' : isCompleted ? 'check' : 'chevron-right'}
-                          size={18}
-                          color={!isUnlocked ? '#94A3B8' : isCompleted ? '#10B981' : '#0F172A'}
-                        />
+                        {!isUnlocked ? (
+                          <Icon name="lock" size={18} color="#94A3B8" />
+                        ) : isCompleted ? (
+                          <VectorCheckmark size={16} color="#10B981" strokeWidth={2.5} />
+                        ) : (
+                          <Icon name="chevron-right" size={18} color="#0F172A" />
+                        )}
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -511,10 +534,21 @@ const styles = StyleSheet.create({
   logoSquareContainer: {
     width: 46,
     height: 46,
-    borderRadius: 12,
-    backgroundColor: '#EDE9FE',
+    borderRadius: 13,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  moduleLogoImg: {
+    width: 46,
+    height: 46,
+    borderRadius: 13,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
   },
   cardCenterBlock: {
     flex: 1
