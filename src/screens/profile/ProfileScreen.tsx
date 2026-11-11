@@ -39,6 +39,17 @@ import { CONFIG } from '../../constants/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// Premium custom menu squircle icons
+const MENU_ICONS = {
+  personalInfo: require('../../assets/menu-icons/profile.png'),
+  security: require('../../assets/menu-icons/security.png'),
+  notifications: require('../../assets/menu-icons/notification.png'),
+  help: require('../../assets/menu-icons/help.png'),
+  logout: require('../../assets/menu-icons/logout.png'),
+  support247: require('../../assets/menu-icons/support247.png'),
+  mail: require('../../assets/menu-icons/mail.png'),
+};
+
 // Curated gallery of preset avatar images
 const PRESET_AVATARS = [
   { id: '1', title: 'Tech Lead', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80' },
@@ -670,9 +681,7 @@ export const ProfileScreen = ({ navigation }: any) => {
           <View style={styles.menuGroupCard}>
             {/* 1. Personal Information */}
             <TouchableOpacity style={styles.menuRowItem} activeOpacity={0.7} onPress={() => setPersonalInfoModalVisible(true)}>
-              <View style={[styles.menuIconCircle, { backgroundColor: '#EEEDFF' }]}>
-                <Icon name="user" size={18} color="#5553FE" />
-              </View>
+              <Image source={MENU_ICONS.personalInfo} style={styles.menuIconImg} resizeMode="contain" />
               <View style={styles.menuTextCol}>
                 <Text style={styles.menuRowTitle}>Personal Information</Text>
                 <Text style={styles.menuRowSubtitle}>Update your personal details</Text>
@@ -684,9 +693,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
             {/* 2. Security */}
             <TouchableOpacity style={styles.menuRowItem} activeOpacity={0.7} onPress={() => setSecurityModalVisible(true)}>
-              <View style={[styles.menuIconCircle, { backgroundColor: '#EFF6FF' }]}>
-                <Icon name="shield" size={18} color="#2563EB" />
-              </View>
+              <Image source={MENU_ICONS.security} style={styles.menuIconImg} resizeMode="contain" />
               <View style={styles.menuTextCol}>
                 <Text style={styles.menuRowTitle}>Security</Text>
                 <Text style={styles.menuRowSubtitle}>Password, 2FA, and security settings</Text>
@@ -698,9 +705,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
             {/* 3. Notifications */}
             <TouchableOpacity style={styles.menuRowItem} activeOpacity={0.7} onPress={() => setNotifModalVisible(true)}>
-              <View style={[styles.menuIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                <Icon name="bell" size={18} color="#D97706" />
-              </View>
+              <Image source={MENU_ICONS.notifications} style={styles.menuIconImg} resizeMode="contain" />
               <View style={styles.menuTextCol}>
                 <Text style={styles.menuRowTitle}>Notifications</Text>
                 <Text style={styles.menuRowSubtitle}>Manage your notification preferences</Text>
@@ -716,9 +721,7 @@ export const ProfileScreen = ({ navigation }: any) => {
               activeOpacity={0.7}
               onPress={() => setSupportModalVisible(true)}
             >
-              <View style={[styles.menuIconCircle, { backgroundColor: '#FCE7F3' }]}>
-                <Icon name="help-circle" size={18} color="#EC4899" />
-              </View>
+              <Image source={MENU_ICONS.help} style={styles.menuIconImg} resizeMode="contain" />
               <View style={styles.menuTextCol}>
                 <Text style={styles.menuRowTitle}>Help & Support</Text>
                 <Text style={styles.menuRowSubtitle}>Get help and contact support</Text>
@@ -730,9 +733,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
             {/* 5. Logout */}
             <TouchableOpacity style={styles.menuRowItem} activeOpacity={0.7} onPress={() => setLogoutModalVisible(true)}>
-              <View style={[styles.menuIconCircle, { backgroundColor: '#FEE2E2' }]}>
-                <Icon name="log-out" size={18} color="#EF4444" />
-              </View>
+              <Image source={MENU_ICONS.logout} style={styles.menuIconImg} resizeMode="contain" />
               <View style={styles.menuTextCol}>
                 <Text style={[styles.menuRowTitle, { color: '#EF4444' }]}>Logout</Text>
                 <Text style={styles.menuRowSubtitle}>Sign out from your account</Text>
@@ -745,9 +746,7 @@ export const ProfileScreen = ({ navigation }: any) => {
         {/* ================= 24/7 OFFICIAL SUPPORT BANNER CARD ================= */}
         <View style={styles.supportBannerCard}>
           <View style={styles.supportBannerHeader}>
-            <View style={styles.supportBannerIcon}>
-              <Icon name="help-circle" size={20} color="#5553FE" />
-            </View>
+            <Image source={MENU_ICONS.support247} style={styles.supportBannerIconImg} resizeMode="contain" />
             <View style={{ flex: 1 }}>
               <Text style={styles.supportBannerTitle}>24/7 Official Support</Text>
               <Text style={styles.supportBannerSub}>Have questions or need assistance? Reach out anytime!</Text>
@@ -757,11 +756,11 @@ export const ProfileScreen = ({ navigation }: any) => {
           <TouchableOpacity
             style={styles.supportEmailRow}
             activeOpacity={0.8}
-            onPress={() => Linking.openURL('mailto:support@crackwithai.com?subject=CrackWithAI%20Support%20Request')}
+            onPress={() => Linking.openURL('mailto:admin@crackwithai.net?subject=CrackWithAI%20Support%20Request')}
           >
             <View style={styles.supportEmailLeft}>
-              <Icon name="mail" size={16} color="#5553FE" />
-              <Text style={styles.supportEmailText}>support@crackwithai.com</Text>
+              <Image source={MENU_ICONS.mail} style={styles.supportMailIconImg} resizeMode="contain" />
+              <Text style={styles.supportEmailText}>admin@crackwithai.net</Text>
             </View>
             <View style={styles.mailActionPill}>
               <Text style={styles.mailActionPillText}>Send Email ➔</Text>
@@ -962,13 +961,14 @@ export const ProfileScreen = ({ navigation }: any) => {
             <TouchableOpacity
               style={styles.supportEmailCard}
               activeOpacity={0.8}
-              onPress={() => Linking.openURL('mailto:support@crackwithai.com?subject=CrackWithAI%20Help%20Request')}
+              onPress={() => Linking.openURL('mailto:admin@crackwithai.net?subject=CrackWithAI%20Help%20Request')}
             >
+              <Image source={MENU_ICONS.mail} style={{ width: 34, height: 34, borderRadius: 10, marginRight: 12 }} resizeMode="contain" />
               <View style={{ flex: 1 }}>
                 <Text style={styles.supportEmailLabel}>Official Support Email (Tap to Email)</Text>
-                <Text style={styles.supportEmailValue}>support@crackwithai.com</Text>
+                <Text style={styles.supportEmailValue}>admin@crackwithai.net</Text>
               </View>
-              <Icon name="mail" size={20} color="#5553FE" />
+              <Icon name="chevron-right" size={16} color="#5553FE" />
             </TouchableOpacity>
 
             <Text style={styles.modalInputLabel}>Send Message to Support</Text>
@@ -1497,6 +1497,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
+  },
+  menuIconImg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    marginRight: 14,
+  },
+  supportBannerIconImg: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  supportMailIconImg: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
   },
   menuTextCol: {
     flex: 1,
