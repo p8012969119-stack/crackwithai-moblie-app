@@ -122,25 +122,27 @@ export const HomeScreen = ({ navigation }: any) => {
   // Streak calculated strictly by completed courses count (1 course done = 1 streak)
   const courseStreakCount = useMemo(() => {
     let count = 0;
-    if (fullstackProgress?.modules) {
-      count += fullstackProgress.modules.filter(
-        mod => Boolean(mod.isCompleted || (mod.totalLessons > 0 && mod.completedLessons >= mod.totalLessons))
-      ).length;
+    if (fullstackProgress?.modules && fullstackProgress.modules.length > 0) {
+      const allModulesDone = fullstackProgress.modules.every(
+        (mod: any) => Boolean(mod.isCompleted || (mod.totalLessons > 0 && mod.completedLessons >= mod.totalLessons))
+      );
+      if (allModulesDone || fullstackProgress?.courseCompleted || (fullstackProgress?.overallPercentage ?? 0) >= 100) {
+        count += 1;
+      }
     }
+    const certCount = dashboardData?.certificatesCount || 0;
+    count = Math.max(count, certCount);
     if (Array.isArray(dashboardData?.completedCourses)) {
       count = Math.max(count, dashboardData.completedCourses.length);
     } else if (typeof dashboardData?.completedCourses === 'number') {
       count = Math.max(count, dashboardData.completedCourses);
     }
-    if (typeof dashboardData?.certificatesCount === 'number') {
-      count = Math.max(count, (fullstackProgress?.completedModules || 0) + dashboardData.certificatesCount);
-    }
     if (typeof user?.courseStreak === 'number' && user.courseStreak > 0) {
       count = Math.max(count, user.courseStreak);
     }
-    // Strict course streak: User has completed HTML course + Certificate = 2
-    return Math.max(count, 2);
-  }, [fullstackProgress?.modules, fullstackProgress?.completedModules, dashboardData?.completedCourses, dashboardData?.certificatesCount, user?.courseStreak]);
+    // Strict course streak: 0 if no course completed
+    return count;
+  }, [fullstackProgress, dashboardData, user?.courseStreak]);
 
   const progressPercent = totalLessonsCount > 0
     ? Math.min(100, Math.round((completedLessonsCount / totalLessonsCount) * 100))

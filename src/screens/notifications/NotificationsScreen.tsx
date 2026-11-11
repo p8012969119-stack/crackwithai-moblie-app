@@ -32,19 +32,25 @@ export const NotificationsScreen = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
-  const courseStreak = 2; // Strict course streak (HTML + Certificate completed)
+  const courseStreak = Number(user?.courseStreak || user?.streak || 0);
 
   const buildDefaultNotifications = useCallback((): NotificationItem[] => {
-    return [
-      {
+    const items: NotificationItem[] = [];
+
+    if (courseStreak > 0) {
+      items.push({
         id: 'notif-streak',
-        title: `Course Streak Active: ${courseStreak} Courses 🔥`,
-        message: `Great dedication! You have a streak of ${courseStreak} completed courses. Keep finishing modules to earn more certificates and XP!`,
+        title: `Course Streak Active: ${courseStreak} ${courseStreak === 1 ? 'Course' : 'Courses'} 🔥`,
+        message: `Great dedication! You have a streak of ${courseStreak} completed ${courseStreak === 1 ? 'course' : 'courses'}. Keep finishing modules to earn more certificates and XP!`,
         time: 'Just now',
         unread: true,
         type: 'streak',
         targetScreen: 'Profile',
-      },
+      });
+    }
+
+    return [
+      ...items,
       {
         id: 'notif-milestone',
         title: 'Learning Track In Progress 🚀',

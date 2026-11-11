@@ -26,23 +26,22 @@ export const ForgotPasswordScreen = ({ navigation }: any) => {
 
   const handleContinue = async () => {
     clearError();
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
+    const cleanEmail = email.trim().toLowerCase().replace(/\.{2,}/g, '.');
+    if (!cleanEmail) {
       setErrorMessage('Please enter your email address.');
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      setErrorMessage('Please enter a valid email address.');
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setErrorMessage('Please enter a valid email address (e.g. name@gmail.com).');
       return;
     }
 
     try {
       setLoading(true);
-      const res: any = await authApi.forgotPassword(trimmedEmail);
-      const devOtp = res?.devOtp;
-      navigation.navigate('OtpVerification', { email: trimmedEmail, fromForgot: true, devOtp });
+      await authApi.forgotPassword(cleanEmail);
+      navigation.navigate('OtpVerification', { email: cleanEmail, fromForgot: true });
     } catch (err: any) {
       if (err?.message?.toLowerCase().includes('not found')) {
         setErrorMessage('No account found with this email. Please check your email or tap Create Account below.');

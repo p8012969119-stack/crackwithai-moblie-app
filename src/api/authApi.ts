@@ -12,9 +12,9 @@ export const authApi = {
     return response.data;
   },
 
-  register: async (payload: { name: string; email: string; password: string }): Promise<ApiResponse<User & { devOtp?: string }>> => {
+  register: async (payload: { name: string; email: string; password: string }): Promise<ApiResponse<User>> => {
     await probeFastestApiUrl().catch(() => {});
-    const response = await apiClient.post<ApiResponse<User & { devOtp?: string }>>('/auth/register', {
+    const response = await apiClient.post<ApiResponse<User>>('/auth/register', {
       ...payload,
       fullName: payload.name,
     }, {

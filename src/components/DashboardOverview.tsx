@@ -130,7 +130,7 @@ export const DashboardOverview = ({
           </View>
           <Text style={styles.cardLabelLight}>Daily Streak</Text>
           <Text style={styles.cardValueLight}>
-            {data.streak ?? 1} <Text style={styles.unitLight}>days</Text>
+            {data.streak ?? 0} <Text style={styles.unitLight}>days</Text>
           </Text>
           <Text style={styles.cardSubTextLight}>Build your daily AI habit</Text>
         </Pressable>

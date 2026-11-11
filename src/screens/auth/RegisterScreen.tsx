@@ -39,21 +39,21 @@ export const RegisterScreen = ({ navigation }: any) => {
   const handleRegister = async () => {
     clearError();
     const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
+    const cleanEmail = email.trim().toLowerCase().replace(/\.{2,}/g, '.');
 
     if (!trimmedName) {
       setErrorMessage('Please enter your full name.');
       return;
     }
 
-    if (!trimmedEmail) {
+    if (!cleanEmail) {
       setErrorMessage('Please enter your email address.');
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      setErrorMessage('Please enter a valid email address.');
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setErrorMessage('Please enter a valid email address (e.g. name@gmail.com).');
       return;
     }
 
@@ -74,14 +74,12 @@ export const RegisterScreen = ({ navigation }: any) => {
 
     try {
       setLoading(true);
-      const res = await authApi.register({ name: trimmedName, email: trimmedEmail, password });
-      const devOtp = (res as any)?.devOtp || (res as any)?.data?.devOtp;
+      await authApi.register({ name: trimmedName, email: cleanEmail, password });
 
       navigation.navigate('OtpVerification', {
-        email: trimmedEmail,
+        email: cleanEmail,
         password: password,
         fromRegister: true,
-        devOtp,
       });
     } catch (err: any) {
       setErrorMessage(err.message || 'Registration failed. Account may already exist.');

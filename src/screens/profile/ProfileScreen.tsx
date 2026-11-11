@@ -397,15 +397,18 @@ export const ProfileScreen = ({ navigation }: any) => {
   // Strict Course Streak: 1 completed course = 1 streak point (never per-lesson!)
   const courseStreakCount = useMemo(() => {
     let count = 0;
-    if (fullstackProgress?.modules) {
-      count += fullstackProgress.modules.filter(
+    if (fullstackProgress?.modules && fullstackProgress.modules.length > 0) {
+      const allModulesDone = fullstackProgress.modules.every(
         (m: any) => Boolean(m.isCompleted || (m.totalLessons > 0 && m.completedLessons >= m.totalLessons))
-      ).length;
+      );
+      if (allModulesDone || fullstackProgress?.courseCompleted || (fullstackProgress?.overallPercentage ?? 0) >= 100) {
+        count += 1;
+      }
     } else if (skillsProgress?.fullstack && skillsProgress.fullstack.completedCount >= 25) {
       count += 1;
     }
     const certCount = certificates.length || dashboardData?.certificatesCount || 0;
-    count += certCount;
+    count = Math.max(count, certCount);
     if (Array.isArray(dashboardData?.completedCourses)) {
       count = Math.max(count, dashboardData.completedCourses.length);
     } else if (typeof dashboardData?.completedCourses === 'number') {
@@ -414,8 +417,8 @@ export const ProfileScreen = ({ navigation }: any) => {
     if (typeof user?.courseStreak === 'number' && user.courseStreak > 0) {
       count = Math.max(count, user.courseStreak);
     }
-    // Strict course streak: User completed HTML course + Certificate course = 2
-    return Math.max(2, count);
+    // Strict course streak: 0 if no course completed
+    return count;
   }, [fullstackProgress, skillsProgress, certificates, dashboardData, user?.courseStreak]);
 
   const timeframeData = dashboardData?.timeframeStats?.[timeFilter];
