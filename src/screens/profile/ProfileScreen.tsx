@@ -742,31 +742,6 @@ export const ProfileScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* ================= 24/7 OFFICIAL SUPPORT BANNER CARD ================= */}
-        <View style={styles.supportBannerCard}>
-          <View style={styles.supportBannerHeader}>
-            <Image source={MENU_ICONS.support247} style={styles.supportBannerIconImg} resizeMode="contain" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.supportBannerTitle}>24/7 Official Support</Text>
-              <Text style={styles.supportBannerSub}>Have questions or need assistance? Reach out anytime!</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.supportEmailRow}
-            activeOpacity={0.8}
-            onPress={() => Linking.openURL('mailto:admin@crackwithai.net?subject=CrackWithAI%20Support%20Request')}
-          >
-            <View style={styles.supportEmailLeft}>
-              <Image source={MENU_ICONS.mail} style={styles.supportMailIconImg} resizeMode="contain" />
-              <Text style={styles.supportEmailText}>admin@crackwithai.net</Text>
-            </View>
-            <View style={styles.mailActionPill}>
-              <Text style={styles.mailActionPillText}>Send Email ➔</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       {/* Logout Confirmation Bottom Sheet Modal */}
@@ -1144,7 +1119,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 160,
+    paddingBottom: 72,
   },
   /* TOP HEADER STYLES */
   topGradientHeader: {
@@ -1262,6 +1237,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
     color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
   verifiedCheckBadge: {
     width: 18,
@@ -1275,19 +1251,21 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 12,
-    marginVertical: 4,
+    marginVertical: 5,
   },
   memberTagText: {
     fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   userEmailText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#E0E7FF',
-    marginBottom: 8,
+    marginBottom: 10,
+    letterSpacing: 0.1,
   },
   pillsRow: {
     flexDirection: 'row',
@@ -1298,10 +1276,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 14,
-    gap: 4,
+    gap: 5,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.25)',
   },
@@ -1309,9 +1287,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   pillLabelText: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
 
   /* FLOATING STATISTICS CARD STYLES */
@@ -1321,11 +1300,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    paddingVertical: 16,
-    paddingHorizontal: 10,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
     marginHorizontal: 16,
     marginTop: -32,
-    marginBottom: 20,
+    marginBottom: 22,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     ...SHADOWS.medium,
@@ -1343,19 +1322,22 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   statNumberText: {
-    fontSize: 18,
-    fontWeight: '900',
+    fontSize: 19,
+    fontWeight: '800',
     color: '#0F172A',
+    letterSpacing: -0.2,
   },
   statLabelText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: '#475569',
-    marginTop: 2,
+    marginTop: 4,
+    letterSpacing: 0.1,
   },
   statSubText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#94A3B8',
+    marginTop: 2,
   },
   verticalSeparator: {
     width: 1,
@@ -1366,10 +1348,10 @@ const styles = StyleSheet.create({
   /* WHITE CARDS GENERAL */
   whiteSectionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 22,
+    padding: 20,
     marginHorizontal: 16,
-    marginBottom: 18,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     ...SHADOWS.small,
@@ -1385,9 +1367,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardHeaderTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
+    letterSpacing: -0.2,
   },
   dropdownBtn: {
     flexDirection: 'row',
@@ -1437,50 +1420,54 @@ const styles = StyleSheet.create({
   },
   metricsRightGrid: {
     flex: 1,
-    gap: 10,
+    gap: 12,
   },
   metricItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   smallIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   metricTextGroup: {
     flex: 1,
   },
   metricValueText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: '#0F172A',
+    letterSpacing: -0.1,
   },
   metricSubLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#64748B',
+    marginTop: 3,
+    letterSpacing: 0.1,
   },
 
 
   /* ACCOUNT & PREFERENCES LIST */
   accountSection: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   accountSectionHeading: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 12,
+    marginBottom: 14,
+    letterSpacing: -0.3,
   },
   menuGroupCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     ...SHADOWS.small,
@@ -1488,45 +1475,38 @@ const styles = StyleSheet.create({
   menuRowItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   menuIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  menuIconImg: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    marginRight: 14,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
   },
-  supportBannerIconImg: {
+  menuIconImg: {
     width: 42,
     height: 42,
     borderRadius: 12,
-    marginRight: 12,
-  },
-  supportMailIconImg: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
+    marginRight: 15,
   },
   menuTextCol: {
     flex: 1,
+    justifyContent: 'center',
   },
   menuRowTitle: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#0F172A',
+    letterSpacing: -0.1,
+    marginBottom: 3,
   },
   menuRowSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#64748B',
-    marginTop: 2,
+    lineHeight: 17,
+    letterSpacing: 0.1,
   },
   rightValueRow: {
     flexDirection: 'row',
@@ -1697,73 +1677,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#1E293B',
-  },
-  supportBannerCard: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...SHADOWS.small,
-  },
-  supportBannerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  supportBannerIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EEEDFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  supportBannerTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  supportBannerSub: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  supportEmailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  supportEmailLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  supportEmailText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1E293B',
-  },
-  mailActionPill: {
-    backgroundColor: '#5553FE',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  mailActionPillText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   filterOptItem: {
     flexDirection: 'row',
