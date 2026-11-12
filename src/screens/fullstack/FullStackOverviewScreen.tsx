@@ -118,15 +118,6 @@ export const FullStackOverviewScreen: React.FC = () => {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* HEADER SECTION */}
-        <View style={styles.headerBlock}>
-          <Text style={styles.eyebrow}>CRACKWITHAI / COURSES</Text>
-          <Text style={styles.mainTitle}>Learning Tracks</Text>
-          <Text style={styles.subtitle}>
-            Learn practical technology and AI skills with hands-on courses.
-          </Text>
-        </View>
-
         {/* 4 LEARNING TRACK CARDS */}
         <View style={styles.trackList}>
           {LEARNING_TRACKS.map((track) => (
@@ -217,30 +208,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 18,
     paddingBottom: 40,
-  },
-
-  /* HEADER BLOCK */
-  headerBlock: {
-    marginBottom: 20,
-  },
-  eyebrow: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#5653FE',
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
-  mainTitle: {
-    fontFamily: FONT_FAMILY_MEDIUM,
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 13.5,
-    color: '#64748B',
-    lineHeight: 19,
   },
 
   /* TRACK LIST */
