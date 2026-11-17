@@ -11,9 +11,20 @@ export interface User {
   taskStreak?: number;
   courseStreak?: number;
   twoFactorEnabled?: boolean;
+  goldCoins?: number;
+  coins?: number;
   xp?: number;
+  points?: number;
+  level?: number;
   avatar?: string;
   profileImage?: string;
+  learningStats?: {
+    enrolledCoursesCount?: number;
+    completedCoursesCount?: number;
+    completedLessonsCount?: number;
+    completedModulesCount?: number;
+    certificatesCount?: number;
+  };
   createdAt?: string;
   updatedAt?: string;
 }

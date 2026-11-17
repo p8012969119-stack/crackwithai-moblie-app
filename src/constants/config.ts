@@ -1,6 +1,7 @@
 import { NativeModules, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const PROD_URL = 'https://api.crackwithai.net/api';
 const TUNNEL_LHR_URL = 'https://e1d334cc13abac.lhr.life/api';
 const TUNNEL_LOCA_URL = 'https://little-forks-sing.loca.lt/api';
 const TUNNEL_CF_URL = 'https://objects-introduces-replace-wealth.trycloudflare.com/api';
@@ -15,6 +16,7 @@ const FASTEST_URL_KEY = '@crackwithai_fastest_api_url_v2';
 // Multi-tier resilient public endpoints (USB reverse first, then LAN, then live Cloudflare tunnel)
 export const CANDIDATE_URLS = [
   LOCAL_URL,
+  PROD_URL,
   DEV_LAN_URL,
   TUNNEL_CF_URL,
   EMULATOR_URL,
@@ -108,7 +110,7 @@ export const getAlternateApiBaseUrl = (currentUrl: string): string | null => {
     const nextIndex = (currentIndex + 1) % CANDIDATE_URLS.length;
     return CANDIDATE_URLS[nextIndex];
   }
-  return TUNNEL_CF_URL;
+  return PROD_URL;
 };
 
 export const getDevApiBaseUrl = (): string => {

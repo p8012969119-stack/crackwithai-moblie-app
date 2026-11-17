@@ -13,77 +13,81 @@ export const userApi = {
         return response.data;
       }
     } catch (err) {
-      console.log('[userApi.getDashboard] Notice: using fallback dashboard data:', err);
+      console.log('[userApi.getDashboard] Notice: /auth/dashboard failed, trying /users/me:', err);
     }
 
+    // Backup to /users/me
+    try {
+      const meRes = await apiClient.get<ApiResponse<any>>('/users/me', { signal });
+      if (meRes.data?.success && meRes.data?.data) {
+        const u = meRes.data.data;
+        return {
+          success: true,
+          message: 'Dashboard loaded from user sync',
+          data: {
+            user: u,
+            greeting: 'Good morning 👋',
+            streak: u.streak ?? u.learningStreak ?? 0,
+            xp: u.xp ?? 0,
+            certificatesCount: u.learningStats?.certificatesCount ?? 0,
+            completedCoursesCount: u.learningStats?.completedCoursesCount ?? 0,
+            enrolledCoursesCount: u.learningStats?.enrolledCoursesCount ?? 0,
+          },
+        };
+      }
+    } catch (err) {
+      console.log('[userApi.getDashboard] /users/me also failed:', err);
+    }
+
+    const cachedUser = await storage.getUser();
     return {
       success: true,
-      message: 'Dashboard data loaded',
+      message: 'Dashboard data loaded (cached)',
       data: {
-        user: {
-          _id: 'usr_default',
-          name: 'Prakash',
-          fullName: 'Prakash',
-          email: 'p8012969119@gmail.com',
-          role: 'PRO LEARNER',
+        user: cachedUser || {
+          _id: '',
+          name: 'Learner',
+          fullName: 'Learner',
+          email: '',
+          role: 'learner',
           streak: 0,
-          xp: 150,
         },
         greeting: 'Good morning 👋',
-        streak: 0,
-        averageProgress: 25,
-        learningMinutes: 45,
-        xp: 150,
-        completedModulesCount: 2,
-        totalModulesCount: 8,
-        completedLessonsCount: 6,
-        totalLessonsCount: 24,
+        streak: cachedUser?.streak ?? cachedUser?.learningStreak ?? 0,
         certificatesCount: 0,
-        timeframeStats: {
-          'This Month': {
-            averageProgress: 25,
-            learningMinutes: 45,
-            xp: 150,
-            completedModulesCount: 2,
-            completedLessonsCount: 6,
-          },
-          'This Week': {
-            averageProgress: 12,
-            learningMinutes: 20,
-            xp: 75,
-            completedModulesCount: 1,
-            completedLessonsCount: 3,
-          },
-          'All Time': {
-            averageProgress: 25,
-            learningMinutes: 45,
-            xp: 150,
-            completedModulesCount: 2,
-            completedLessonsCount: 6,
-          },
-        },
       },
     };
   },
 
   getProfile: async (): Promise<ApiResponse<User>> => {
     try {
+      const response = await apiClient.get<ApiResponse<User>>('/users/me');
+      if (response.data && response.data.success) {
+        return response.data;
+      }
+    } catch {
+      // Try /auth/profile
+    }
+
+    try {
       const response = await apiClient.get<ApiResponse<User>>('/auth/profile');
       if (response.data && response.data.success) {
         return response.data;
       }
     } catch (err) {
-      console.log('[userApi.getProfile] notice, using fallback:', err);
+      console.log('[userApi.getProfile] network request failed:', err);
     }
+
+    const cachedUser = await storage.getUser();
     return {
       success: true,
-      message: 'Profile fetched (fallback)',
-      data: {
-        _id: 'usr_default',
-        name: 'Prakash',
-        fullName: 'Prakash',
-        email: 'p8012969119@gmail.com',
-        role: 'PRO LEARNER',
+      message: 'Profile fetched (cached)',
+      data: cachedUser || {
+        _id: '',
+        name: 'Learner',
+        fullName: 'Learner',
+        email: '',
+        role: 'learner',
         streak: 0,
         preferredLanguage: 'en',
       },
@@ -92,7 +96,21 @@ export const userApi = {
 
   updateProfile: async (payload: Partial<User> & { currentPassword?: string; newPassword?: string; twoFactorEnabled?: boolean }): Promise<ApiResponse<User>> => {
     try {
-      const response = await apiClient.put<ApiResponse<User>>('/auth/profile', payload);
+      const response = await apiClient.patch<ApiResponse<User>>('/users/me', payload);
+      if (response.data && response.data.success) {
+        const updated = response.data.data;
+        const stored = await storage.getUser();
+        if (stored) {
+          await storage.saveUser({ ...stored, ...updated, avatar: payload.avatar || updated?.avatar || stored.avatar });
+        }
+        return response.data;
+      }
+    } catch {
+      // Try /auth/profile
+    }
+
+    try {
+      const response = await apiClient.patch<ApiResponse<User>>('/auth/profile', payload);
       if (response.data && response.data.success) {
         const updated = response.data.data;
         const stored = await storage.getUser();
@@ -107,22 +125,20 @@ export const userApi = {
         throw new Error(err.response.data.message);
       }
     }
-    const stored = await storage.getUser();
-    const fallbackUser: User = {
-      _id: stored?._id || 'usr_default',
-      name: payload.name || payload.fullName || stored?.name || 'Prakash',
-      fullName: payload.fullName || payload.name || stored?.fullName || 'Prakash',
-      email: payload.email || stored?.email || 'p8012969119@gmail.com',
-      role: stored?.role || 'PRO LEARNER',
-      streak: stored?.streak || 0,
-      avatar: payload.avatar || stored?.avatar,
-      preferredLanguage: payload.preferredLanguage || stored?.preferredLanguage || 'en',
+
+    const cachedUser = await storage.getUser();
+    const updated = {
+      ...(cachedUser || {}),
+      ...payload,
+      fullName: payload.fullName || payload.name || cachedUser?.fullName || cachedUser?.name || 'Learner',
+      name: payload.name || payload.fullName || cachedUser?.name || cachedUser?.fullName || 'Learner',
     };
-    await storage.saveUser(fallbackUser);
+    await storage.saveUser(updated);
+
     return {
       success: true,
       message: 'Profile updated successfully',
-      data: fallbackUser,
+      data: updated,
     };
   },
 };
